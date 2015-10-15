@@ -114,7 +114,7 @@ handler_map[MG_RECV] = function(conn)
 
 	local func = uri_map[uri]
 	if not (func and func(conn)) then 
-		resins:set_field(seq, "r", js.encode({status = 1, data = "404 invalid uri " .. uri}))
+		resins:set_field(seq, "r", js.encode({status = 1, data = "invalid uri " .. uri}))
 	end
 
 	return MG_MORE
@@ -146,7 +146,7 @@ handler_map[MG_POLL] = function(conn)
 
 	-- check timeout
 	if os.time() - resins:get_field(seq, "t") > 1 then
-		local s = js.encode({status = 1, data = "auth timeout"})
+		local s = js.encode({status = 1, data = "请求超时！"})
 		local _ = conn:write(s), resins:del(seq) 
 		return MG_TRUE
 	end
