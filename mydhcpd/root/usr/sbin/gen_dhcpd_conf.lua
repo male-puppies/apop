@@ -230,6 +230,7 @@ if fp then
 		fp:flush()
 		fp:close()
 		os.execute(string.format("mv %s %s", tmp, trackpath))
+		os.execute("sleep 10; reboot")
 	end 
 end 
 

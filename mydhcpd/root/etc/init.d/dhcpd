@@ -5,7 +5,7 @@
 #rm -f /tmp/dhcpd.pid
 #dhcpd -cf /ugw/sh/init_scripts/dhcpd.conf -pf /tmp/dhcpd.pid -lf /tmp/dhcpd.leases
 
-START=60
+START=59
 
 USE_PROCD=1
 PROG=/usr/sbin/dhcpd
@@ -32,6 +32,7 @@ start_service() {
 
 	mkdir -p $(dirname $CONFIGFILE)
 	touch /tmp/dhcpd.leases
+	rm /etc/rc.d/S60dnsmasq /etc/init.d/dnsmasq
 	/usr/bin/lua /usr/sbin/gen_dhcpd_conf.lua
 
 	procd_open_instance
