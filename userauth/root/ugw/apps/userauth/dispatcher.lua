@@ -26,45 +26,45 @@ end
 local function auth(map)
 	local username, password, ip, mac = map.username, map.password, map.ip, map.mac
 	if not (username and password and ip and mac) then 
-		return status("missing login param")
+		return status("请尝试重新加载！")
 	end
 
 	local ol = onlinelist.ins()
 	if ol:exist_mac(mac) then
 		kernelop.online(mac)
-		return status("already online", true)
+		return status("已在线！", true)
 	end
 
 	local ul = userlist.ins()
 	local user = ul:get(username)
 	if not user then
-		return status("user not exist")
+		return status("此帐号不存在！")
 	end
 
 	if 0 == user:get_enable() then
-		return status("user disabled")
+		return status("此帐号被禁用！")
 	end
 
 	if not user:check_expire() then 
-		return status("expired")
+		return status("此帐号已过期！")
 	end
 
 	if not user:check_remain() then 
-		return status("no remaining")
+		return status("此帐号无剩余时间！")
 	end 
 
 	local is_auto = policies:ins():check_auto(ip)
 	local _ = is_auto and print("why auto", ip)
 	if not (is_auto or user:check_user_passwd(username, password)) then  
-		return status("invalid username/password")
+		return status("无效帐号或密码错误！")
 	end 
 
 	if not user:check_multi(ol:exist_user(username)) then
-		return status("multi disabled")
+		return status("此帐号已在线！")
 	end
 
 	if not user:check_mac(mac) then
-		return status("mac disabled")
+		return status("此设备禁止登录！")
 	end
 
 	login_success(mac, ip, username)
@@ -143,14 +143,14 @@ local function user_set(map)
 	for name, item in pairs(map) do
 		local ret, err = usr.check(item) 
 		if not ret then 
-			return status(err)
+			return status("参数错误！")
 		end
 
 		if not ul:exist(name) then 
-			return status("miss " .. name)
+			return status("不存在 " .. name)
 		end 
 		if name ~= item.name and ul:exist(item.name) then 
-			return status("dup " .. item.name)
+			return status("认证名已存在！")
 		end
 	end
 
@@ -191,10 +191,10 @@ local function user_add(map)
 	for _, map in ipairs(arr) do 
 		local ret, err = usr.check(map) 
 		if not ret then 
-			return {status = 1, msg = err}
+			return {status = 1, data = "参数错误！"}
 		end 
 		if ul:exist(map.name) then 
-			return {status = 1, msg = "dup " .. map.name} 
+			return {status = 1, data = "认证名已存在！"} 
 		end
 	end
 
@@ -232,15 +232,15 @@ local function policy_set(map)
 	for name, item in pairs(map) do 
 		local ret, err = policy.check(item)
 		if not ret then 
-			return {status = 1, msg = err} 
+			return {status = 1, data = err} 
 		end
 
 		if not pols:exist(name) then 
-			return {status = 1, msg = "miss " .. name} 
+			return {status = 1, data = "miss " .. name} 
 		end 
 		
 		if name ~= item.name and pols:exist(item.name) then 
-			return {status = 1, msg = "dup " .. item.name} 
+			return {status = 1, data = "dup " .. item.name} 
 		end
 	end
 
@@ -264,12 +264,12 @@ local function policy_add(map)
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
 	local ret, err = policy.check(map)
 	if not ret then 
-		return {status = 1, msg = err}  
+		return {status = 1, data = err}  
 	end 
 
 	local pols = policies.ins()
 	if pols:exist(name) then 
-		return {status = 1, msg = "dup " .. name}  
+		return {status = 1, data = "dup " .. name}  
 	end
 
 	local n = policy.new()
@@ -299,7 +299,7 @@ local function policy_adj(map)
 	local pols = policies.ins() 
 	for _, name in ipairs(arr) do 
 		if not pols:exist(name) then 
-			return {status = 1, msg = "miss " .. name}   
+			return {status = 1, data = "miss " .. name}   
 		end 
 	end
 
