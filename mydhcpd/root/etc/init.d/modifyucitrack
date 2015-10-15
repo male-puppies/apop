@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+
+START=1
+
+service_triggers()                                                            
+{                                                                             
+	echo "nothing"               
+}                                                               
+
+boot() {
+# Will be launched through hotplug
+	return 0
+}  
+
+start_service() {
+	echo "nothing"
+}
+
+reload_service() {
+	/usr/bin/lua /usr/sbin/modify_ucitrack.lua
+}
+
+stop_service() {
+	echo "nothing"
+}
