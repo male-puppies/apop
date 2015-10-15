@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common 
+START=59
+
+start_service() {
+	ls /etc/rc.d/S60dnsmasq >/dev/null 2>&1 
+	test $? -ne 0 && exit 0
+	cp -r /ugw/apps/mydhcpd/root /
+	ln -sf /etc/init.d/dhcpd /etc/rc.d/S60dhcpd 
+}
+
+reload_service() {
+	
+}
+
+stop_service() {
+	
+}
