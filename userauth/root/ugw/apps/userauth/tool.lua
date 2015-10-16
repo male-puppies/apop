@@ -2,8 +2,9 @@ local uci = require("uci")
 local js = require("cjson.safe") 
 local myutil = require("myutil")
 
-local read = myutil.read
+local read, write = myutil.read, myutil.write
 
+--[[
 local function get_firewall()
 	local ret = uci.load("firewall")
 	if not ret then 
@@ -73,6 +74,65 @@ function cmd_map.iface(arg)
 	local s = js.encode(arr)
 	print(s)
 end 
+--]]
+local cmd_map = {}
+
+local function toarr(map)
+	local arr = {}
+	for k in pairs(map) do 
+		table.insert(arr, k)
+	end 
+	return arr 
+end
+
+local function get_iface()
+	local s = read("ip ro", io.popen)
+	s = s .. "\n"
+
+	local wan, lan, all = {}, {}, {}
+	for part in s:gmatch("(.-)\n") do 
+		local ifname = part:match("dev%s+(.-)%s")
+		if ifname and not wan[ifname] then 
+			all[ifname] = 1
+
+			local iswlan = part:find("^default")
+			if iswlan then 
+				wan[ifname] = 1
+			end
+		end
+	end
+
+	for ifname in pairs(all) do 
+		if not wan[ifname] then 
+			lan[ifname] = 1
+		end
+	end 
+
+	return lan, wan 
+end
+
+function cmd_map.iface(arg)
+	local lan, wan = get_iface() 
+	local arr = {}
+
+	for ifname in pairs(lan) do 
+		table.insert(arr, {
+			InterfaceName = ifname,
+			InterfaceType = 0,
+		})
+	end 
+
+	for ifname in pairs(wan) do 
+		table.insert(arr, {
+			InterfaceName = ifname,
+			InterfaceType = 1,
+		})
+	end 
+
+	local s = js.encode(arr)
+	write("/tmp/memfile/userauth_config.json", s)
+	print(s)
+end
 
 local arg = {...}
 local cmd = table.remove(arg, 1)
