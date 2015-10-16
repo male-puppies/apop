@@ -8,16 +8,15 @@ service_triggers()
 }                                                               
 
 boot() {
-# Will be launched through hotplug
-	return 0
+	/usr/bin/lua /usr/sbin/modify_ucitrack.lua
 }  
 
 start_service() {
-	echo "nothing"
+	/usr/bin/lua /usr/sbin/modify_ucitrack.lua
 }
 
 reload_service() {
-	/usr/bin/lua /usr/sbin/modify_ucitrack.lua
+	echo "nothing"
 }
 
 stop_service() {
