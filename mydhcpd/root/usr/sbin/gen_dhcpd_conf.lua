@@ -175,7 +175,7 @@ dhcp.uci:foreach("dhcp", "dhcp", function(d)
 				local start = d.start or "100"
 				local limit = d.limit or "150"
 				local leasetime = d.leasetime or "12h"
-				local dhcp_option = d.dhcp_option or "6,8.8.8.8,8.8.4.4"
+				
 				--print("get", iface, ipaddr, netmask, start, limit, leasetime, dhcp_option)
 				local ip = ip2int(ipaddr)
 				local mask = ip2int(netmask)
@@ -193,7 +193,12 @@ dhcp.uci:foreach("dhcp", "dhcp", function(d)
 				end
 
 				--print("lease_time=", lease_time)
-				dhcp_option = string.gsub(dhcp_option, "^6,", "")
+				-- 6,8.8.8.8,8.8.4.4
+				local dhcp_option = "8.8.8.8,8.8.4.4"
+				if d.dhcp_option then 
+					local s = d.dhcp_option[1] 	assert(s)
+					dhcp_option = s:gsub("^6,", "") 
+				end
 				dhcpd_conf_str = dhcpd_conf_str .. string.format(dhcpd_conf_node, int2ip(net), int2ip(mask), lease_time, int2ip(ip), dhcp_option, int2ip(range_start), int2ip(range_end))
 			end
 		end)
