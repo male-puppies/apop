@@ -12,6 +12,7 @@ if fp then
 		fp:flush()
 		fp:close()
 		os.execute(string.format("mv %s %s", tmp, trackpath))
-	end 
+		os.execute("sync; sync; sync; sleep 10; reboot")
+	end
 end 
 

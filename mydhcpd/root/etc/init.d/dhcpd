@@ -5,7 +5,7 @@
 #rm -f /tmp/dhcpd.pid
 #dhcpd -cf /ugw/sh/init_scripts/dhcpd.conf -pf /tmp/dhcpd.pid -lf /tmp/dhcpd.leases
 
-START=59
+START=60
 
 USE_PROCD=1
 PROG=/usr/sbin/dhcpd
