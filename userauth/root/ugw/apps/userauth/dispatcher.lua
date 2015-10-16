@@ -123,7 +123,7 @@ local function scan_remain()
 		if user and user:get_remain_enable() == 1 then
 			local left = user:get_remain_time() - n 
 			left = left > 0 and left or 0 
-			local _ = user:set_remain(1, left), ul:set_change(true)
+			local _ = user:set_remain({1, left}), ul:set_change(true)
 			if left <= 0 then 
 				local _ = kick_online_user(username), ol:set_change(true)
 			end

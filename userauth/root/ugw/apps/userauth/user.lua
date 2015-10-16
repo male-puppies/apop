@@ -24,7 +24,6 @@ local function get_timestamp()
 	return  os.date("%Y%m%d %H%M%S") 
 end
 
-
 function method.check_mac(ins, mac) 
 	if ins:get_bind() == BIND_NONE then
 		return true 
