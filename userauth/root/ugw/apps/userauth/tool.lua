@@ -18,7 +18,7 @@ local function get_firewall()
 			local s = network .. " "
 			local arr = {}
 			for part in s:gmatch("(%S-)%s") do 
-				table.insert(arr, part)
+				table.insert(arr, part) 
 			end 
 			network = arr
 		end
@@ -38,8 +38,10 @@ local function get_network()
 	cursor:foreach("network", "interface", function(sec)
 		local name, ifname = sec[".name"], sec.ifname
 		if sec.type == "bridge" then 
-			ifname = "br-" .. name 
-		end 
+			ifname = "br-" .. name
+		elseif sec.proto == "pppoe" then
+			ifname = "pppoe-" .. name
+		end
 		netw[name] = ifname
 	end)
 	return netw
