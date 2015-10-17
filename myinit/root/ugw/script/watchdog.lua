@@ -50,10 +50,16 @@ local function watchlog()
 	end
 end
 
-
+local function ntpdate()
+	while true do 
+		os.execute("/ugw/script/ntpdate.sh &")
+		se.sleep(3600)
+	end
+end
 
 local function main()
 	se.go(watchlog)
+	se.go(ntpdate)
 end
 
 se.run(main)
