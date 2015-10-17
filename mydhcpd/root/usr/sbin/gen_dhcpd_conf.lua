@@ -196,7 +196,13 @@ dhcp.uci:foreach("dhcp", "dhcp", function(d)
 				-- 6,8.8.8.8,8.8.4.4
 				local dhcp_option = "8.8.8.8,8.8.4.4"
 				if d.dhcp_option then 
-					local s = d.dhcp_option[1] 	assert(s)
+					local s 
+					if type(d.dhcp_option) then 
+						s = d.dhcp_option
+					else 
+						s = d.dhcp_option[1] 	assert(s)
+					end
+					
 					dhcp_option = s:gsub("^6,", "") 
 				end
 				dhcpd_conf_str = dhcpd_conf_str .. string.format(dhcpd_conf_node, int2ip(net), int2ip(mask), lease_time, int2ip(ip), dhcp_option, int2ip(range_start), int2ip(range_end))
