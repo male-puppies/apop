@@ -51,10 +51,10 @@ local function watchlog()
 end
 
 local function ntpdate()
-	while true do 
+	--while true do 
 		os.execute("ps | grep ntpdate.sh | grep -v grep || /ugw/script/ntpdate.sh &")
-		se.sleep(3600)
-	end
+	--	se.sleep(3600)
+	--end
 end
 
 local function main()
