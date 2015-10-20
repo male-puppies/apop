@@ -73,9 +73,9 @@ local function get_all_user()
 
 	local user = {}
 	for part in s:gmatch(".-\n") do 
-		local ip, st, jf, mac = part:match("ip:(.-) st:(%d) jf:(%d+) mac:(%S+)")
+		local ip, st, jf, mac, tp = part:match("ip:(.-) st:(%d) jf:(%d+) mac:(%S+) type:(%d)")
 		if ip then 
-			user[mac] = {ip = ip, st = tonumber(st), jf = tonumber(jf)}
+			user[mac] = {ip = ip, st = tonumber(st), jf = tonumber(jf), tp = tonumber(tp)}
 		end
 	end
 

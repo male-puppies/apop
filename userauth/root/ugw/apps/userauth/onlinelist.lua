@@ -105,16 +105,16 @@ function method.adjust(ins, users)
 		ins:del_mac(mac)
 	end 
 
-	-- sync 
+	-- sync
 	for mac, item in pairs(users) do
-		if item.st == 1 then -- online
+		if item.st == 1 and item.type == 2 then -- online
 			local user = usermap[mac] 	assert(user)
 			local _ = user:get_ip() ~= item.ip and log.debug("ip change %s->%s", js.encode(user), js.encode(item))
 			user:set_jf(item.jf):set_ip(item.ip)
 		else 
 			ins:del_mac(mac) -- offline
 		end
-	end 
+	end
 
 	ins:set_change(true)
 	ins:save()
