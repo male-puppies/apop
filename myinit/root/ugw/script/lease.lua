@@ -31,7 +31,7 @@ local function load()
 	end 
 
 	local arr = {}
-	for _, v in ipairs(map) do 
+	for _, v in pairs(map) do 
 		table.insert(arr, v)
 	end 
 	return arr  
