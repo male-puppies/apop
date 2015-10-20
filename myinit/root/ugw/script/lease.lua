@@ -9,7 +9,7 @@ local function load()
 	local s = fp:read("*a")
 	fp:close()
 
-	local arr = {}
+	local map = {}
 	for part in s:gmatch("(lease.-})") do  
 		local ip, et, mac = part:match("lease (%d+.-) {.-ends.-(%d+).-ethernet (.-);")
 		if ip then
@@ -26,8 +26,13 @@ local function load()
 				seconds = seconds - res * item.s
 			end
 			local hostname = part:match('hostname "(.-)"') or ""
-			table.insert(arr, {expires = table.concat(t, " "), hostname = hostname, macaddr = mac, ipaddr = ip})
+			map[ip] = {expires = table.concat(t, " "), hostname = hostname, macaddr = mac, ipaddr = ip} 
 		end
+	end 
+
+	local arr = {}
+	for _, v in ipairs(map) do 
+		table.insert(arr, v)
 	end 
 	return arr  
 end
