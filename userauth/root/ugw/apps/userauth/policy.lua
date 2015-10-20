@@ -27,16 +27,16 @@ end
 local function check(map)
 	local ip_pattern = "^[0-9]+%.[0-9]+%.[0-9]+%.[0-9]+$"
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
-	if not (name and #name > 0 and #name <= 16) then  
-		return nil, "invalid name"
+	if not (name and #name > 4 and #name <= 32) then  
+		return nil, "认证名格式错误！"
 	end 
 
 	if not (ip1 and ip1:find(ip_pattern) and ip2 and ip2:find(ip_pattern)) then 
-		return nil, "invalid ip"
+		return nil, "IP范围格式错误！"
 	end 
 
 	if not (tp and (tp == "web" or tp == "auto")) then 
-		return nil, "invalid type"
+		return nil, "认证方式格式错误！"
 	end  
 	
 	return true

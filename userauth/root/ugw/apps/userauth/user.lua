@@ -95,54 +95,54 @@ local function check(map)
 	local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
 	local expire, remain = map.expire, map.remain 
 
-	if not (name and #name > 0 and #name <= 16) then 
-		return nil, "invalid name"
+	if not (name and #name > 4 and #name <= 32) then 
+		return nil, "账号格式错误！"
 	end 
 
-	if not (pwd and #pwd >= 4 and #pwd <= 16) then 
-		return nil, "invalid password"
+	if not (pwd and #pwd >= 4 and #pwd <= 32) then 
+		return nil, "密码格式错误！"
 	end
 
-	if not (desc and #desc < 16) then 
-		return nil, "invalid desc"
+	if not (desc and #desc < 32) then 
+		return nil, "描述格式错误！"
 	end 
 
 	if not (enable and (enable == 0 or enable == 1)) then 
-		return nil, "invalid enable"
+		return nil, "页面错误！请尝试重新加载！"
 	end
 
 	if not (multi and (multi == 0 or multi == 1)) then 
-		return nil, "invalid multi"
+		return nil, "页面错误！请尝试重新加载！"
 	end
 
 	if not (bind and (bind == "mac" or bind == "none")) then 
-		return nil, "invalid bind"
+		return nil, "页面错误！请尝试重新加载！"
 	end
 
 	if not (maclist and type(maclist) == "table") then 
-		return nil, "invalid maclist"
+		return nil, "无效的MAC地址！"
 	end 
 
 	for _, mac in ipairs(maclist) do 
 		if not (mac and mac:find(mac_pattern)) then 
-			return nil, "invalid mac " .. mac
+			return nil, "MAC地址格式错误！"
 		end
 	end
 
 	if not (expire and (expire[1] == 0 or expire[1] == 1)) then 
-		return nil, "invalid expire " .. tostring(expire[1])
+		return nil, "页面错误！请尝试重新加载！"
 	end
 
 	if not (expire and expire[2]:find("%d%d%d%d%d%d%d%d %d%d%d%d%d%d")) then 
-		return nil, "invalid expire"
+		return nil, "过期时间格式错误！"
 	end 
 
 	if not (remain and (remain[1] == 0 or remain[1] == 1)) then 
-		return nil, "invalid remain"
+		return nil, "页面错误！请尝试重新加载！"
 	end
 
 	if not (remain and remain[2] >= 0) then 
-		return nil, "invalid remain"
+		return nil, "剩余时间格式错误！"
 	end
 
 	return true
