@@ -5,6 +5,7 @@ TIMEOUT="10"
 
 while :; do 
 	for s in $STEP_SERVERS ; do
-		/usr/sbin/ntpdate -s -b -u -t "$TIMEOUT" "$s" && exit 0
+		/usr/sbin/ntpdate -s -b -u -t "$TIMEOUT" "$s" && break
 	done
+	sleep 5
 done
