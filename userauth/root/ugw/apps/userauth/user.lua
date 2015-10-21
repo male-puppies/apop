@@ -95,11 +95,11 @@ local function check(map)
 	local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
 	local expire, remain = map.expire, map.remain 
 
-	if not (name and #name > 4 and #name <= 32) then 
+	if not (name and #name > 3 and #name <= 32) then 
 		return nil, "账号格式错误！"
 	end 
 
-	if not (pwd and #pwd >= 4 and #pwd <= 32) then 
+	if not (pwd and #pwd >= 3 and #pwd <= 32) then 
 		return nil, "密码格式错误！"
 	end
 
