@@ -20,5 +20,6 @@
 "wg_sensitivity":"1",
 "wg_ten_black_time":"60",
 "wg_kick_interval":"60",
-"wg_barr":"[\"2g\"]"
+"wg_barr":"[\"2g\"]",
+"g_debug":"disable"
 }

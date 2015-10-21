@@ -60,6 +60,7 @@ local keys = {
 	c_ap_list = 			"g_ap_list", 			
 	c_update_host = 		"g_update_host", 
 	c_upload_log = 			"g_upload_log", 
+	c_g_debug	=			"g_debug",		--调试开关
 
 	c_rs_iso =				"ag_rs_iso",			--启用AP隔离
 	c_rs_inspeed =			"ag_rs_inspeed",		--广播提速
