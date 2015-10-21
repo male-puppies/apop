@@ -103,9 +103,21 @@ function cmdmap.download(args)
 	for k, v in ipairs(args) do 
 		local version = get_version(host, v)
 		if version then 
-			local path = string.format("/tmp/www/webui/rom/%s", version:gsub("%-", "."))
-			local _ = lfs.attributes(path) or download(host, v) 
-		end
+			version = version:gsub("%-", ".")
+			local version_path = string.format("/tmp/www/webui/rom/%s.version", v) 
+			
+			local cur_version
+			local fp = io.open(version_path)
+			if fp then 
+				cur_version = fp:read("*l")
+				cur_version = cur_version:gsub("[ \t\r\n]", "")
+				fp:close()
+			end 
+
+			if not (cur_version and cur_version >= version) then 
+				download(host, v) 
+			end
+		end  
 	end
 end
 

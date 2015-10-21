@@ -11,8 +11,7 @@ local function apmupdatefireware(conn, group, data)
 	rds, pcli = conn.rds, conn.pcli
 	
 	local apid_arr = data
-	if type(apid_arr) ~= "table" then
-		log.debug("error %s", data);
+	if type(apid_arr) ~= "table" then 
 		return {status = 1, data = "error"}
 	end
 
@@ -32,6 +31,26 @@ local function apmfirewarelist(conn, group, data)
 		local _ = version and table.insert(vers, version)
 	end
 	return {status = 0, data = vers}	
+end
+
+local function apmfirewaredownload(conn, group, data)
+	assert(conn and conn.rds and group)
+	rds, pcli = conn.rds, conn.pcli
+	
+	local ver_arr = data
+	if type(ver_arr) ~= "table" then 
+		return {status = 1, data = "error"}
+	end
+
+	local arr = {"lua", "/ugw/script/checkaprom.lua", "download", "default"}
+	for _, v in ipairs(ver_arr) do 
+		table.insert(arr, v)
+	end 
+
+	local cmd = table.concat(arr, " ")
+	log.debug("cmd %s", cmd)
+	os.execute(cmd)
+	return {status = 0, data = "ok"}	
 end
 
 local function newest_version(conn, group, data) 
@@ -88,5 +107,7 @@ return {
 	newest_version = newest_version,
 	apmfirewarelist = apmfirewarelist,
 	apmupdatefireware = apmupdatefireware,
+	apmfirewaredownload = apmfirewaredownload,
 }
 
+ 

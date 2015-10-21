@@ -31,6 +31,7 @@ local cmd_func = {
 	ApmUpdateAps = upaps.apmupdateaps,
 	ApmFirewareList = firelist.apmfirewarelist,
 	ApmUpdateFireware = firelist.apmupdatefireware,
+	ApmFirewareDownload = firelist.apmfirewaredownload,
 	WLANList = wlan.wlanlist,
 	WLANAdd = wlan.wlanadd,
 	WLANDelete = wlan.wlandelete,

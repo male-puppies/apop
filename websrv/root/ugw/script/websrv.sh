@@ -3,6 +3,8 @@
 mkdir -p /tmp/www 
 cd /www && cp -r webui /tmp/www/
 
+ln -sf /tmp/www/webui/rom /www/rom
+
 ps | grep websrv/main.lua | grep -v grep >/dev/null 
 test $? -eq 0 && exit 0
 
