@@ -29,17 +29,26 @@ local function collect_all(map, param)
 	local v = map.gateway 						assert(v)
 	fix_kpmap[keys.c_gw] = tostring(v)
 	
+	local v = map.netmask 						assert(v)
+	fix_kpmap[keys.c_mask] = tostring(v)
+	
+	local v = map.dns 						assert(v)
+	fix_kpmap[keys.c_dns] = tostring(v)
+	
 	-- 批量修改时，描述名/ip/掩码/网关 不能修改
 	if ismulti then 
 		fix_kpmap[keys.c_desc] = nil
 		fix_kpmap[keys.c_ip] = nil 
 		fix_kpmap[keys.c_gw] = nil
+		fix_kpmap[keys.c_mask] = nil
 	end
 
-	-- 模式为dhcp时，ip/掩码/网关 不能修改
+	-- 模式为dhcp时，ip/掩码/网关/dns 不能修改
 	if isdhcp then 
 		fix_kpmap[keys.c_ip] = nil 
 		fix_kpmap[keys.c_gw] = nil
+		fix_kpmap[keys.c_mask] = nil
+		fix_kpmap[keys.c_dns] = nil
 	end 
 
 	local v = map.ac_host 						assert(v)
