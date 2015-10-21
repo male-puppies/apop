@@ -3,6 +3,7 @@ local log = require("log")
 local util = require("myutil")
 local online = require("online")
 local js = require("cjson.safe")
+local kernelop = require("kernelop")
 
 local read, write = util.read, util.write 
 
@@ -36,6 +37,7 @@ function method.del_mac(ins, mac)
 	if ins.usermap[mac] then 
 		ins.usermap[mac], ins.change = nil, true
 	end
+	kernelop.offline({mac})
 end
 
 function method.del_user(ins, name)
