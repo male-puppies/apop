@@ -103,18 +103,24 @@ function method.adjust(ins, users)
 		end
 	end
 
-	for _, mac in ipairs(del) do 
+	for _, mac in ipairs(del) do  
 		ins:del_mac(mac)
 	end 
 
 	-- sync
-	for mac, item in pairs(users) do
-		if item.st == 1 and item.type == 2 then -- online
-			local user = usermap[mac] 	assert(user)
-			local _ = user:get_ip() ~= item.ip and log.debug("ip change %s->%s", js.encode(user), js.encode(item))
-			user:set_jf(item.jf):set_ip(item.ip)
-		else 
-			ins:del_mac(mac) -- offline
+	for mac, item in pairs(users) do 
+		if item.type == 2 then 
+			if item.st == 1 then 
+				local user = usermap[mac] 
+				if not user then 
+					ins:del_mac(mac) -- offline
+				else 
+					local _ = user:get_ip() ~= item.ip and log.debug("ip change %s->%s", js.encode(user), js.encode(item))
+					user:set_jf(item.jf):set_ip(item.ip)
+				end
+			else
+				ins:del_mac(mac) -- offline
+			end  
 		end
 	end
 
