@@ -89,7 +89,7 @@ local function main()
 	set_timeout(5, 5, kernelop.check_network)
 	set_timeout(120, 120, dispatcher.update_user)
 	set_timeout(1, 20, dispatcher.update_online)
-	set_timeout(0.1, 1800, dispatcher.adjust_elapse)
+	set_timeout(0.1, 30, dispatcher.adjust_elapse)
 end
 
 log.setdebug(true)
