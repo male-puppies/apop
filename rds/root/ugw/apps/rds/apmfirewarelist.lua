@@ -49,7 +49,7 @@ local function apmfirewaredownload(conn, group, data)
 
 	local cmd = table.concat(arr, " ")
 	log.debug("cmd %s", cmd)
-	os.execute(cmd)
+	os.execute(cmd .. " &")
 	return {status = 0, data = "ok"}	
 end
 
@@ -97,8 +97,8 @@ local function download_rom(conn, group, data)
 	end 
 
 	local cmd = string.format("lua /ugw/script/checkaprom.lua %s &", table.concat(narr, " "))
-	print("TODO cmd", cmd)
-	-- os.execute(cmd)
+	os.execute(cmd)
+	print(cmd)
 	return {status = 0, data = "ok"}
 end
 
