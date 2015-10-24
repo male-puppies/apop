@@ -143,7 +143,7 @@ local function user_set(map)
 	for name, item in pairs(map) do
 		local ret, err = usr.check(item) 
 		if not ret then 
-			return status("参数错误！")
+			return status(err)
 		end
 
 		if not ul:exist(name) then 
@@ -191,7 +191,7 @@ local function user_add(map)
 	for _, map in ipairs(arr) do 
 		local ret, err = usr.check(map) 
 		if not ret then 
-			return {status = 1, data = "参数错误！"}
+			return {status = 1, data = err}
 		end 
 		if ul:exist(map.name) then 
 			return {status = 1, data = "认证名已存在！"} 
