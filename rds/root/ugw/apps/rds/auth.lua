@@ -106,7 +106,7 @@ end
 
 local function userget(conn, group, data)
 	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli)
-	return pcli:query_auth({cmd = "user_get", data = {group = group, data = data}}) or get_status(0, "{}") 
+	return pcli:query_auth({cmd = "user_get", data = {group = group, data = data}}) or get_status(0, {}) 
 end
 
 local function userimport(conn, group, path)
