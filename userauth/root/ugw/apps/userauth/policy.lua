@@ -27,7 +27,7 @@ end
 local function check(map)
 	local ip_pattern = "^[0-9]+%.[0-9]+%.[0-9]+%.[0-9]+$"
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
-	if not (name and #name > 4 and #name <= 32) then  
+	if not (name and #name >= 4 and #name <= 32) then  
 		return nil, "认证名格式错误！"
 	end 
 
