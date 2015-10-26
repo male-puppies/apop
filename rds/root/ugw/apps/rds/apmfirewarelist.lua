@@ -46,65 +46,44 @@ local function apmfirewaredownload(conn, group, data)
 	for _, v in ipairs(ver_arr) do 
 		table.insert(arr, v)
 	end 
-
+	table.insert(arr, "&")
 	local cmd = table.concat(arr, " ")
 	log.debug("cmd %s", cmd)
-	os.execute(cmd .. " &")
 	return {status = 0, data = "ok"}	
 end
 
-local function newest_version(conn, group, data) 
-	local data = {host = "default", arr = {"QM1439", "QM1438"}}
-	local map = data 
-	local host, arr = map.host, map.arr 
-	if not (host and arr and #arr > 0) then 
-		return {status = 1, data = "invalid param"}	 
-	end 
+-- local function newest_version(conn, group, data) 
+-- 	local data = {host = "default", arr = {"QM1439", "QM1438"}}
+-- 	local map = data 
+-- 	local host, arr = map.host, map.arr 
+-- 	if not (host and arr and #arr > 0) then 
+-- 		return {status = 1, data = "invalid param"}	 
+-- 	end 
 
-	local narr = {"version", host}
-	for _, v in ipairs(arr) do 
-		table.insert(narr, v)
-	end 
+-- 	local narr = {"version", host}
+-- 	for _, v in ipairs(arr) do 
+-- 		table.insert(narr, v)
+-- 	end 
 
-	local cmd = string.format("timeout -t 4 lua /ugw/script/checkaprom.lua %s", table.concat(narr, " "))
-	print("TODO cmd", cmd)
-	-- os.execute(cmd)
-	local fp = io.open("/tmp/ap.version", "r")
-	if not fp then 
-		return {status = 1, "check version fail"}
-	end 
+-- 	local cmd = string.format("timeout -t 4 lua /ugw/script/checkaprom.lua %s", table.concat(narr, " "))
+-- 	print("TODO cmd", cmd)
+-- 	-- os.execute(cmd)
+-- 	local fp = io.open("/tmp/ap.version", "r")
+-- 	if not fp then 
+-- 		return {status = 1, "check version fail"}
+-- 	end 
 
-	local narr = {}
-	for line in fp:lines() do 
-		table.insert(narr, line)
-	end 
-	fp:close()
+-- 	local narr = {}
+-- 	for line in fp:lines() do 
+-- 		table.insert(narr, line)
+-- 	end 
+-- 	fp:close()
 
-	return {status = 0, data = line}
-end
+-- 	return {status = 0, data = line}
+-- end
 
-local function download_rom(conn, group, data) 
-	local data = {host = "default", arr = {"QM1439", "QM1438"}}
-	local map = data 
-	local host, arr = map.host, map.arr 
-	if not (host and arr and #arr > 0) then 
-		return {status = 1, data = "invalid param"}	 
-	end 
-
-	local narr = {"download", host}
-	for _, v in ipairs(arr) do 
-		table.insert(narr, v)
-	end 
-
-	local cmd = string.format("lua /ugw/script/checkaprom.lua %s &", table.concat(narr, " "))
-	os.execute(cmd)
-	print(cmd)
-	return {status = 0, data = "ok"}
-end
-
-return {
-	download_rom = download_rom,
-	newest_version = newest_version,
+return { 
+	-- newest_version = newest_version,
 	apmfirewarelist = apmfirewarelist,
 	apmupdatefireware = apmupdatefireware,
 	apmfirewaredownload = apmfirewaredownload,

@@ -95,11 +95,29 @@ local function get_group_data(t)
 	return map.group, map.data
 end
 
+local running_fp = io.open("/tmp/memfile/rds_cmd.txt", "wb") 	assert(running_fp)
+
+local function rds_cmd_write(id, d, fmt, ...) 
+	local s = string.format(fmt, ...) 
+	local s = string.format("%s %s %s %s\n", id, d, os.date("%H%M%S"), s)
+	running_fp:write(s)
+	if running_fp:seek("end") > 32 * 1024 then 
+		running_fp:seek("set", 0)
+	end 
+end
+
+local function cursec()
+	return math.floor(se.time())
+end
+
 local function handle_client(cli)
 	local brds, nrds = mredis.blpop_rds(), mredis.normal_rds() 
 	
+	local sc = cursec()
+	rds_cmd_write(sc, 0, "read len")
 	local content, err = se.read(cli, 4, 5)
 	if not content then 
+		rds_cmd_write(sc, cursec() - sc, "read len fail")
 		log.error("read len fail %s", err)
 		return se.close(cli)
 	end
@@ -110,17 +128,21 @@ local function handle_client(cli)
 		return se.close(cli)
 	end
 
+	rds_cmd_write(sc, cursec() - sc, "read content %d", total)
 	local data, err = se.read(cli, total, 5)
 	if not data or #data ~= total then 
+		rds_cmd_write(sc, cursec() - sc, "read content %d fail", total)
 		return se.close(cli)
 	end
 	
 	local result
 	local t = js.decode(data)
 	if not t then 
+		rds_cmd_write(sc, cursec() - sc, "decode fail %s", data)
 		return se.close(cli)
 	end 
 
+	rds_cmd_write(sc, cursec() - sc, "begin %s", data)
 	local cmd = table.remove(t, 1)
 	local func = cmd_func[cmd] 
 	if not func then
@@ -134,7 +156,10 @@ local function handle_client(cli)
 	end
 
 	local data = struct.pack("<I", #result) .. result
+
+	rds_cmd_write(sc, cursec() - sc, "response %s", cmd)
 	local err = se.write(cli, data)
+	rds_cmd_write(sc, cursec() - sc, "response %s done", cmd)
 	local _ = err and log.error("send len %s fail %s", #data, err) 
 	se.close(cli) 
 end
@@ -170,7 +195,7 @@ local function main()
 	while true do
 		local cli, err = se.accept(srv, 1)
 		if cli then
-			handle_client(cli)
+			se.go(handle_client, cli)
 		elseif err ~= "TIMEOUT" then
 			log.fatal("accept error %s", err)
 		end
