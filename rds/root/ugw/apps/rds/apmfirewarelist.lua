@@ -49,6 +49,7 @@ local function apmfirewaredownload(conn, group, data)
 	table.insert(arr, "&")
 	local cmd = table.concat(arr, " ")
 	log.debug("cmd %s", cmd)
+	os.execute(cmd)
 	return {status = 0, data = "ok"}	
 end
 
