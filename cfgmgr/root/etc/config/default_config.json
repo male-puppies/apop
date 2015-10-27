@@ -13,7 +13,7 @@
 "ag_sta_cycle":"5", 
 "ag_rdo_cycle":"5",
 "g_ld_switch":"0", 
-"g_upload_log":"1",
+"g_upload_log":"0",
 "wg_tena_switch":"0",
 "wg_rssi_limit":"-85",
 "wg_flow_limit":"500",

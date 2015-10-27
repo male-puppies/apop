@@ -44,6 +44,7 @@ local function close_client(ins, err)
 end
 
 function method.publish(ins, topic, payload)
+	assert(ins and topic and payload)
 	if not ins:running() then 
 		return false 
 	end
@@ -218,7 +219,7 @@ local function run_internal(ins)
 
 		-- process data
 		local ret, err = on_recv()
-		if err then
+		if not ret then 
 			close_client(ins, err)
 			break
 		end
