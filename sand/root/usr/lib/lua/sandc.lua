@@ -219,7 +219,7 @@ local function run_internal(ins)
 
 		-- process data
 		local ret, err = on_recv()
-		if not ret then 
+		if err then 
 			close_client(ins, err)
 			break
 		end
