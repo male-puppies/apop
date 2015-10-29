@@ -145,7 +145,7 @@ handler_map[MG_POLL] = function(conn)
 	end
 
 	-- check timeout
-	if os.time() - resins:get_field(seq, "t") > 1 then
+	if os.time() - resins:get_field(seq, "t") > 3 then
 		local s = js.encode({status = 1, data = "请求超时！"})
 		local _ = conn:write(s), resins:del(seq) 
 		return MG_TRUE

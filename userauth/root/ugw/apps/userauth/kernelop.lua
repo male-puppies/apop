@@ -43,7 +43,7 @@ local function reset()
 		GlobaleAuthOption = get_global(),
 	}
 	
-	local cmd = string.format("auth_tool '%s' 2>&1", js.encode(cfg))
+	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", js.encode(cfg))
 	print(cmd)
 	read(cmd, io.popen)
 end
