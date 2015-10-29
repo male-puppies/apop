@@ -33,7 +33,7 @@ local function get_policy()
 end
 
 local function get_global()
-	return {CheckOffline = 10}
+	return {CheckOffline = 60}
 end
 
 local function reset()
