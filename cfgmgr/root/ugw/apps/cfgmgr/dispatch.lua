@@ -125,54 +125,6 @@ local function find_ap_config(group, apid)
 	return {fix = ac2ap(apid, fix), wlan = wlan_map}
 end
 
-local function register(cmd)
-	local data = cmd.data 						assert(data)
-	local apid, group = data[1], data[2]		assert(#apid == 17 and group)
-	local aparr = aplist(group)
-	local exist = find_apid(apid, aparr)
-	local version_k = pkey.version(apid) 
-
-	online.set_noupgrade(group, apid)
-
-	if cmd.cmd == "check" then 	-- 检查apid的配置是否存在
-		if not exist then
-			log.debug("apid %s %s not exist", apid, group)
-			return 0
-		end
-
-		local ver = data[3] 		assert(ver)
-		local curver = cfgget(group, version_k)			assert(curver)
-		if ver == curver then
-			return 1
-		end
-		
-		-- version不一样，用AC的配置替换AP的配置
-		log.debug("diff cfg %s %s", apid, group)
-		local cfg_map = find_ap_config(group, apid)  
-		return 1, {[apid] = cfg_map}
-	end
-
-	assert(cmd.cmd == "upload")
-	local group = data[2] 		
-	local kvmap = data[3] 		assert(type(kvmap) == "table")
-
-	local ver = os.date("%Y%m%d %H%M%S")
-	kvmap[version_k] = ver
-
-	-- 加入AP列表
-	if not exist then 
-		log.debug("new apid %s %s %s", apid, group, ver)
-
-		table.insert(aparr, apid) 
-		cfgset(group, keys.c_ap_list, js.encode(aparr))
-	end
-	for k, v in pairs(kvmap) do
-		k = k:find("^a#") and apid .. "#" .. k or k
-		local _ = cfgget(group, k) == nil and cfgset(group, k, v) 	-- 可能AP有新增配置，此时补上。已经存在的配置以AC为准
-	end
-
-	return 1
-end
 
 local function del_ap(map) 
 	local group, apid_arr = map.group, map.arr
@@ -230,6 +182,75 @@ local function del_ap(map)
 	
 	local k, v = keys.c_ap_list, js.encode(aplist)
 	cfgset(group, k, v)
+end
+
+local function clear_old_apid(group, apid)
+	local groups = cfgmgr.groups()
+	for _, g in ipairs(groups) do 
+		if g ~= group then 
+			local s = cfgget(g, keys.c_ap_list)
+			local aparr = js.decode(s)
+			for _, a in ipairs(aparr) do 
+				if a == apid then 
+					print("delete", g, a) 
+					del_ap({group = g, arr = {a}})
+					break 
+				end
+			end
+		end
+	end
+end
+
+local function register(cmd)
+	local data = cmd.data 						assert(data)
+	local apid, group = data[1], data[2]		assert(#apid == 17 and group)
+	local aparr = aplist(group)
+	local exist = find_apid(apid, aparr)
+	local version_k = pkey.version(apid) 
+
+	online.set_noupgrade(group, apid)
+
+	if cmd.cmd == "check" then 	-- 检查apid的配置是否存在
+		if not exist then
+			log.debug("apid %s %s not exist", apid, group)
+			return 0
+		end
+
+		local ver = data[3] 		assert(ver)
+		local curver = cfgget(group, version_k)			assert(curver)
+		if ver == curver then
+			return 1
+		end
+		
+		-- version不一样，用AC的配置替换AP的配置
+		log.debug("diff cfg %s %s", apid, group)
+		local cfg_map = find_ap_config(group, apid)  
+		return 1, {[apid] = cfg_map}
+	end
+
+	assert(cmd.cmd == "upload")
+	local group = data[2] 		
+	local kvmap = data[3] 		assert(type(kvmap) == "table")
+
+	local ver = os.date("%Y%m%d %H%M%S")
+	kvmap[version_k] = ver
+
+	-- 加入AP列表
+	if not exist then 
+		log.debug("new apid %s %s %s", apid, group, ver)
+
+		table.insert(aparr, apid) 
+		cfgset(group, keys.c_ap_list, js.encode(aparr))
+	end
+	
+	for k, v in pairs(kvmap) do
+		k = k:find("^a#") and apid .. "#" .. k or k
+		local _ = cfgget(group, k) == nil and cfgset(group, k, v) 	-- 可能AP有新增配置，此时补上。已经存在的配置以AC为准
+	end
+
+	clear_old_apid(group, apid)
+
+	return 1
 end
 
 local function set_ap(map)

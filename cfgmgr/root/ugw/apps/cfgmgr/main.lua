@@ -251,8 +251,8 @@ topic_map["a/ac/query/connect"] = function(map)
 	if not (map and map.group and map.apid and map.data) then 
 		return 
 	end  
-
-	local group, apid = map.group, map.apid
+	
+	local group, apid, data = map.group, map.apid, map.data
 	if not (group and apid) then 
 		return
 	end 

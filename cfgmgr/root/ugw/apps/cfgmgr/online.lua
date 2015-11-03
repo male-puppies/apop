@@ -23,7 +23,7 @@ end
 local function set_upgrade_state(group, apid, map, time)
 	map[apid] = time
 	mf_upgrade:set(group, map):save()
-	print("set upgrade", group, apid, time)
+	-- print("set upgrade", group, apid, time)
 end
 
 -- 0：离线	1：在线	2：升级
@@ -31,7 +31,7 @@ local function set_state(group, apid, map, state)
 	assert(group and apid and map and state)
 	map[apid] = state
 	mf_online:set(group, map):save()
-	print("set state", group, apid, state)
+	-- print("set state", group, apid, state)
 	local ret = rds:hset(online_key(group), apid, state) 	assert(ret ~= nil)
 end
 

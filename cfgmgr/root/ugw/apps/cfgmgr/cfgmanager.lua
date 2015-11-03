@@ -182,4 +182,12 @@ local function save_all()
 	end
 end
 
-return {ins = ins, save_all = save_all} 
+local function groups()
+	local arr = {}
+	for k in pairs(ins_map) do 
+		table.insert(arr, k)
+	end 
+	return arr
+end
+
+return {ins = ins, save_all = save_all, groups = groups} 
