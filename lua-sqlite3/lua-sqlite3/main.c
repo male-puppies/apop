@@ -2,34 +2,11 @@
 #include <string.h>
 #include <assert.h>
 
-#define LUA_LIB
-#include "lua.h"
-#include "lauxlib.h"
+#include "luacommon.h"
 #include "sqlite3.h"
 
-#if LUA_VERSION_NUM < 502 
-# define luaL_newlib(L,l) (lua_newtable(L), luaL_register(L,NULL,l))
-#endif 
 
-#if LUA_VERSION_NUM > 501
-/*
-** Lua 5.2
-*/
-#define lua_strlen lua_rawlen
-/* luaL_typerror always used with arg at ndx == NULL */
-#define luaL_typerror(L,ndx,str) luaL_error(L,"bad argument %d (%s expected, got nil)",ndx,str)
-/* luaL_register used once, so below expansion is OK for this case */
-#define luaL_register(L,name,reg) lua_newtable(L);luaL_setfuncs(L,reg,0)
-/* luaL_openlib always used with name == NULL */
-#define luaL_openlib(L,name,reg,nup) luaL_setfuncs(L,reg,nup)
-
-#if LUA_VERSION_NUM > 502
-/*
-** Lua 5.3
-*/
-#define luaL_checkint(L,n)  ((int)luaL_checkinteger(L, (n)))
-#endif
-#endif
+#define MT_SQLITE3 	"mt_sqlite3"
 
 struct sdb {
 	sqlite3 *db;
@@ -42,21 +19,26 @@ static void cleanupdb(lua_State *L, struct sdb *db) {
 
 static int lsqlite_open(lua_State *L) {
 	const char *filename = luaL_checkstring(L, 1);
-	struct sdb *db = (struct sdb *)lua_newuserdata(L, sizeof(struct sdb));
-	db->db = NULL;
-	if (sqlite3_open(filename, &db->db) == SQLITE_OK) 
-		return 1;
 
-	cleanupdb(L, db);	
+	struct sdb *db = (struct sdb *)lua_newuserdata(L, sizeof(struct sdb));
+	memset(db, 0, sizeof(struct sdb));
+	
+	if (sqlite3_open(filename, &db->db) == SQLITE_OK) {
+		luaL_getmetatable(L, MT_SQLITE3);
+		lua_setmetatable(L, -2);
+		return 1;
+	}
+
 	lua_pushnil(L);
-	// lua_pushinteger(L, sqlite3_errcode(db->db));
 	lua_pushstring(L, sqlite3_errmsg(db->db));
+	cleanupdb(L, db);
+
 	return 2;
 }
 
 struct cb_help {
-	lua_State *L;
 	int i;
+	lua_State *L;
 };
 
 static int callback(void *data, int argc, char **argv, char **azColName){
@@ -67,10 +49,11 @@ static int callback(void *data, int argc, char **argv, char **azColName){
 
 	int i;
 	for (i = 0; i < argc; i++) {
-		if (argv[i]) 
+		if (argv[i]) {
 			lua_pushstring(L, argv[i]);
-		else 
+		} else {
 			lua_pushnil(L);
+		}
 		lua_rawseti(L, -2, i + 1);
 	}
 
@@ -78,58 +61,65 @@ static int callback(void *data, int argc, char **argv, char **azColName){
 	return 0;
 }
 
-static int lsqlite_exec(lua_State *L) {
-	if (!lua_isuserdata(L, 1)) 
-		luaL_error(L, "param 1 should be userdata");
-	
-	char *errmsg = NULL;
-	struct sdb *db = (struct sdb *)lua_touserdata(L, 1);
+static int lsqlite_exec(lua_State *L) { 
+	struct sdb *db = (struct sdb *)luaL_checkudata(L, 1, MT_SQLITE3);
 	const char *sql = luaL_checkstring(L, 2);
 	
-	int is_select = 0;
-	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) 
-		is_select = 1;
-	
-	if (is_select) 
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) { 	//have result 
 		lua_newtable(L);
+		
+		char *errmsg = NULL;
+		struct cb_help help = {0, L};
+		
+		int ret = sqlite3_exec(db->db, sql, callback, &help, &errmsg);
+		if (ret != SQLITE_OK) {
+			lua_pop(L, 1); 		DUMP(L);
+			lua_pushnil(L);
+			lua_pushstring(L, errmsg);
+			sqlite3_free(errmsg); DUMP(L);
+			return 2; 
+		}
+		return 1;
+	} 
 
-	struct cb_help help = {L, 0};
-	int ret = sqlite3_exec(db->db, sql, callback, &help, &errmsg);
+	char *errmsg = NULL;
+	int ret = sqlite3_exec(db->db, sql, 0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
-		lua_pop(L, 1);
-		lua_pushnil(L);
+		lua_pushnil(L); 		DUMP(L);
 		lua_pushstring(L, errmsg);
-		sqlite3_free(errmsg);
+		sqlite3_free(errmsg);	DUMP(L);
 		return 2; 
 	}
 
-	if (!is_select) 
-		lua_pushboolean(L, 1);
+	lua_pushboolean(L, 1);
 	
 	return 1;
 }
 
 static int lsqlite_close(lua_State *L) {
-	if (!lua_isuserdata(L, 1)) 
-		luaL_error(L, "param 1 should be userdata");
-	struct sdb *db = (struct sdb *)lua_touserdata(L, 1); 	assert(db->db);
-	cleanupdb(L, db);
+	struct sdb *db = (struct sdb *)luaL_checkudata(L, 1, MT_SQLITE3);
+	if (db->db) {
+		cleanupdb(L, db);
+		DUMP(L);
+	}
 	return 0;
 }
 
-static const luaL_Reg sqlitelib[] = {
-	{ "open",	lsqlite_open },
+static const luaL_Reg mt_sqlite[] = {
 	{ "exec", 	lsqlite_exec },
 	{ "close", 	lsqlite_close },
+	{ "__gc", 	lsqlite_close },
 	{ NULL, 	NULL}
 };
 
-#ifdef BY_LUA_53
-LUALIB_API int luaopen_lsqlite53(lua_State *L) {
-#else
-LUALIB_API int luaopen_lsqlite(lua_State *L) {
-#endif  
-	luaL_newlib(L, sqlitelib); 
+static const luaL_Reg sqlitelib[] = {
+	{ "open",	lsqlite_open },
+	{ NULL, 	NULL}
+};
+
+LUALIB_API int luaopen_lsqlite3(lua_State *L) {
+	create_metatable(L, mt_sqlite, MT_SQLITE3);
+	luaL_newlib(L, sqlitelib);
 	return 1;
 }
 
