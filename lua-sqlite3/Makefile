@@ -27,8 +27,8 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install  
-	#$(INSTALL_DIR) $(1)/usr/lib/lua/
-	#$(INSTALL_BIN) lua-mongoose/mongoose.so $(1)/usr/lib/lua/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/
+	cd lua-sqlite3 && $(INSTALL_BIN) *.so $(1)/usr/lib/lua/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
