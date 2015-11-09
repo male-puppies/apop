@@ -16,6 +16,7 @@ define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
 	TITLE:=lua-sqlite3
+	DEPENDS:=+liblua sqlite3.9
 endef
 
 define Package/$(PKG_NAME)/description
