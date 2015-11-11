@@ -1,5 +1,7 @@
 #!/bin/sh
-LUA_LIB=../lua-5.1.5/src/ LUA_INC=../lua-5.1.5/src/ ./configure --prefix=/home/yjs/lua/run/ \
+luadir=$1
+#LUA_LIB=../lua-5.1.5/src/ LUA_INC=../lua-5.1.5/src/ ./configure --prefix=/home/yjs/lua/run/ \
+LUA_LIB=$luadir LUA_INC=$luadir ./configure \
 --without-http_charset_module \
 --without-http_gzip_module \
 --without-http_ssi_module \
@@ -22,6 +24,6 @@ LUA_LIB=../lua-5.1.5/src/ LUA_INC=../lua-5.1.5/src/ ./configure --prefix=/home/y
 --without-mail_pop3_module \
 --without-mail_imap_module \
 --without-mail_smtp_module \
---with-ld-opt="-Wl,-rpath,../lua-5.1.5/src/" \
+--with-ld-opt="-Wl,-rpath,$luadir" \
 --add-module=../ngx_devel_kit-0.2.19 \
 --add-module=../lua-nginx-module/

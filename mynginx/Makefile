@@ -9,7 +9,7 @@ PKG_LICENSE_FILES:=
 PKG_MAINTAINER:=Ivan <itgb1989@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-SRC_DIR:= se
+SRC_DIR:= nginx-1.9.6
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -17,15 +17,18 @@ define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
 	TITLE:=mynginx
-	#DEPENDS:=+lua53
+	DEPENDS:=+liblua libpcre
 endef
 
 define Package/$(PKG_NAME)/description
-	se library
+	mynginx
 endef
 
 define Build/Compile
 	echo "--------------------" $(BUILD_DIR)/lua53/src
+	#cd $(SRC_DIR) && ./cfg.sh $(BUILD_DIR)/lua-5.1.5/src
+	$(MAKE) -C $(SRC_DIR) $(TARGET_CONFIGURE_OPTS)  
+	
 	#$(MAKE) -C $(SRC_DIR) LUA_SO_DIR=$(BUILD_DIR)/lua53/src $(TARGET_CONFIGURE_OPTS)  
 	
 	#$(MAKE)  -C $(SRC_DIR)/se \
