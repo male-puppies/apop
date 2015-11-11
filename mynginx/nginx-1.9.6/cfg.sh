@@ -26,4 +26,8 @@ LUA_LIB=$luadir LUA_INC=$luadir ./configure \
 --without-mail_smtp_module \
 --with-ld-opt="-Wl,-rpath,$luadir" \
 --add-module=../ngx_devel_kit-0.2.19 \
---add-module=../lua-nginx-module/
+--add-module=../lua-nginx-module/ \
+--conf-path=/etc/config/nginx.conf \
+--prefix=/usr/sbin/ \
+--pid-path=/tmp/nginx/nginx.pid \
+--error-log-path=/tmp/nginx/error.log

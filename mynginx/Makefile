@@ -26,7 +26,7 @@ endef
 
 define Build/Compile
 	echo "--------------------" $(BUILD_DIR)/lua53/src
-	#cd $(SRC_DIR) && ./cfg.sh $(BUILD_DIR)/lua-5.1.5/src
+	#cd $(SRC_DIR) && ./cfg.sh $(BUILD_DIR)/lua-5.1.5/src 
 	$(MAKE) -C $(SRC_DIR) $(TARGET_CONFIGURE_OPTS)  
 	
 	#$(MAKE) -C $(SRC_DIR) LUA_SO_DIR=$(BUILD_DIR)/lua53/src $(TARGET_CONFIGURE_OPTS)  
