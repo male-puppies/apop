@@ -15,7 +15,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
 	SECTION:=Applications
-	CATEGORY:=apps
+	CATEGORY:=Puppies
 	TITLE:=mynginx
 	#DEPENDS:=+lua53
 endef
