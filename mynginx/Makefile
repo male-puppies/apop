@@ -17,7 +17,7 @@ define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
 	TITLE:=mynginx
-	DEPENDS:=+liblua libpcre
+	DEPENDS:=+liblua +libpcre +libopenssl +libpthread
 endef
 
 define Package/$(PKG_NAME)/description
@@ -27,23 +27,13 @@ endef
 define Build/Compile
 	echo "--------------------" $(BUILD_DIR)/lua53/src
 	#cd $(SRC_DIR) && ./cfg.sh $(BUILD_DIR)/lua-5.1.5/src 
-	$(MAKE) -C $(SRC_DIR) $(TARGET_CONFIGURE_OPTS)  
-	
-	#$(MAKE) -C $(SRC_DIR) LUA_SO_DIR=$(BUILD_DIR)/lua53/src $(TARGET_CONFIGURE_OPTS)  
-	
-	#$(MAKE)  -C $(SRC_DIR)/se \
-	#	CC="$(TARGET_CROSS)gcc" \
-	#	AR="$(TARGET_CROSS)ar rcu" \
-	#	RANLIB="$(TARGET_CROSS)ranlib" \
-	#	INSTALL_ROOT=/usr \
-	#	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) -fPIC" \
-	#	MYLDFLAGS="$(TARGET_LDFLAGS)" \
-	#	PKG_VERSION=$(PKG_VERSION)
+	$(MAKE) -C $(SRC_DIR) $(TARGET_CONFIGURE_OPTS)
 endef
 
 define Package/$(PKG_NAME)/install  
-	#$(INSTALL_DIR) $(1)/usr/lib/lua 
-	#$(CP) $(SRC_DIR)/bin/se.so $(1)/usr/lib/lua 
+	$(INSTALL_DIR) $(1)/usr/sbin
+	cp $(SRC_DIR)/objs/nginx $(1)/usr/sbin
+	$(CP) -a ./root/* $(1)/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
