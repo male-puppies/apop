@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=lua-sqlite3
+PKG_NAME:=lsqlite3
 PKG_VERSION:=0.1
 PKG_RELEASE:=0
 
@@ -15,7 +15,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
-	TITLE:=lua-sqlite3
+	TITLE:=lsqlite3
 	DEPENDS:=+liblua sqlite3.9
 endef
 
