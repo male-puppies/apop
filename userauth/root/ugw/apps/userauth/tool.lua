@@ -130,7 +130,7 @@ function cmd_map.iface(arg)
 	end 
 
 	local s = js.encode(arr)
-	write("/tmp/memfile/userauth_config.json", s)
+	-- write("/tmp/memfile/userauth_config.json", s)
 	print(s)
 end
 

@@ -5,7 +5,9 @@ local policy = require("policy")
 local memfile = require("memfile")
 local policies = require("policies")
 
-local read = myutil.read
+local last_iface_count
+local read, write = myutil.read, myutil.write
+local userauth_config = "/tmp/memfile/userauth_config.json"
 
 local function get_iface()
 	local cmd = "lua /ugw/apps/userauth/tool.lua iface"
@@ -36,15 +38,18 @@ local function get_global()
 	return {CheckOffline = 60}
 end
 
-local function reset()
+local function reset(iface_arr)
+	local iface_arr = iface_arr and iface_arr or get_iface()
+	last_iface_count = #iface_arr
+
 	local cfg = {
 		AuthPolicy = get_policy(),
-		InterfaceInfo = get_iface(), 
+		InterfaceInfo = iface_arr,
 		GlobaleAuthOption = get_global(),
 	}
 	
 	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", js.encode(cfg))
-	print(cmd)
+	log.debug("%s", cmd)
 	read(cmd, io.popen)
 end
 
@@ -82,6 +87,7 @@ local function get_all_user()
 	return user
 end
 
+--[[
 local function check_modify(path)
 	local attr = lfs.attributes(path)
 	if not attr then 
@@ -108,11 +114,21 @@ local function check_network()
 	end
 	local _ = change and reset()
 end
+]]
+
+local function check_ip_route()
+	local iface_arr = get_iface()
+	if last_iface_count ~= #iface_arr then 
+		log.debug("io route reset %s %s", last_iface_count, #iface_arr)
+		reset()
+	end 
+end
 
 return {
 	reset = reset, 
 	online = online, 
 	offline = offline, 
 	get_all_user = get_all_user, 
-	check_network = check_network,
+	-- check_network = check_network,
+	check_ip_route = check_ip_route,
 }
