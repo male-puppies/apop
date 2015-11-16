@@ -23,7 +23,7 @@ local cfgclient = require("cfgclient")
 
 local pcli
 -- local is_ac
-local tcp_addr = "tcp://0.0.0.0:9997"
+local tcp_addr = "tcp://0.0.0.0:9998"
 local rds_addr = "tcp://127.0.0.1:6379"
 
 -- local cmd_func = {
