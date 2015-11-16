@@ -12,7 +12,6 @@ local js = require("cjson.safe")
 local wlan = require("wlanssid")
 local const = require("constant")
 local aps = require("apmlistaps") 
-local request = require("request")
 local collect = require("collect")
 local glbcfg = require("globalcfg")
 local load = require("loadbalance") 
@@ -172,11 +171,6 @@ local function check_ac()
 	end 
 end 
 
-local function dispatcher(data)
-	-- TODO
-	return {status = 0, data = os.date()}
-end
-
 local function main()
 	log.debug("start rds web ...")
 	check_ac()
@@ -187,12 +181,24 @@ local function main()
 
 	init_rds()
 
-	local serv, err = se.listen(tcp_addr) 
-	
-	local _ = serv or log.fatal("listen %s fail %s", tcp_addr, err)
+	local srv, err = se.listen(tcp_addr) 
+	local _ = srv or log.fatal("listen %s fail %s", tcp_addr, err)
+
+	-- se.go(function()
+	-- 	se.sleep(1)
+	-- 	while true do 
+	-- 		auth.policyget({rds = "xx", pcli = pcli}, "default", "xxx")
+	-- 		se.sleep(3)
+	-- 	end
+	-- end)
+
 	while true do
-		local cli = se.accept(serv)
-		local _ = cli and request.new(cli, dispatcher):run() 
+		local cli, err = se.accept(srv, 1)
+		if cli then
+			se.go(handle_client, cli)
+		elseif err ~= "TIMEOUT" then
+			log.fatal("accept error %s", err)
+		end
 	end
 end
 
