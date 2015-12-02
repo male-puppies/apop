@@ -133,6 +133,14 @@ local function set_debug(conn, group, data)
 	return get_status(0)  
 end
 
+local function set_ledctrl(conn, group, data)
+	assert(conn and conn.rds and group)
+	rds, pcli = conn.rds, conn.pcli  			assert(rds and pcli)
+	local ledctrl = data 		assert(ledctrl)
+	local res = pcli:modify({cmd = "set_ledctrl", data = {group = "default", ledctrl = ledctrl}})
+	return js.encode({status = 0, msg = "success"})
+end
+
 return {
 	execute_cmd = execute_cmd,
 	set_country = set_country,
@@ -141,5 +149,6 @@ return {
 	get_hide_columns = get_hide_columns,
 	set_band_support = set_band_support,
 	get_band_support = get_band_support, 
-	set_debug		= set_debug
+	set_debug		= set_debug,
+	set_ledctrl		= set_ledctrl,
 }

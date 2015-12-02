@@ -93,6 +93,7 @@ local function find_ap_config(group, apid)
 		keys.c_rs_iso,
 		keys.c_rs_inspeed,
 		keys.c_g_debug,
+		keys.c_g_ledctrl,
 	}
 
 	for _, k in ipairs(extra) do  
@@ -677,6 +678,33 @@ local function set_debug(map)
 	return apid_map
 end
 
+local function set_ledctrl(map)
+	local group, ledctrl = map.group, map.ledctrl  	assert(group and ledctrl)
+
+	local change_map = {}
+	change_map[keys.c_g_ledctrl] = ledctrl
+
+	local ver = os.date("%Y%m%d %H%M%S") 
+	local s = cfgget(group, keys.c_ap_list) or "{}"
+	local aparr = js.decode(s) 	assert(aparr)
+	
+	for _, apid in ipairs(aparr) do 
+		local version_k = pkey.version(apid)
+		change_map[version_k] = ver
+	end
+
+	for k, v in pairs(change_map) do 
+		cfgset(group, k, v)
+	end 
+	
+	local apid_map = {}
+	for _, apid in ipairs(aparr) do 
+		apid_map[apid] = find_ap_config(group, apid)
+	end 
+	
+	return apid_map
+end
+
 
 return {
 	register = register,
@@ -692,4 +720,5 @@ return {
 	set_network = set_network,
 	find_ap_config = find_ap_config,
 	set_debug = set_debug,
+	set_ledctrl = set_ledctrl,
 }

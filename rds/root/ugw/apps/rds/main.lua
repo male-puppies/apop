@@ -54,6 +54,7 @@ local cmd_func = {
 	GetOptimization = optimal.optimization,
 	SaveOptimization = optimal.save_optimization,
 	DebugSwitch		 = glbcfg.set_debug,
+	LedctrlSwitch = glbcfg.set_ledctrl,
 	UserImport = auth.userimport,
 	UserAdd = auth.useradd,
 	UserDel = auth.userdel,

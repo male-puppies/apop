@@ -61,7 +61,9 @@ local keys = {
 	c_update_host = 		"g_update_host", 
 	c_upload_log = 			"g_upload_log", 
 	c_g_debug	=			"g_debug",		--调试开关
-
+	c_g_ledctrl =			"g_ledctrl",
+	c_g_abncheck = 			"g_abncheck",
+	
 	c_rs_iso =				"ag_rs_iso",			--启用AP隔离
 	c_rs_inspeed =			"ag_rs_inspeed",		--广播提速
 	c_tena_switch = 		"wg_tena_switch",		--防终端粘滞开关

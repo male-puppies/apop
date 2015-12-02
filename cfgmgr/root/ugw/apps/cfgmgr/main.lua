@@ -197,6 +197,10 @@ modify_map["set_debug"] = function(map, set_done_cb)
 	local _ = set_done_cb(), update_ap(dispatch.set_debug(map))
 end
 
+modify_map["set_ledctrl"] = function(map, set_done_cb) 
+	local _ = set_done_cb(), update_ap(dispatch.set_ledctrl(map))
+end
+
 topic_map["a/ac/cfgmgr/modify"] = function(map)
 	local cmd = map.pld 
 	local func = modify_map[cmd.cmd]
