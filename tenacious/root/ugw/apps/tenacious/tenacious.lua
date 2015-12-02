@@ -134,7 +134,7 @@ end
 --检测粘滞终端（逐个ap,逐个radio遍历所有sta）
 local function check_tenacious() 
 	while true do
-		local interval, switch 
+		local interval, switch = 5, 0
 		local ap_list = {}
 		local query_keys = {}
 
