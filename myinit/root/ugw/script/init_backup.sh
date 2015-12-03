@@ -57,7 +57,7 @@ mount_backup
 
 lua /ugw/script/watchdog.lua &
 
-merge_json=/ugw/scripts/mergedefault.lua
+merge_json=/ugw/script/mergedefault.lua
 if [ -f "${merge_json}" ]; then
 	lua ${merge_json} 
 	mv ${merge_json} ${merge_json}.bak
