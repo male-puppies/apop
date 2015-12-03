@@ -1,4 +1,5 @@
 local js = require("cjson.safe")
+local log = require("log")
 
 local current_file = "/etc/config/default/m.json"
 local default_file = "/etc/default_config.json"
@@ -24,6 +25,8 @@ local function save_current(file, current)
 	local cmd = string.format("mv %s %s", tmpfile, file)
 	print(cmd)
 	local _ = os.execute(cmd) ~= 0 and print("cmd fail", cmd)
+	log.debug("merge config success.")
+	
 end
 
 local current = parse_json(current_file)
@@ -38,6 +41,7 @@ local change = false
 for nk, nv in pairs(default) do
 	if not current[nk] then
 		print("new", nk, nv)
+		log.debug("add new %s = %s to config", nk, nv)
 		current[nk], change = nv, true
 	end
 end
