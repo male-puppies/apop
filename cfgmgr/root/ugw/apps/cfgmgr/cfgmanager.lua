@@ -17,7 +17,7 @@ local function read(path, func)
 end
 
 local function recover_default(path)
-	local cmd = string.format("cp %s %s", "/etc/config/default_config.json", path)
+	local cmd = string.format("cp %s %s", "/etc/default_config.json", path)
 	log.debug("%s", cmd)
 	local ret = os.execute(cmd) 	assert(ret)
 	local s = read(path) 			assert(s)
