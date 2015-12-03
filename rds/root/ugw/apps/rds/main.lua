@@ -86,14 +86,8 @@ local function read(path, func)
 end
 
 local function get_group_data(t) 
-	if is_ac then 
-		-- return "default", t[1]
-		local map = t[1]	assert(map.group, t[1])
-		return map.group, map.data
-	end 
-	
-	local map = t[1]	assert(map.group, t[1])
-	return map.group, map.data
+	assert(t)
+	return "default", t[1]
 end
 
 local running_fp = io.open("/tmp/memfile/rds_cmd.txt", "wb") 	assert(running_fp)
