@@ -87,7 +87,7 @@ end
 
 local function get_group_data(t) 
 	assert(t)
-	return "default", t[1]
+	return "default", t[1].data
 end
 
 local running_fp = io.open("/tmp/memfile/rds_cmd.txt", "wb") 	assert(running_fp)
