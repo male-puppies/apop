@@ -155,6 +155,17 @@ local function start_local()
 	local_mqtt = mqtt
 end
 
+local function set_default()
+	g_kvmap = {
+		account = "default",
+		ac_host = "192.168.0.213", -- TODO
+		ac_port = "61886",
+		descr = "default",
+		version = "0000-00-00 00:00:00",
+	}
+	-- print(js.encode(g_kvmap))
+end
+
 local function load() 
 	if not lfs.attributes(cfgpath) then
 		return set_default()

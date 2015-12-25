@@ -111,7 +111,7 @@ function cmd_map.replace(map)
 end
 
 local sshreverse_running = false
-function cmd_map.ssh(map) 
+function cmd_map.proxypass(map) 
 	if sshreverse_running then 
 		log.error("sshreverse is already running")
 		return 
