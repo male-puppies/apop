@@ -24,12 +24,12 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Build/Compile
-	$(MAKE) -C lua-sqlite3 LUA53_SO_DIR=$(BUILD_DIR)/lua53/src  LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS)
+	$(MAKE) -C luasql/src LUA53_SO_DIR=$(BUILD_DIR)/lua53/src LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS)
 endef
 
 define Package/$(PKG_NAME)/install  
-	$(INSTALL_DIR) $(1)/usr/lib/lua/
-	cd lua-sqlite3 && $(INSTALL_BIN) *.so $(1)/usr/lib/lua/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luasql/
+	cd luasql/src && $(INSTALL_BIN) *.so $(1)/usr/lib/lua/luasql/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
