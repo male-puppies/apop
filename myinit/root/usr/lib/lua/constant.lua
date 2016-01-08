@@ -105,7 +105,7 @@ local const = {
 	download_dir	= "/tmp/ugw/download",		--存放下载文件的临时目录（考虑频繁写or包大小）
 	text_dir		= "/ugw/etc/wac/json", 		--临时存放文本配置文件
 	package_dir		= "/ugw/etc/wac/package",	--临时存放tgz文件，比如广告包等
-	default_version	= "etc/default_version.json",
+	default_version	= "/etc/default_version.json",
 	config_version 	= config_dir.."/".."config_version.json",	
 	ad_package_file	= "ad.tgz",
 }
