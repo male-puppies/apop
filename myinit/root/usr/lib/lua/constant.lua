@@ -1,3 +1,4 @@
+local config_dir = "/etc/config"
 local keys = {
 	c_account = 			"APID#a#account",
 	c_ac_host = 			"APID#a#ac_host",
@@ -98,9 +99,15 @@ local keys = {
 }
 
 local const = {
-	keys = 						keys,
-
-	default_config = 		"/etc/config/default_config.json", 
+	keys 			= keys,
+	default_config  = "/etc/default_config.json", 
+	config_dir		= config_dir,
+	download_dir	= "/tmp/ugw/download",		--存放下载文件的临时目录（考虑频繁写or包大小）
+	text_dir		= "/ugw/etc/wac/json", 		--临时存放文本配置文件
+	package_dir		= "/ugw/etc/wac/package",	--临时存放tgz文件，比如广告包等
+	default_version	= "etc/default_version.json",
+	config_version 	= config_dir.."/".."config_version.json",	
+	ad_package_file	= "ad.tgz",
 }
 
 local function check_part(p)
