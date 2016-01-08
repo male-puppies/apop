@@ -21,7 +21,7 @@ local function read_id()
 end
 
 local function remote_topic()
-	return "a/devid/" .. g_devid
+	return "a/dev/" .. g_devid
 end
 
 local function try_connect(host, port)
