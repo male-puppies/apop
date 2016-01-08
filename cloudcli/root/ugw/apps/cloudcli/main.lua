@@ -289,6 +289,7 @@ local function set_cfg_ver_info()
 	local tmp, del = path .. ".tmp", path .. ".del"
 
 	local s = js.encode(cfg_ver_info)
+	s = s:gsub(',"', ',\n"')
 	log.debug("update cfg version:%s", s)
 	local fp, err = io.open(tmp, "wb")
 	local _ = fp or log.fatal("open %s fail %s", tmp, err)
@@ -571,13 +572,13 @@ local function process_cfg_notify(cfg_type, map)
 		log.debug("package name:%s", file_name)
 
 		--keep singleton
-		os.execute("kdog.sh dlconfig.lua")
+		os.execute("killstr dlconfig.lua")
 		local cmd = string.format("nohup lua ./dlconfig.lua %s %s %s >/tmp/ugw/log/apmgr.error 2>&1 &", url, file_name, cfg_type)
 		os.execute(cmd)
 		local ret, file_map = process_dlconfig(cfg_type, file_name)
 		if not ret then
 			log.debug("subcmd[%s] process failed.", map["subcmd"])
-			os.execute("kdog.sh dlconfig.lua")
+			os.execute("killstr dlconfig.lua")
 			return false
 		end
 
