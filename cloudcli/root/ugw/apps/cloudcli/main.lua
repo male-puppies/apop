@@ -733,6 +733,7 @@ local function check_cfg_version()
 				end
 			end
 		end
+		return true
 	end
 
 	while true do
