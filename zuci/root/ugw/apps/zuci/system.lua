@@ -2,30 +2,31 @@ local log = require("log")
 local md5 = require("md5")
 local js = require("cjson.safe")
 local uci = require("muci")
+-- local nixio = require("nixio")
 
-local function fork_exec(command)
-	local pid = nixio.fork()
-	if pid > 0 then
-		return
-	elseif pid == 0 then
+-- local function fork_exec(command)
+	-- local pid = nixio.fork()
+	-- if pid > 0 then
+		-- return
+	-- elseif pid == 0 then
 		-- change to root dir
-		nixio.chdir("/")
+		-- nixio.chdir("/")
 
 		-- patch stdin, out, err to /dev/null
-		local null = nixio.open("/dev/null", "w+")
-		if null then
-			nixio.dup(null, nixio.stderr)
-			nixio.dup(null, nixio.stdout)
-			nixio.dup(null, nixio.stdin)
-			if null:fileno() > 2 then
-				null:close()
-			end
-		end
+		-- local null = nixio.open("/dev/null", "w+")
+		-- if null then
+			-- nixio.dup(null, nixio.stderr)
+			-- nixio.dup(null, nixio.stdout)
+			-- nixio.dup(null, nixio.stdin)
+			-- if null:fileno() > 2 then
+				-- null:close()
+			-- end
+		-- end
 
 		-- replace with target command
-		nixio.exec("/bin/sh", "-c", command)
-	end
-end
+		-- nixio.exec("/bin/sh", "-c", command)
+	-- end
+-- end
 
 local function random_string(len)
 	local templete = "abcdefghijklmnopqrstuvwxyz"
@@ -250,7 +251,7 @@ local function uploadbackup(group, data)
 end
 
 local function confreset(group, data)
-	fork_exec("/ugw/script/reset_data.sh; sleep 1; mtd -r erase rootfs_data")
+	os.execute("/ugw/script/reset_data.sh; sleep 1; mtd -r erase rootfs_data")
 end
 
 local function image_supported(image_tmp)
@@ -270,7 +271,7 @@ local function uploadbrush(group, data)
 	end
 	
 	local cmd = string.format("/ugw/script/stop_all.sh; sleep 1; /sbin/sysupgrade %s %q", keep, image_tmp)
-	fork_exec(cmd)
+	os.execute(cmd)
 end
 
 local function sysreboot(group, data)
