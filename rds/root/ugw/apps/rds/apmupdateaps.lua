@@ -62,9 +62,13 @@ local function collect_all(map, param)
 		fix_kpmap[keys.c_hbd_cycle] = tostring(v)
 		local v = map.hybrid_scan_time 			assert(v)
 		fix_kpmap[keys.c_hbd_time] = tostring(v)
+		local v = map.scan_channels				assert(v)
+		fix_kpmap[keys.c_scan_chan] = tostring(v)
 	elseif v == "monitor" then
 		local v = map.monitor_scan_time 		assert(v)
 		fix_kpmap[keys.c_mnt_time] = tostring(v)
+		local v = map.scan_channels				assert(v)
+		fix_kpmap[keys.c_scan_chan] = tostring(v)
 	end 
 
 	local radio_map = {}

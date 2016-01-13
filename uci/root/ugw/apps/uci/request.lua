@@ -10,6 +10,7 @@ function client_method:reply_close(map)
 	local data = #s .. "\r\n" .. s 
 	se.write(self.cli, data)
 	se.close(self.cli)
+	-- print("close client", self.cli)
 end
 
 function client_method:readlen()
@@ -20,7 +21,7 @@ function client_method:readlen()
 		if err and err ~= "TIMEOUT" then
 			return nil, err
 		end
-		local _ = err and print("read len timeout")
+		local _ = err and print("---------------------read len timeout", self.cli)
 		if s then 
 			buff, left = buff .. s, left - #s 	assert(left >= 0)
 			local s, e = buff:find("\r\n")
@@ -51,7 +52,9 @@ function client_method:readdata(expect, buff)
 end
 
 function client_method:handle()
+	-- print("new client", os.date(), self.cli)
 	local len, data = self:readlen()
+	-- print("--- client", os.date(), self.cli)
 	if not len then 
 		return self:reply_close({status = 1, data = data}) 
 	end

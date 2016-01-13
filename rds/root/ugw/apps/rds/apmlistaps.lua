@@ -138,7 +138,8 @@ local function nap_info(kvmap, stmap)
 
 	local res = {}
 	for k, v in pairs(nap) do  
-	 	local desc = kvmap.desc or ""
+	 	-- local desc = kvmap.desc or ""
+		local desc = ""
 	 	table.insert(res, {apid = k, desc = desc, ["2g"] = v["2g"], ["5g"] = v["5g"]})
 	end
 
