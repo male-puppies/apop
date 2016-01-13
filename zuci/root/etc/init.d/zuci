@@ -3,7 +3,7 @@
 START=94
 
 USE_PROCD=1
-PROG=/ugw/script/uci.sh 
+PROG=/ugw/script/zuci.sh 
 
 start_service() {
 	include /lib/functions
@@ -14,11 +14,11 @@ start_service() {
 }
 
 reload_service() {
-	echo "restart uci"
-	killstr uci/main.lua
+	echo "restart zuci"
+	killstr zuci/main.lua
 }
 
 stop_service() {
-	echo "stop uci"
-	killstr uci/main.lua
+	echo "stop zuci"
+	killstr zuci/main.lua
 }

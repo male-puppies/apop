@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=uci
+PKG_NAME:=zuci
 PKG_VERSION:=2015-08-20
 PKG_RELEASE:=1
 
@@ -22,11 +22,11 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
-	TITLE:=uci
+	TITLE:=zuci
 endef
 
 define Package/$(PKG_NAME)/description
-	uci
+	zuci
 endef
 
 
