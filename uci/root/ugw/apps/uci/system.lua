@@ -250,8 +250,7 @@ local function uploadbackup(group, data)
 end
 
 local function confreset(group, data)
-	print('backup start')
-	-- fork_exec("/ugw/script/reset_data.sh; sleep 1; mtd -r erase rootfs_data")
+	fork_exec("/ugw/script/reset_data.sh; sleep 1; mtd -r erase rootfs_data")
 end
 
 local function image_supported(image_tmp)
@@ -271,8 +270,7 @@ local function uploadbrush(group, data)
 	end
 	
 	local cmd = string.format("/ugw/script/stop_all.sh; sleep 1; /sbin/sysupgrade %s %q", keep, image_tmp)
-	print(cmd)
-	-- fork_exec(cmd)
+	fork_exec(cmd)
 end
 
 local function sysreboot(group, data)
