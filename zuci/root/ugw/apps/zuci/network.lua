@@ -541,20 +541,82 @@ end
 local function getlanconfig(group, data)
 	local curs = uci.cursor()
 	local lan_map = get_config(curs, "lan")
-	local wan_arr = get_firewall_dis(cursor, "wan")
+	local wan_arr = get_firewall_dis(curs, "wan")
+	local lan_arr = get_firewall_dis(curs, "lan")
+	local map = {}
+	for _, val in ipairs(lan_arr) do
+		local options = curs:get_all("dhcp", val)
+		map[val] = options
+	end
+	
 	lan_map["wan"] = wan_arr
+	lan_map["dhcp"] = map
 	return {status = 0, data = lan_map}
+end
+
+local function setdhcpconfig(curs, data)
+	local _ = assert(type(data) == "table") and assert(curs)
+
+	for key, _ in pairs(data) do
+		if not key:find("lan") then
+			log.debug("error setdhcpconfig " .. key)
+			return false
+		end
+	end
+
+	local tosec = true
+	for k, v in pairs(data) do
+		if curs:get("dhcp", k, "interface") then
+			--mod
+			if delete_all_option(curs, "dhcp", k) then
+				if not curs:tset("dhcp", k, v) then
+					tosec = false
+				end
+			else
+				tosec = false
+			end
+		else
+			--add
+			if not curs:section("dhcp", "dhcp", k, v) then
+				tosec = false
+			end
+		end
+	end
+	
+	if not tosec then
+		log.debug("error uci mod dhcpconfig")
+		return false
+	end
+	
+	local mit = curs:commit("dhcp")
+	if mit then
+		-- utl.call("/etc/init.d/network restart")
+		return true
+	else
+		log.debug("error setdhcpconfig commit")
+		return false
+	end
 end
 
 local function setlanconfig(group, data)
 	local curs = uci.cursor()
-	if type(data) ~= "table" then
+	if type(data) ~= "table" and type(data.dhcp) ~= "table" then
 		log.debug("error setlanconfig %s", data);
 		return {status = 1, data = "参数错误"} 
 	end
 	
-	if set_switch_vlan(curs, data) then
-		if not set_lan_network(curs, data) then
+	local map, dhcp = {}, {}
+	
+	for key, val in pairs(data) do
+		if key == "dhcp" then
+			dhcp = val
+		else
+			map[key] = val
+		end
+	end
+	
+	if set_switch_vlan(curs, map) then
+		if not set_lan_network(curs, map) then
 			return {status = 1, data = "修改network失败"}
 		end
 	else
@@ -562,7 +624,8 @@ local function setlanconfig(group, data)
 	end
 	
 	local mit = curs:commit("network")
-	if mit then
+	local mark = setdhcpconfig(curs, dhcp)
+	if mit and mark then
 		utl.call("/etc/init.d/network restart")
 		-- utl.call("env -i /bin/ubus call network restart >/dev/null 2>/dev/null")
 		return {status = 0}
@@ -742,66 +805,6 @@ local function diagnslookup(group, data)
 	return {status = 0, data = str}
 end
 
-local function getdhcpconfig(group, data)
-	local curs = uci.cursor()
-
-	local lan = get_firewall_dis(curs, "lan")
-	local map = {}
-	for _, val in ipairs(lan) do
-		local options = curs:get_all("dhcp", val)
-		map[val] = options
-	end
-	
-	return {status = 0, data = map}
-end
-
-local function setdhcpconfig(group, data)
-	local curs = uci.cursor()
-	if not (type(data) == "table") then
-		return {status = 1, data = "参数错误"}	
-	end
-
-	for key, _ in pairs(data) do
-		if not key:find("lan") then
-			log.debug("error setdhcpconfig " .. key)
-			return {status = 1, data = "参数错误"}	
-		end
-	end
-
-	local tosec = true
-	for k, v in pairs(data) do
-		if curs:get("dhcp", k, "interface") then
-			--mod
-			if delete_all_option(curs, "dhcp", k) then
-				if not curs:tset("dhcp", k, v) then
-					tosec = false
-				end
-			else
-				tosec = false
-			end
-		else
-			--add
-			if not curs:section("dhcp", "dhcp", k, v) then
-				tosec = false
-			end
-		end
-	end
-	
-	if not tosec then
-		log.debug("error uci mod dhcpconfig")
-		return {status = 1, data = ""}
-	end
-	
-	local mit = curs:commit("dhcp")
-	if mit then
-		utl.call("/etc/init.d/network restart")
-		return {status = 0}
-	else
-		log.debug("error setdhcpconfig commit")
-		return {status = 1, data = ""}
-	end
-end
-
 local function getmwan(group, data)
 	local curs = uci.cursor()
 
@@ -913,8 +916,8 @@ return {
 	diagping = diagping,
 	diagtraceroute = diagtraceroute,
 	diagnslookup = diagnslookup,
-	getdhcpconfig = getdhcpconfig,
-	setdhcpconfig = setdhcpconfig,
+	-- getdhcpconfig = getdhcpconfig,
+	-- setdhcpconfig = setdhcpconfig,
 	getmwan = getmwan,
 	setmwan = setmwan,
 }
