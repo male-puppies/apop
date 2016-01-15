@@ -14,11 +14,11 @@ start_service() {
 }
 
 reload_service() {
-	# echo "restart cpu_idle"
+	echo "restart cpu_idle"
 	# killstr cpu_idle.sh
 }
 
 stop_service() {
-	# echo "stop cpu_idle"
+	echo "stop cpu_idle"
 	# killstr cpu_idle.sh
 }

@@ -270,9 +270,9 @@ local function uploadbrush(group, data)
 		keep = "-n"
 	end
 	
-	local cmd = string.format("/ugw/script/stop_all.sh; sleep 1; /sbin/sysupgrade %s %q" %{ keep, image_tmp })
+	local cmd = string.format("/ugw/script/stop_all.sh; sleep 1; /sbin/sysupgrade %s %q", keep, image_tmp)
 	if keep ~= "" then
-		cmd = string.format("/ugw/script/reset_data.sh; sleep 1; /sbin/sysupgrade %s %q" %{ keep, image_tmp })
+		cmd = string.format("/ugw/script/reset_data.sh; sleep 1; /sbin/sysupgrade %s %q", keep, image_tmp)
 	end 
 
 	os.execute(cmd)
