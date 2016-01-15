@@ -4,8 +4,8 @@ local utl = require("util")
 local uci = require("muci")
 local ipc = require("luci.ip")
 
-local function get_interface(cursor, sid, opt)
-	local curs = cursor or uci.cursor()
+local function get_interface(curs, sid, opt)
+	assert(curs)
 	local v = curs:get("network", sid, opt)
 	if type(v) == "table" then
 		return table.concat(v, " ")
@@ -13,8 +13,8 @@ local function get_interface(cursor, sid, opt)
 	return v or ""
 end
 
-local function is_empty(cursor, sid)
-	local curs = cursor or uci.cursor()
+local function is_empty(curs, sid)
+	assert(curs)
 	local rv = true
 	if (get_interface(curs, sid, "ifname") or ""):match("%S+") then
 		rv = false
@@ -22,8 +22,8 @@ local function is_empty(cursor, sid)
 	return rv
 end
 
-local function delete_all_option(cursor, config, section)
-	local curs = cursor or uci.cursor()
+local function delete_all_option(curs, config, section)
+	assert(curs)
 	
 	if section and config then
 		local map = curs:get_all(config, section)
@@ -42,8 +42,8 @@ local function delete_all_option(cursor, config, section)
 	return true
 end
 
-local function get_switches(cursor)
-	local curs = cursor or uci.cursor()
+local function get_switches(curs)
+	assert(curs)
 	local switches = {}
 	curs:foreach("network", "switch", 
 		function(x)
@@ -60,8 +60,8 @@ local function get_switches(cursor)
 	return switches
 end
 
-local function iface_get_network(cursor, iface)
-	local curs = cursor or uci.cursor()
+local function iface_get_network(curs, iface)
+	assert(curs)
 	local link = ipc.link(tostring(iface))
 	if link.master then
 		iface = link.master
@@ -82,8 +82,8 @@ local function iface_get_network(cursor, iface)
 	end
 end
 
-local function get_firewall_zone(cursor)
-	local curs = cursor or uci.cursor()
+local function get_firewall_zone(curs)
+	assert(curs)
 	local zone = {}
 	curs:foreach("firewall", "zone",
 		function(s)
@@ -102,8 +102,8 @@ local function get_firewall_zone(cursor)
 	return zone
 end
 
-local function get_firewall_dis(cursor, dis)
-	local curs = cursor or uci.cursor()
+local function get_firewall_dis(curs, dis)
+	assert(curs)
 	local arr = {}
 	curs:foreach("firewall", "zone",
 		function(s)
@@ -124,8 +124,8 @@ local function get_firewall_dis(cursor, dis)
 	return arr
 end
 
-local function get_switch_vlan(cursor, sw)
-	local curs = cursor or uci.cursor()
+local function get_switch_vlan(curs, sw)
+	assert(curs)
 	local svlan = {}
 	curs:foreach("network", "switch_vlan",
 		function(s)
@@ -142,8 +142,8 @@ local function get_switch_vlan(cursor, sw)
 	return svlan
 end
 
-local function del_switch_vlan(cursor)
-	local curs = cursor or uci:cursor()
+local function del_switch_vlan(curs)
+	assert(curs)
 	curs:delete_all("network", "switch_vlan",
 		function(s) return (s.device == "switch0") end)
 	
@@ -159,8 +159,8 @@ local function del_switch_vlan(cursor)
 	return map
 end
 
-local function set_switch_vlan(cursor, data)
-	local curs = cursor or uci:cursor()
+local function set_switch_vlan(curs, data)
+	assert(curs)
 	
 	local wan_arr, lan_arr = {}, {}
 	if data["wan0"] then
@@ -171,7 +171,7 @@ local function set_switch_vlan(cursor, data)
 				return false
 			end
 		end
-		lan_arr = get_firewall_dis(cursor, "lan")
+		lan_arr = get_firewall_dis(curs, "lan")
 	elseif data["lan0"] then
 		for key, val in pairs(data) do
 			if key:find("lan") == 1 then
@@ -180,7 +180,7 @@ local function set_switch_vlan(cursor, data)
 				return false
 			end
 		end
-		wan_arr = get_firewall_dis(cursor, "wan")
+		wan_arr = get_firewall_dis(curs, "wan")
 		if (5 - #wan_arr < #lan_arr) then
 			return false
 		end
@@ -203,7 +203,7 @@ local function set_switch_vlan(cursor, data)
 	
 	if not del_switch_vlan(curs) then
 		for k, v in pairs(vlan) do
-			local switches = get_switches()
+			local switches = get_switches(curs)
 			local vid = k:match("vlan(%d)")
 			local mark = curs:section("network", "switch_vlan", nil,
 				{
@@ -221,8 +221,8 @@ local function set_switch_vlan(cursor, data)
 	return true
 end
 
-local function get_config(cursor, zone)
-	local curs = cursor or uci:cursor()
+local function get_config(curs, zone)
+	assert(curs)
 	local wan = get_firewall_dis(curs, zone)
 	local map = {}
 	for _, val in ipairs(wan) do
@@ -233,8 +233,8 @@ local function get_config(cursor, zone)
 	return map
 end
 
-local function del_network(cursor, n, bool)
-	local curs = cursor or uci:cursor()
+local function del_network(curs, n, bool)
+	assert(curs)
 	
 	local r = curs:delete("network", n)
 	if r and bool then
@@ -254,7 +254,7 @@ local function del_network(cursor, n, bool)
 	
 	
 	-- local iface;
-	-- local curs = cursor or uci:cursor()
+	-- local curs = cursor or uci.cursor()
 	-- for i = 0, 3 do
 		-- local r = curs:delete("network", zone .. i)
 		-- iface = zone .. i
@@ -306,8 +306,8 @@ local function get_mod_arr(wans, lans)
 	return arr
 end
 
-local function modify_network(cursor, newarr, oldarr, data)
-	local curs = cursor or uci:cursor()
+local function modify_network(curs, newarr, oldarr, data)
+	assert(curs)
 
 	local mark, del = true, {}
 	for keys, vals in pairs(newarr) do
@@ -344,8 +344,8 @@ local function modify_network(cursor, newarr, oldarr, data)
 	return mark, del
 end
 
-local function set_wan_network(cursor, data)
-	local curs = cursor or uci:cursor()
+local function set_wan_network(curs, data)
+	assert(curs)
 	local wan_arr = get_firewall_dis(curs, "wan") or {}
 	local lan_arr = get_firewall_dis(curs, "lan") or {}
 	local wan_new = {}
@@ -388,8 +388,8 @@ local function set_wan_network(cursor, data)
 	end
 end
 
-local function set_lan_network(cursor, data)
-	local curs = cursor or uci:cursor()
+local function set_lan_network(curs, data)
+	assert(curs)
 	
 	local wan_arr = get_firewall_dis(curs, "wan") or {}
 	local lan_arr = get_firewall_dis(curs, "lan") or {}
@@ -507,7 +507,7 @@ end
 local function getwanconfig(group, data)
 	local curs = uci.cursor()
 	local wan_map = get_config(curs, "wan")
-	local lan_arr = get_firewall_dis(cursor, "lan")
+	local lan_arr = get_firewall_dis(curs, "lan")
 	wan_map["lan"] = lan_arr
 	return {status = 0, data = wan_map}
 end
@@ -840,8 +840,8 @@ local function getmwan(group, data)
 	return {status = 0, data = map}
 end
 
-local function delete_all_mwan(cursor, arr)
-	local curs = cursor or uci.cursor()
+local function delete_all_mwan(curs, arr)
+	assert(curs)
 	local mark = true
 
 	for _, v in ipairs(arr) do

@@ -8,3 +8,4 @@
 /etc/init.d/tenacious stop
 /etc/init.d/userauth stop
 /etc/init.d/websrv stop
+/etc/init.d/zuci stop

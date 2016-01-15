@@ -45,8 +45,8 @@ local function switch_status(dev)
 	return ports
 end
 
-local function get_zone(cursor, eth)
-	local zone = network.get_firewall_zone(cursor)
+local function get_zone(curs, eth)
+	local zone = network.get_firewall_zone(curs)
 	if zone[eth] then
 		return zone[eth]
 	else
@@ -55,9 +55,9 @@ local function get_zone(cursor, eth)
 	end
 end
 
-local function get_interface(cursor, eth)
-	local zone = get_zone(cursor, eth)
-	local wan = network.new_proto(cursor, zone)
+local function get_interface(curs, eth)
+	local zone = get_zone(curs, eth)
+	local wan = network.new_proto(curs, zone)
 	return {
 		ipaddr  = wan:ipaddr(),
 		gwaddr  = wan:gwaddr(),
@@ -104,7 +104,7 @@ local function getstatus(group, data)
 end
 
 local function getethstatus(group, data)
-	local curs = uci:cursor()
+	local curs = uci.cursor()
 	local switches = network.get_switches(curs)
 	local psta = switch_status(switches[1])
 	local switch_vlan = network.get_switch_vlan(curs, switches[1])
@@ -139,7 +139,7 @@ local function getdhcplease(group, data)
 end
 
 local function getroutes(group, data)
-	local curs = uci:cursor()
+	local curs = uci.cursor()
 	local rtn = {
 		[255] = "local",
 		[254] = "main",
