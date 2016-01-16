@@ -13,7 +13,7 @@ local wlan = require("wlanssid")
 local const = require("constant")
 local aps = require("apmlistaps") 
 local request = require("request")
--- local collect = require("collect")
+local collect = require("collect")
 local glbcfg = require("globalcfg")
 local load = require("loadbalance") 
 local upaps = require("apmupdateaps")
@@ -99,7 +99,7 @@ local function dispatcher(data)
 		return result
 	else 
 		local group, data = t.group, t.data		assert(group, data)
-		-- collect.update(nrds, group)
+		collect.update(nrds, group)
 		result = func({rds = nrds, pcli = pcli},  group, data) or {status = 1, data = "error"}
 	end	
 
@@ -134,5 +134,5 @@ end
 
 log.setmodule("cgi")
 se.go(check_debug)
--- se.go(collect.start)
+se.go(collect.start)
 se.run(main)
