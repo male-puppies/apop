@@ -531,7 +531,7 @@ local function setwanconfig(group, data)
 	if mit then
 		utl.call("/etc/init.d/network restart")
 		-- utl.call("env -i /bin/ubus call network restart >/dev/null 2>/dev/null")
-		return {status = 0}
+		return {status = 0, data = ""}
 	else
 		log.debug("error setwanconfig commit")
 		return {status = 1, data = ""}
@@ -628,7 +628,7 @@ local function setlanconfig(group, data)
 	if mit and mark then
 		utl.call("/etc/init.d/network restart")
 		-- utl.call("env -i /bin/ubus call network restart >/dev/null 2>/dev/null")
-		return {status = 0}
+		return {status = 0, data = ""}
 	else
 		log.debug("error setlanconfig commit")
 		return {status = 1, data = ""}
@@ -679,7 +679,7 @@ local function addroutes(group, data)
 	if mit then
 		utl.call("/etc/init.d/network restart")
 		-- utl.call("env -i /bin/ubus call network restart >/dev/null 2>/dev/null")
-		return {status = 0}
+		return {status = 0, data = ""}
 	else
 		log.debug("error addroutes commit")
 		return {status = 1, data = ""}
@@ -713,19 +713,19 @@ local function updateroutes(group, data)
 	
 	if not delete_all_option(curs, "network", data[".name"]) then
 		log.debug("error delete_all_option network %s", data[".name"])
-		return {status = 1}
+		return {status = 1, data = ""}
 	end
 	
 	local mark = curs:tset("network", data[".name"], data)
 	if not mark then
 		log.debug("error updateroutes section")
-		return {status = 1}
+		return {status = 1, data = ""}
 	end
 	
 	local mit = curs:commit("network")
 	if mit then
 		utl.call("/etc/init.d/network restart")
-		return {status = 0}
+		return {status = 0, data = ""}
 	else
 		log.debug("error updateroutes commit")
 		return {status = 1, data = ""}
@@ -758,7 +758,7 @@ local function deleteroutes(group, data)
 	local mit = curs:commit("network")
 	if mit then
 		utl.call("/etc/init.d/network restart")
-		return {status = 0}
+		return {status = 0, data = ""}
 	else
 		log.debug("error updateroutes commit")
 		return {status = 1, data = ""}
@@ -863,10 +863,10 @@ local function setmwan(group, data)
 	local arr = {"interface", "member", "policy", "rule"}
 	if data["delete"] and data["delete"] == "all" then
 		if delete_all_mwan(curs, arr) and curs:commit("mwan3") then
-			return {status = 0}
+			return {status = 0, data = ""}
 		else
 			log.debug("error setmwan commit fail")
-			return {status = 1}
+			return {status = 1, data = ""}
 		end
 	end
 
@@ -887,14 +887,14 @@ local function setmwan(group, data)
 		end
 	else
 		log.debug("error setmwan del")
-		return {status = 1}
+		return {status = 1, data = ""}
 	end
 	
 	if mark and curs:commit("mwan3") then
-		return {status = 0}
+		return {status = 0, data = ""}
 	else
 		log.debug("error setmwan section fail")
-		return {status = 1}
+		return {status = 1, data = ""}
 	end
 end
 
