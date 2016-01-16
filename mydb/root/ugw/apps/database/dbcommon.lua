@@ -9,6 +9,11 @@ local function connect(sourcename)
 	g_db = conn
 end
 
+local function close()
+	local _ = g_db:close(), g_env:close()
+	g_db, g_env = nil, nil
+end
+
 local function myexecute(sql)
 	return g_db:execute(sql) 
 end
@@ -50,6 +55,7 @@ end
 
 return {
 	connect = connect,
+	close = close,
 	execute = myexecute,
 	select = select,
 	promise = promise,

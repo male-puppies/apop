@@ -3,16 +3,12 @@ local log = require("log")
 local js = require("cjson.safe")
 local dc = require("dbcommon")
 local ud = require("updatelog")
+local dispatch = require("dispatch")
 
 local function main()
-	-- recover from log.sql and the last disk.db
 	ud.recover()
-
-	-- backup disk.db and remove log.sql
-
-	-- promise database
-
-	-- connect mqtt and start service 
+	ud.init()
+	
 
 end
 

@@ -4,7 +4,7 @@ local lfs = require("lfs")
 local js = require("cjson.safe")
 
 local function execute(s)
-	-- print(s)
+	print(s)
 	return true
 end
 
