@@ -1,4 +1,5 @@
 local se = require("se") 
+local log = require("log")
 local js = require("cjson.safe") 
 local baseclient = require("baseclient2")
 
@@ -114,6 +115,8 @@ local function new()
 
 		table.insert(obj.notify_arr, map.pld)
 	end)
+	
+	ins:set_callback("on_disconnect", function(st, err) log.fatal("rds sandc disconnect %s %s", st, err) end)
 
 	return obj
 end
