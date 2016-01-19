@@ -900,6 +900,36 @@ local function setmwan(group, data)
 	end
 end
 
+function getbypassconfig(group, data)
+	local curs = uci.cursor()
+	local map = curs:get_all("network", "lan0")
+	if map then
+		return {status = 0, data = map}
+	else
+		return {status = 1, data = ""}
+	end
+end
+
+function setbypassconfig(group, data)
+	local curs = uci.cursor()
+	if not (type(data) == "table") then
+		return {status = 1, data = "参数错误"}	
+	end
+	
+	local mark = delete_all_option(curs, "network", "lan0")
+	if not mark then
+		return {status = 1, data = ""}
+	end
+	
+	local t = curs:tset("network", "lan0", data)
+	if t and curs:commit("network") then
+		utl.call("/etc/init.d/network restart")
+		return {status = 0, data = ""}
+	else
+		return {status = 1, data = ""}
+	end
+end
+
 return {
 	get_switches = get_switches,
 	iface_get_network = iface_get_network,
@@ -922,4 +952,7 @@ return {
 	-- setdhcpconfig = setdhcpconfig,
 	getmwan = getmwan,
 	setmwan = setmwan,
+	
+	getbypassconfig = getbypassconfig,
+	setbypassconfig = setbypassconfig,
 }

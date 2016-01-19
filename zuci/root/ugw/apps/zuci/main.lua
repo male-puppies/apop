@@ -48,6 +48,9 @@ local cmd_func = {
 	ConfReset		= system.confreset,
 	UploadBrush		= system.uploadbrush,
 	SysReboot		= system.sysreboot,
+	
+	GetBypassconfig	= network.getbypassconfig,
+	SetBypassconfig = network.setbypassconfig,
 }
 
 -- local function init_rds()
