@@ -863,6 +863,7 @@ local function setmwan(group, data)
 	local arr = {"interface", "member", "policy", "rule"}
 	if data["delete"] and data["delete"] == "all" then
 		if delete_all_mwan(curs, arr) and curs:commit("mwan3") then
+			utl.call("/etc/init.d/network restart")
 			return {status = 0, data = ""}
 		else
 			log.debug("error setmwan commit fail")
