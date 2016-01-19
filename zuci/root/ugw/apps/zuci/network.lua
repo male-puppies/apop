@@ -891,6 +891,7 @@ local function setmwan(group, data)
 	end
 	
 	if mark and curs:commit("mwan3") then
+		utl.call("/etc/init.d/network restart")
 		return {status = 0, data = ""}
 	else
 		log.debug("error setmwan section fail")
