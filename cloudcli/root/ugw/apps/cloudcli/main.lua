@@ -177,7 +177,7 @@ end
 
 
 --[[
-	ÏÂÔØÅäÖÃ¼°ÅäÖÃ¹ÜÀíÏà¹Ø
+	ä¸‹è½½é…ç½®åŠé…ç½®ç®¡ç†ç›¸å…³
 --]]
 --config_version.json
 local cfg_ver_info = {}
@@ -365,7 +365,7 @@ end
 
 
 --[[
-	¹ã¸æ°ü´æ·ÅÔÚpackage_dirÄ¿Â¼
+	å¹¿å‘ŠåŒ…å­˜æ”¾åœ¨package_dirç›®å½•
 --]]
 local function clear_adcfg()
 	local dst_file = const.config_dir.."/"..const.ad_package_file
@@ -638,9 +638,9 @@ end
 
 
 --[[
-	ÅäÖÃÖ÷ÒªÓĞÁ½ÀàdevcfgºÍadcfg;
-	ÆäÖĞdevcfg°üÀ¨¡°basic(ap_config.json), sms, wx, user¡± ¹²¼ÆËÄ¸öÅäÖÃ,Í³Ò»ÒÔdevcfg_version	
-	ÆäÖĞadcfgÒÔadcfg_version
+	é…ç½®ä¸»è¦æœ‰ä¸¤ç±»devcfgå’Œadcfg;
+	å…¶ä¸­devcfgåŒ…æ‹¬â€œbasic(ap_config.json), sms, wx, userâ€ å…±è®¡å››ä¸ªé…ç½®,ç»Ÿä¸€ä»¥devcfg_version	
+	å…¶ä¸­adcfgä»¥adcfg_version
 --]]
 local function send_query_version_req()
 	local ret = get_cfg_ver_info()
@@ -717,7 +717,7 @@ local function check_cfg_change()
 end
 
 
---todo¼õĞ¡ÅäÖÃ»Ö¸´µÄÁ£¶È£¬ÒÔad¼°devÎªµ¥Î»£¬¶ø·Ç»Ö¸´ËùÓĞ
+--todoå‡å°é…ç½®æ¢å¤çš„ç²’åº¦ï¼Œä»¥adåŠdevä¸ºå•ä½ï¼Œè€Œéæ¢å¤æ‰€æœ‰
 local function check_cfg_version()
 	local timeout = 300
 	local file_dir, continue = const.config_dir, true
