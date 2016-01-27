@@ -2,9 +2,11 @@ require("global")
 local se = require("se")
 local log = require("log")
 local lfs = require("lfs")
+local common = require("common")
 local js = require("cjson.safe")
 local sandc = require("sandclient")
-local common = require("common")
+local const = require("constant")
+local defaultcfg = require("defaultcfg")
 
 local cfgpath = "/etc/config/cloud.json"
 local read, save, save_safe = common.read, common.save, common.save_safe
@@ -16,7 +18,7 @@ local function read_id()
 	local id = read("ifconfig eth0 | grep HWaddr | awk '{print $5}'", io.popen)
 	id = id:gsub("[ \t\n]", ""):lower()
 	assert(#id == 17)
-	g_devid = "wx" .. id
+	g_devid = id
 end
 
 local function upload()
@@ -27,7 +29,7 @@ local function upload()
 			if res ~= nil then 
 				return res
 			end
-			log.error("register fail %s", js.encode(data))
+			log.error("register fail %s %s", js.encode(res), js.encode(data))
 			se.sleep(10)
 		end
 	end
@@ -42,11 +44,12 @@ local function upload()
 	log.debug("upload config")
 	local cmd = {cmd = "upload", data = {devid = g_devid, account = g_kvmap.account, config = g_kvmap}}
 	local res = request(cmd)
-	if res ~= 1 then 
-		log.error("upload config fail %s", js.encode(g_kvmap))
-		se.sleep(10)
-		os.exit(-1)
-	end 
+	local _ = (type(res) == "table" and res.status and res.msg) or log.fatal("upload fail %s", js.encode(res))
+	if res.status ~= 0 and res.msg == "invalid account" then 
+		os.execute("touch /tmp/invalid_account;  /etc/init.d/base restart")
+		log.fatal("invalid account, notify base to stop connect")
+	end
+	log.info("register success")
 end
 
 local function reset_cloud()
@@ -70,19 +73,12 @@ end
 
 
 local function set_detail()
-	g_kvmap.detail = js.encode({major = "ac", minor = "x86x"})
+	g_kvmap.detail = js.encode({major = "ac", minor = "7621"})
 end
 
-
 local function set_default()
-	g_kvmap = {
-		account = "default",
-		ac_host = "192.168.0.213", -- TODO
-		ac_port = "61886",
-		descr = "default",
-		version = "0000-00-00 00:00:00",
-	}
-	-- print(js.encode(g_kvmap))
+	g_kvmap = defaultcfg.default_cloud()
+	set_detail()
 end
 
 local function load() 
@@ -138,7 +134,7 @@ function cmd_map.replace(map)
 end
 
 local sshreverse_running = false
-local proxypass_sh = "/ugw/sh/init_scripts/sshreverse.sh"
+local proxypass_sh = "/ugw/script/sshreverse.sh"
 function cmd_map.proxypass(map) 
 	if sshreverse_running then 
 		log.error("sshreverse is already running")
@@ -151,7 +147,7 @@ function cmd_map.proxypass(map)
 		if sshreverse_running then 
 			return 
 		end 
-
+		print(cmd)
 		os.remove(respath)
 		os.execute(cmd)
 
@@ -458,6 +454,8 @@ local function override_devcfg()
 			os.execute(cmd)
 		end
 	end
+
+	os.execute("/ugw/script/resetcfg.sh dev &")
  	return true, file_map
 end
 

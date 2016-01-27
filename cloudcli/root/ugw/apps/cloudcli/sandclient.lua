@@ -42,13 +42,13 @@ mt_ext.__index = {
 	-- 	return ins:request_common("a/ac/cfgmgr/query", {group = group, karr = karr})
 	-- end, 
 
-	request = function(ins, out_topic, payload)
+	request = function(ins, out_topic, payload, timeout)
 		assert(out_topic and payload)
 
 		local nseq
 		nseq, ins.seq = ins.seq, ins.seq + 1
 			
-		local timeout = 3
+		local timeout = timeout or 3
 		local map = {
 			out_topic = out_topic,
 			deadline = cursec() + timeout,
