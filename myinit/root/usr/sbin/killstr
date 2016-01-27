@@ -1,4 +1,6 @@
 #!/bin/sh
+test $# -eq 0 && exit 1
+test "$1" = "" && exit 2
 ps | grep "$1" | grep -v -E "grep|killstr" | awk '{print $1}' | xargs kill >/dev/null 2>&1
 for i in 1 2 3; do 
 	ps | grep "$1" | grep -v -E "grep|killstr" #>/dev/null 2>&1 
