@@ -49,8 +49,8 @@ static int l_rds_encode(lua_State *L) {
 		luaL_error(L, "empty table");
 	}
 	
-	int idx = 0, len;
 	const char *s;
+	int idx = 0, len;
 	rds_str *arr = (rds_str *)malloc(sizeof(rds_str) * count); 	assert(arr);
 	
 	lua_pushnil(L);
