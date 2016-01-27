@@ -62,7 +62,7 @@ trypath() {
 	rm -f $tmpfile
 	
 	wget -q -O $tmpfile "$path" 2>>$errlog
-	if [ $? -ne 0 ]; then 
+	if [ $? -ne 0 ]; then
 		log "download fail"
 		return 0
 	fi

@@ -9,7 +9,9 @@ local errlog = "/tmp/ugw/log/apmgr.error"
 local firmware_path = "/etc/config/firmware.json"
 local cloud_cfg = "/etc/config/cloud.json"
 local ac_version = "/etc/config/ac_version.json"
-local new_version = "/etc/config/new_version.txt"
+local thin_version = "/etc/config/thin_version.json"
+local new_version = "/tmp/memfile/new_version.txt"
+local current_version = "/etc/openwrt_version"
 local host, port, actype = "cloud.trylong.cn", 80, "7621"
 
 local function nslookup(host)
@@ -55,8 +57,7 @@ local function check_firmware()
 	return trans(h, p, a)
 end
 
-
-local function chkap(param) 
+local function chkap(param)
 	os.execute(string.format("./download.sh apver %s %s %s", param.actype, host, port))
 end
 
@@ -68,14 +69,14 @@ end
 local function download_ap_firmware(actype)
 	local lfs = require("lfs")
 	local flag = "/tmp/download_ap_firmware"
-	if not lfs.attributes(flag) then 
-		return 
-	end 
+	if not lfs.attributes(flag) then
+		return
+	end
 	
 	os.remove(flag)
 	log.debug("start to download ap firmware")
 
-	local s = read("/ugw/etc/wac/thin_version.json")
+	local s = read(thin_version)
 	local map = js.decode(s)
 	if not map then 
 		return 
@@ -91,8 +92,8 @@ local function download_ap_firmware(actype)
 		for _, v in ipairs(patharr) do 
 			table.insert(narr, "'" .. v .. "'")
 		end 
-		cmd = cmd .. table.concat(narr, " ")
-		os.execute(cmd)
+		cmd = cmd .. table.concat(narr, " ") 
+		os.execute(cmd) 
 	end
 
 	local arr = {}
@@ -108,6 +109,8 @@ local function download_ap_firmware(actype)
 			local over = s:match("(.-)\n")
 			if item.version and item.version > over then
 				do_download(aptype, item)
+			else 
+				print("no need to download", item.version, over)
 			end
 		end
 	end
@@ -116,15 +119,15 @@ end
 local function download_ac_firmware(actype)
 	local lfs = require("lfs")
 	local flag = "/tmp/download_ac_firmware"
-	if not lfs.attributes(flag) then 
+	if not lfs.attributes(flag) then
 		return os.remove(flag)
-	end 
+	end
 	
 	log.debug("start to download ac firmware")
 
-	local s = read("/ugw/etc/wac/ac_version.json")
+	local s = read(ac_version)
 	local map = js.decode(s)
-	if not map then 
+	if not map then
 		return os.remove(flag)
 	end
 
@@ -133,9 +136,19 @@ local function download_ac_firmware(actype)
 		return os.remove(flag)
 	end 
 
-	local curver = read("/ugw/etc/version"):gsub("%s", "")
-	if version <= curver then 
+	local curver = read(current_version):gsub("%s", "")
+	if version <= curver then
 		return os.remove(flag)
+	end
+
+	local path = string.format("/www/rom4ac/%s.version", actype)
+	local s = read(path)  
+	if s then 
+		local over = s:match("(.-)\n") 
+		if version <= over then
+			print("no need to download", version, over)
+			return
+		end
 	end 
 
 	os.remove(new_version)
@@ -156,18 +169,12 @@ local function chk_new_ac()
 		return os.remove(ac_version)
 	end
 	
-	local curver = read("/ugw/etc/version"):gsub("%s", "")
+	local curver = read(current_version):gsub("%s", "")
 	os.remove(new_version)
 	if map.version <= curver then
 		print("not find", map.version, curver)
 		return
-	end 
-
-	local path = string.format("/www/rom4ac/%s", map.version)
-	if not lfs.attributes(path) then 
-		print("not find ", path)
-		return 
-	end 
+	end
 
 	save_safe(new_version, map.version)
 end
@@ -182,11 +189,11 @@ end
 
 local function main()
 	check_firmware()
-	-- download_ap_firmware(actype)
-	-- download_ac_firmware(actype)
+	download_ap_firmware(actype)
+	download_ac_firmware(actype)
 	se.go(loop_check, chkap, 0.1, 3600, {actype = actype})
 	se.go(loop_check, chkac, 0.1, 3600, {actype = actype})
-	-- se.go(loop_check, chk_new_ac, 10, 20)
+	se.go(loop_check, chk_new_ac, 10, 20)
 end
 
 log.setmodule("cf")

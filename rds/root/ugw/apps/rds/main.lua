@@ -6,12 +6,14 @@ local auth = require("auth")
 local user = require("user") 
 local radio = require("radio")
 local aplog = require("aplog")
+local flow = require("flowctrl")
 local struct = require("struct")
 local mredis = require("mredis") 
 local js = require("cjson.safe")
 local wlan = require("wlanssid")
 local const = require("constant")
 local aps = require("apmlistaps") 
+local upgrade = require("upgrade")
 local request = require("request")
 local collect = require("collect")
 local glbcfg = require("globalcfg")
@@ -20,7 +22,6 @@ local upaps = require("apmupdateaps")
 local cfgclient = require("cfgclient")
 local optimal = require("optimization")
 local firelist = require("apmfirewarelist")
-local flow = require("flowctrl")
 
 local pcli
 local tcp_addr = "tcp://127.0.0.1:9998"
@@ -73,6 +74,8 @@ local cmd_func = {
 	InsRules			= flow.insrules,
 	UpdateRules			= flow.updaterules,
 	DeleteRules			= flow.deleterules,
+	ACUpgrade			= upgrade.acupgrade,
+	ACChkNew			= upgrade.acchknew,
 }
 
 local function init_rds()
