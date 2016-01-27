@@ -87,13 +87,24 @@ local function getstatus(group, data)
 			read("wc -l /proc/net/ip_conntrack", io.popen) or
 			""):match("%d+")) or 0
 
+	local stat = read("/proc/stat")
+	local a1,a2,a3,a4,a5,a6,a7 = stat:match("[cpu ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)")
 	local rv = {
 		version		= boardinfo.release.description or "",
 		uptime		= sysinfo.uptime or 0,
 		times		= os.date("%Y-%m-%d %H:%M:%S"),
 		loadavg		= sysinfo.load or { 0, 0, 0 },
 		usercount	= read("auth_tool '{\"GetAllUser\":1}' | grep st:1 | wc -l", io.popen),
-		cpuidle		= read("/tmp/cpu_idle") or "90",
+		--cpuidle		= read("/tmp/cpu_idle") or "90",
+		cpu_stat    = {
+			user = a1,
+			nice = a2,
+			system = a3,
+			idle = a4,
+			iowait = a5,
+			irq = a6,
+			softirq = a7,
+		},
 		memorymax	= sysinfo.memory.total / 1024,
 		memorycount	= (sysinfo.memory.total - sysinfo.memory.free - sysinfo.memory.buffered) / 1024,
 		connmax		= conn_max,

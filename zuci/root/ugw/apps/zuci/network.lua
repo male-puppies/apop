@@ -4,6 +4,17 @@ local utl = require("util")
 local uci = require("muci")
 local ipc = require("luci.ip")
 
+local function read(path, func)
+	func = func and func or io.open
+	local fp = func(path, "rb")
+	if not fp then 
+		return 
+	end 
+	local s = fp:read("*a")
+	fp:close()
+	return s
+end
+
 local function get_interface(curs, sid, opt)
 	assert(curs)
 	local v = curs:get("network", sid, opt)
@@ -306,6 +317,53 @@ local function get_mod_arr(wans, lans)
 	return arr
 end
 
+local function eth_mac_add(a, b)
+	local num = string.format("%d", "0x" .. a) + b
+	local str = string.format("%x", num)
+	
+	if #str == 1 then
+		return "0" .. str
+	elseif #str == 2 then
+		return str
+	elseif #str == 3 then
+		return str:sub(2, #str)
+	end
+
+	return "00"
+end
+
+local function get_eth_mac(key, data)
+	assert(type(data) == "table")
+	if data.macaddr and data.macaddr ~= "" then
+		return data
+	end
+	
+	local mac = ""
+	local s = read("/etc/board.json")
+	if s then
+		local map = js.decode(s)
+		if map and map.network.lan0.macaddr then
+			mac = map.network.lan0.macaddr
+		end
+	end
+	
+	local mac1, mac2 = mac:match("(%w%w:%w%w:%w%w:%w%w:%w%w:)(%w%w)")
+	if not mac1 and not mac2 then
+		return data
+	end
+	
+	
+	local lann = key:match("lan(%d)")
+	local wann = key:match("wan(%d)")
+	if lann then
+		data.macaddr = mac1 .. eth_mac_add(mac2, tonumber(lann))
+	elseif wann then
+		data.macaddr = mac1 .. eth_mac_add(mac2, 4 - tonumber(wann))
+	end
+	
+	return data
+end
+
 local function modify_network(curs, newarr, oldarr, data)
 	assert(curs)
 
@@ -315,7 +373,7 @@ local function modify_network(curs, newarr, oldarr, data)
 			if oldarr[keys] == 1 then
 				--修改
 				if data[keys] and del_network(curs, keys) then
-					if not curs:section("network", "interface", keys, data[keys]) then
+					if not curs:section("network", "interface", keys, get_eth_mac(keys, data[keys])) then
 						log.debug("error modify_network mod " .. keys)
 						mark = false
 					end
@@ -323,7 +381,7 @@ local function modify_network(curs, newarr, oldarr, data)
 			else
 				--添加
 				if data[keys] then
-					if not curs:section("network", "interface", keys, data[keys]) then
+					if not curs:section("network", "interface", keys, get_eth_mac(keys, data[keys])) then
 						log.debug("error modify_network add " .. keys)
 						mark = false
 					end
@@ -417,7 +475,7 @@ local function set_lan_network(curs, data)
 			end
 		end
 	end
-	
+
 	local mark, has_delete = modify_network(curs, newarr, oldarr, data)
 	if mark then
 		for _, del in ipairs(has_delete) do
@@ -509,6 +567,15 @@ local function getwanconfig(group, data)
 	local wan_map = get_config(curs, "wan")
 	local lan_arr = get_firewall_dis(curs, "lan")
 	wan_map["lan"] = lan_arr
+	wan_map["initmac"] = ""
+	local s = read("/etc/board.json")
+	if s then
+		local map = js.decode(s)
+		if map and map.network.lan0.macaddr then
+			wan_map["initmac"] = map.network.lan0.macaddr
+		end
+	end
+	
 	return {status = 0, data = wan_map}
 end
 
