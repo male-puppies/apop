@@ -27,12 +27,7 @@ local function accountlist(conn, account, data)
 end
 
 local function accountset(conn, account, data) 
-	local n = js.decode(data)
-	if not n then 
-		return {status = 1, data = "invalid param"}
-	end
-
-	local account, switch, descr, ac_host, ac_port = n.account, n.switch, n.descr, n.ac_host, n.ac_port
+	local account, switch, descr, ac_host, ac_port = data.account, data.switch, data.descr, data.ac_host, data.ac_port
 	if not (account and switch and descr and ac_host and ac_port) then
 		return {status = 1, data = "invalid param"}
 	end

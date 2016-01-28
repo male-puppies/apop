@@ -54,12 +54,7 @@ local function validate(n)
 end
 
 local function wxshopset(conn, account, data)
-	local n = js.decode(data)
-	if not n then 
-		return {status = 1, data = "invalid param"}
-	end 
-	
-	local appid, shop_name, shop_id, ssid, secretkey = n.appid, n.shop_name, n.shop_id, n.ssid, n.secretkey
+	local appid, shop_name, shop_id, ssid, secretkey = data.appid, data.shop_name, data.shop_id, data.ssid, data.secretkey
 	if not (appid and shop_name and shop_id and ssid and secretkey) then
 		return {status = 1, data = "invalid param"}
 	end
@@ -69,7 +64,7 @@ local function wxshopset(conn, account, data)
 		return {status = 0, data = "ok"}	
 	end
 
-	if not validate(n) then 
+	if not validate(data) then 
 		return {status = 1, data = "invalid param"}
 	end 
 	
