@@ -23,18 +23,18 @@ local function accountlist(conn, account, data)
 		local m = js.decode(s or "{}") or {}
 		return m.state and m or {state = 0}
 	end)()
-	return map
+	return {status = 0; data = map}
 end
 
 local function accountset(conn, account, data) 
 	local n = js.decode(data)
 	if not n then 
-		return {status = 1, msg = "invalid param"}
+		return {status = 1, data = "invalid param"}
 	end
 
 	local account, switch, descr, ac_host, ac_port = n.account, n.switch, n.descr, n.ac_host, n.ac_port
 	if not (account and switch and descr and ac_host and ac_port) then
-		return {status = 1, msg = "invalid param"}
+		return {status = 1, data = "invalid param"}
 	end
 
 	local n = {
@@ -55,14 +55,14 @@ local function accountset(conn, account, data)
 	end
 
 	if not change then 
-		return {status = 0, msg = "ok"}
+		return {status = 0, data = "ok"}
 	end 
 
 	local s = js.encode(n):gsub('","', '",\n"')
 	save_safe(cloudpath, s)
 	local cmd = string.format("/ugw/script/resetcfg.sh cloud_switch &") 
 	os.execute(cmd)
-	return {status = 0, msg = "ok"}
+	return {status = 0, data = "ok"}
 end
 
 return {

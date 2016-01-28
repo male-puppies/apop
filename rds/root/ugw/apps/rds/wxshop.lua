@@ -31,7 +31,7 @@ local function wxshoplist(conn, account, data)
 	local cloud = read_config()
 	local wxshop = read_wxshop()
 	wxshop.switch = cloud.switch
-	return wxshop
+	return {status = 0; data = wxshop}
 end
 
 --[[
@@ -56,21 +56,21 @@ end
 local function wxshopset(conn, account, data)
 	local n = js.decode(data)
 	if not n then 
-		return {status = 1, msg = "invalid param"}
+		return {status = 1, data = "invalid param"}
 	end 
 	
 	local appid, shop_name, shop_id, ssid, secretkey = n.appid, n.shop_name, n.shop_id, n.ssid, n.secretkey
 	if not (appid and shop_name and shop_id and ssid and secretkey) then
-		return {status = 1, msg = "invalid param"}
+		return {status = 1, data = "invalid param"}
 	end
 
 	local cloud = read_config()
 	if tonumber(cloud.switch) == 1 then 
-		return {status = 0, msg = "ok"}	
+		return {status = 0, data = "ok"}	
 	end
 
 	if not validate(n) then 
-		return {status = 1, msg = "invalid param"}
+		return {status = 1, data = "invalid param"}
 	end 
 	
 	local nmap = {
@@ -90,7 +90,7 @@ local function wxshopset(conn, account, data)
 	end 
 
 	if not change then 
-		return {status = 0, msg = "ok"}	
+		return {status = 0, data = "ok"}	
 	end
 
 	local s = js.encode(nmap) 
@@ -98,7 +98,7 @@ local function wxshopset(conn, account, data)
 	local cmd = string.format('PATH="/ugw/bin:$PATH" LUA_CPATH="/ugw/lib/?.so;$LUA_CPATH" LUA_PATH="/ugw/share-sc/?.lua;$LUA_PATH" lua /ugw/sh/init_scripts/reset_wx2cfg.lua')
 	os.execute(cmd)
 	os.execute("/ugw/sh/init_scripts/resetcfg.sh dev &")
-	return {status = 0, msg = "ok"}
+	return {status = 0, data = "ok"}
 end
 
 
