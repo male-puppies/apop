@@ -1,10 +1,10 @@
 local function default_cloud()
 	return {
-		account = "yjs",
-		ac_host = "192.168.0.213",
+		account = "",
+		ac_host = "",
 		ac_port = "61886",
-		descr = "default", 
-		switch = "0",
+		descr = "", 
+		switch = "1",
 	}
 end 
 

@@ -147,7 +147,7 @@ function cmd_map.proxypass(map)
 		if sshreverse_running then 
 			return 
 		end 
-		print(cmd)
+
 		os.remove(respath)
 		os.execute(cmd)
 

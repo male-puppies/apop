@@ -1,11 +1,13 @@
 require("global")
 local se = require("se")
+local sms = require("sms")
 local log = require("log")
 local lfs = require("lfs")
 local auth = require("auth")
 local user = require("user") 
 local radio = require("radio")
 local aplog = require("aplog")
+local wxshop = require("wxshop")
 local flow = require("flowctrl")
 local struct = require("struct")
 local mredis = require("mredis") 
@@ -16,6 +18,7 @@ local aps = require("apmlistaps")
 local upgrade = require("upgrade")
 local request = require("request")
 local collect = require("collect")
+local account = require("account")
 local glbcfg = require("globalcfg")
 local load = require("loadbalance") 
 local upaps = require("apmupdateaps")
@@ -76,6 +79,13 @@ local cmd_func = {
 	DeleteRules			= flow.deleterules,
 	ACUpgrade			= upgrade.acupgrade,
 	ACChkNew			= upgrade.acchknew,
+
+	AccountList 	= 	account.accountlist,
+	AccountSet 		= 	account.accountset,
+	WxShopList 		= 	wxshop.wxshoplist,
+	WxShopSet 		=	wxshop.wxshopset,
+	SmsList 		=	sms.smslist,
+	SmsSet 			= 	sms.smsset,
 }
 
 local function init_rds()

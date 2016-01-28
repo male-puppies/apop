@@ -2,17 +2,18 @@ local se = require("se")
 local log = require("log")
 local sandc = require("sandc")
 local js = require("cjson.safe")
+local request = require("request")
 local kernelop = require("kernelop") 
 local dispatcher = require("dispatcher")
 
 local mqtt
+local tcp_addr = "tcp://127.0.0.1:9989"
+
 local function cursec()
 	return math.floor(se.time())
 end
 
 local cmd_map = {
-	auth = dispatcher.auth,
-
 	user_set = dispatcher.user_set,
 	user_del = dispatcher.user_del,
 	user_add = dispatcher.user_add,
@@ -80,10 +81,47 @@ local function set_timeout(timeout, again, cb)
 	end)
 end
 
+local cmd_map = {}
+cmd_map["/cloudlogin"] = dispatcher.auth
+
+cmd_map["/cloudonline"] = function(map)
+
+	return {status = 0, data = "ok"}
+end 
+
+cmd_map["/wxlogin2info"] = function(map) 
+
+	return {status = 0, data = "ok"}
+end 
+
+cmd_map["/weixin2_login"] = function(map) 
+	
+	return {status = 0, data = "ok"}
+end
+
+local function start_server()
+	local function dispatcher(data)
+		local map = js.decode(data)
+		if not (map and map.cmd and cmd_map[map.cmd]) then 
+			return {status = 1, data = "invalid cmd"}
+		end
+
+		return cmd_map[map.cmd](map)
+	end
+
+	local serv, err = se.listen(tcp_addr) 
+	local _ = serv or log.fatal("listen %s fail %s", tcp_addr, err)
+	while true do
+		local cli = se.accept(serv)
+		local _ = cli and request.new(cli, dispatcher):run() 
+	end
+end
+
 local function main()
 	kernelop.reset()
-
+	
 	mqtt = create_mqtt()
+	se.go(start_server) 
 
 	set_timeout(10, 10, timeout_save)
 	-- set_timeout(5, 5, kernelop.check_network)
