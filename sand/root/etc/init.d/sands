@@ -10,9 +10,7 @@ start_service() {
 	procd_open_instance
 	procd_set_param command $PROG
 	procd_set_param respawn
-	procd_close_instance
-	
-	iptables -t nat -A PREROUTING -p tcp -d 10.10.10.10 --dport 80 -j REDIRECT --to-ports 80
+	procd_close_instance 
 }
 
 reload_service() {
