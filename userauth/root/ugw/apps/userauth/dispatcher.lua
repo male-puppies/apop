@@ -185,20 +185,27 @@ local function user_del(map)
 	return {status = 0}
 end
 
-local function user_add(map) 
+local function user_add(map, ignore_dup)
 	local group, arr = map.group, map.data
-	local ul = userlist.ins()
+	local ul, narr = userlist.ins(), {}
 	for _, map in ipairs(arr) do 
 		local ret, err = usr.check(map) 
 		if not ret then 
 			return {status = 1, data = err}
-		end 
-		if ul:exist(map.name) then 
+		end
+
+		if ignore_dup then
+			if not ul:exist(map.name) then 
+				table.insert(narr, map)
+			end
+		elseif ul:exist(map.name) then 
 			return {status = 1, data = "认证名已存在！"} 
+		else 
+			table.insert(narr, map)
 		end
 	end
 
-	for _, map in ipairs(arr) do 
+	for _, map in ipairs(narr) do 
 		local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
 		local expire, remain = map.expire, map.remain 
 

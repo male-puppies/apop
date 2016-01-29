@@ -1,15 +1,7 @@
 #!/bin/sh 
 opt=$1 
-local enable_flag=/ugw/etc/wac/enable_cloud_ads
-get_switch() {
-	path=/ugw/etc/wac/cloud.json 
-	cat $path | grep '"switch":"1"' >/dev/null 2>&1
-	test $? -eq 0 && return 1
-	return 0
-}
-
 reset_ad() {
-	local adpath=/ugw/etc/wac/ad.tgz
+	local adpath=/etc/config/ad.tgz
 	local cloudpath=/www/cloudauth
 	local tmpdir=$cloudpath".tmp"
 	local deldir=$cloudpath".del"
@@ -19,23 +11,23 @@ reset_ad() {
 	mkdir -p $tmpdir
 
 	tar -xzf $adpath -C $tmpdir
-	test $? -ne 0 && return 
+	test $? -ne 0 && return
 
 	test -e $cloudpath && mv $cloudpath $deldir
 	mv $tmpdir $cloudpath
-	rm -rf $deldir 
+	rm -rf $deldir
+	#echo "done" > $adpath #TODO open
 }
 
 reset_dev() { 
-	UGW_BASE=/ugw 
-	PATH=$UGW_BASE/bin/:$PATH LD_LIBRARY_PATH=$UGW_BASE/lib/:$LD_LIBRARY_PATH LUA_PATH="$UGW_BASE/share-sc/?.lua;$LUA_PATH" LUA_CPATH="$UGW_BASE/lib/?.so;$LUA_CPATH" lua /ugw/sh/init_scripts/reset_wx2cfg.lua
-	appctl restart userauthd 
+	/etc/init.d/userauth restart
 }
 
 cloud_switch() {
+	rm /tmp/invalid_account 
 	/etc/init.d/base restart
 	/etc/init.d/cloudcli restart
-	rm /tmp/invalid_account 
+	/etc/init.d/userauth restart
 }
 
 case $opt in 

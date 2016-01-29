@@ -35,7 +35,7 @@ local function get_policy()
 end
 
 local function get_global()
-	return {CheckOffline = 60}
+	return {CheckOffline = 60, RedirectUrl = "http://10.10.10.10/webui"}
 end
 
 local function reset(iface_arr)
