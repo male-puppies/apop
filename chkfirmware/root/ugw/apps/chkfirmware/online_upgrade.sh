@@ -28,5 +28,12 @@ log "$flag was deleted, check firmware"
 version_file=/www/rom4ac/AC1032.version
 test -e $version_file || err_exit "not find $version_file"
 
-echo 1
-# TODO upgrade
+image=/www/rom4ac/`head -1 $version_file`
+test -e $image || err_exit "missing $image"
+nickname=/tmp/upgrade.img
+mv $image $nickname
+/sbin/sysupgrade -T $nickname >> $errlog 2>&1
+test $? -eq 0 || err_exit "invalid image $image"
+/ugw/script/stop_all.sh
+/sbin/sysupgrade $nickname >> $errlog 2>&1
+reboot

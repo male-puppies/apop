@@ -13,10 +13,10 @@ end
 
 local function acupgrade(conn, group, data)
 	local ret = os.execute("ps | grep online_upgrade.sh | grep -v grep")
-	if not (ret == 0 or ret == true) then 
+	if ret == 0 or ret == true then 
 		return {status = 0, data = "upgrading now!"}
 	end
-	os.execute("/ugw/apps/chkfirmware/online_upgrade.sh &")
+	os.execute("/ugw/apps/chkfirmware/online_upgrade.sh &") 
 	return {status = 0, data = "upgrading on backgroup, please wait!"}
 end
 
