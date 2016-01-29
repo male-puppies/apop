@@ -1,12 +1,12 @@
 local log = require("log")
-local myutil = require("myutil")
+local common = require("common")
 local js = require("cjson.safe") 
 local policy = require("policy")
 local memfile = require("memfile")
 local policies = require("policies")
 
 local last_iface_count
-local read, write = myutil.read, myutil.write
+local read, save, save_safe = common.read, common.save, common.save_safe
 local userauth_config = "/tmp/memfile/userauth_config.json"
 
 local function get_iface()

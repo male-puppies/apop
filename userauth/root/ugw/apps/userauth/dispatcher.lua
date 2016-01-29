@@ -376,4 +376,5 @@ return {
 	online_get = online_get,
 
 	adjust_elapse = adjust_elapse,
+	login_success = login_success,
 }

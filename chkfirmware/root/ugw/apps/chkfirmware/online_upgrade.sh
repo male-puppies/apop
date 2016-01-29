@@ -26,6 +26,7 @@ done
 log "$flag was deleted, check firmware"
 
 version_file=/www/rom4ac/AC1032.version
-test -e $verson_file || err_exit "not find $version_file"
+test -e $version_file || err_exit "not find $version_file"
 
+echo 1
 # TODO upgrade
