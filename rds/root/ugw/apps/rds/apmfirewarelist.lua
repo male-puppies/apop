@@ -25,7 +25,7 @@ local function apmfirewarelist(conn, group, data)
 	local narr = {}
 	local dir = "/www/rom/"
 	if not lfs.attributes(dir) then 
-		return narr
+		return {status = 0, data = narr}
 	end
 
 	local aptype_map = {}

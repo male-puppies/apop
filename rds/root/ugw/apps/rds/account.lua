@@ -27,6 +27,10 @@ local function accountlist(conn, account, data)
 end
 
 local function accountset(conn, account, data) 
+
+
+
+
 	local account, switch, descr, ac_host, ac_port = data.account, data.switch, data.descr, data.ac_host, data.ac_port
 	if not (account and switch and descr and ac_host and ac_port) then
 		return {status = 1, data = "invalid param"}
