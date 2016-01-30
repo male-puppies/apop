@@ -138,6 +138,10 @@ cmd_map["/weixin2_login"] = function(map)
 	return {status = 0, data = "ok"}
 end
 
+cmd_map["/c.login"] = function(map)  
+	return dispatcher.auth(map)	 
+end
+
 local function clear_wx_wait()
 	local max, now = 0, cursec()
 	for i, item in ipairs(wx_wait.queue) do
