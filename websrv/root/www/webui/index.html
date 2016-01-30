@@ -11,7 +11,22 @@
 <script type="text/javascript">
 var g_redirect="http://www.baidu.com";
 $(function() {
+	var obj = {}
+	obj.now = new Date().getTime();
+	var params = window.location.search;
 	$("#login").on("click", login_action);
+	$.post(
+		"/authopt" + params,
+		obj,
+		function(d) {
+			if (d.wx == 1) {
+				$(".wx").show();
+			} else {
+				$(".wx").hide();
+			}
+		},
+		"json"
+	);
 });
 
 function login_action() {
@@ -70,7 +85,24 @@ function login_action() {
 		"json"
 	)
 }
+
+function weixin_login_action(d) {
+	Wechat_GotoRedirect(d.AppID, d.Extend, d.TimeStamp, d.Sign, d.ShopID, d.AuthUrl, d.Mac, d.SSID, d.BSSID); 
+}
+
+function call_weixin() {
+	var params = window.location.search;
+	var obj = {};
+	obj.now = new Date().getTime();
+	$.post(
+		"/wxlogin2info" + params,
+		obj,
+		weixin_login_action,
+		"json"
+	);
+}
 </script>
+<script type="text/javascript" src="http://wifi.weixin.qq.com/resources/js/wechatticket/wechatutil.js"></script>
 </head>
 
 <body>
@@ -100,6 +132,12 @@ function login_action() {
 				<li>
 					<span style="min-width: 46px;"></span>
 					<input id="login" style="width:80px;cursor:pointer;" type="button" value="登录" />
+				</li>
+				<li class="wx" style="position: relative;left: -56px;padding-top:20px;display:none;">
+					<label>
+						<span style="min-width: 46px;">其它登录方式:</span>
+						<a style="padding-left:14px;" href="javascript:;" onclick="call_weixin()">微信认证</a>
+					</label>
 				</li>
 			</ul>
 		</div>
