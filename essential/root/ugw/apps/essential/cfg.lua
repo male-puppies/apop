@@ -14,6 +14,13 @@ local cfg = {
 	{	path = "/etc/config/default/m.json"	}, 
 	{	path = "/etc/config/policy.json"	}, 
 	{	path = "/etc/config/user.json"	}, 
+
+	{	path = "/etc/config/authopt.json"	}, 
+	{	path = "/etc/config/cloud.json"	}, 
+	{	path = "/etc/config/config_version.json"	}, 
+	{	path = "/etc/config/sms_config.json"	}, 
+	{	path = "/etc/config/user_config.json"	}, 
+	{	path = "/etc/config/wx_config.json"	}, 
 }
 
 return cfg

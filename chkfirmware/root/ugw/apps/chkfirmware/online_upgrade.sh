@@ -34,6 +34,7 @@ nickname=/tmp/upgrade.img
 mv $image $nickname
 /sbin/sysupgrade -T $nickname >> $errlog 2>&1
 test $? -eq 0 || err_exit "invalid image $image"
+touch /tmp/sysupgrade
 /ugw/script/stop_all.sh
 /sbin/sysupgrade $nickname >> $errlog 2>&1
 reboot

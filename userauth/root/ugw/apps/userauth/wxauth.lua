@@ -4,6 +4,7 @@ local md5 = require("md5")
 local common = require("common")
 local js = require("cjson.safe")
 local request = require("request") 
+local kernelop = require("kernelop") 
 local dispatcher = require("dispatcher")
 
 local read = common.read
@@ -35,6 +36,15 @@ cmd_map["/cloudonline"] = function(map)
 	return {status = 0, data = authopt}
 end 
 
+cmd_map["/authopt"] = function(map)
+	local ip, mac = map.ip, map.mac
+	if not (ip and mac) then 
+		return {status = 1, data = "invalid param"}
+	end
+	kernelop.bypass_mac(ip, mac)
+	return authopt
+end
+
 cmd_map["/wxlogin2info"] = function(map) 
 	if authopt.wx ~= 1 then 
 		return {status = 1, data = "not support wx"}
@@ -47,8 +57,9 @@ cmd_map["/wxlogin2info"] = function(map)
 	
 	local sec, n = cursec(), wx_param
 	local extend = table.concat({ip, mac, sec}, ",")
-	local appid, timestamp, shop_id, authurl, ssid, bssid, sk = n.appid, now, n.shop_id, "http://10.10.10.10/weixin2_login", n.ssid, "", n.secretkey
-	local sign = md5.sumhexa(table.concat({appid, extend, timestamp, shop_id, authurl, mac, ssid, bssid, sk}))
+	local appid, timestamp, shop_id, authurl, ssid, bssid, sk = n.appid, now, n.shop_id, "http://10.10.10.10/weixin2_login", n.ssid, "", n.sk
+	local arr = {appid, extend, timestamp, shop_id, authurl, mac, ssid, bssid, sk}
+	local sign = md5.sumhexa(table.concat(arr))
 	local res = {
 		AppID = appid,
 		Extend = extend,
@@ -84,7 +95,7 @@ local function save_wx_user()
 			multi = 0,
 			bind = "none",
 			maclist = {},
-			expire = {0, ""},
+			expire = {0, os.date("%Y%m%d") .. " 000000"},
 			remain = {0, 0},
 		}
 		table.insert(arr, user)
@@ -100,7 +111,7 @@ local function save_wx_user()
 		openid_map[openid] = nil
 	end 
 
-	dispatcher.user_add(arr, true)
+	dispatcher.user_add({group = "default", data = arr}, true)
 end
 
 cmd_map["/weixin2_login"] = function(map)  
@@ -118,6 +129,7 @@ cmd_map["/weixin2_login"] = function(map)
 	if not item then 
 		return {status = 1, data = "invalid param2"}
 	end
+	wx_wait.ext_map[mac] = nil
 
 	add_wx_user(openid)
 
