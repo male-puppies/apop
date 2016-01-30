@@ -275,6 +275,7 @@ local function uploadbrush(group, data)
 		cmd = string.format("/ugw/script/reset_data.sh; sleep 1; /sbin/sysupgrade %s %q", keep, image_tmp)
 	end 
 
+	os.execute("touch /tmp/sysupgrade")
 	os.execute(cmd)
 end
 
