@@ -5,6 +5,7 @@ local defaultcfg = require("defaultcfg")
 
 local cloudpath = "/etc/config/cloud.json"
 local wxshoppath = "/etc/config/wx_config.json"
+local authoptpath = "/etc/config/authopt.json"
 local read, save, save_safe = common.read, common.save, common.save_safe
 
 local function read_config()
@@ -27,11 +28,18 @@ local function read_wxshop()
 	return defaultcfg.default_wxshop()
 end
 
+local function get_wx_switch()
+	local s = read(authoptpath)
+	return js.decode(s)
+end
+
 local function wxshoplist(conn, account, data)
 	local cloud = read_config()
 	local wxshop = read_wxshop()
 	wxshop.switch = cloud.switch
-	return {status = 0; data = wxshop}
+	local authopt = get_wx_switch()
+	wxshop.wx = authopt and authopt.wx or 0
+	return {status = 0, data = wxshop}
 end
 
 --[[
@@ -54,8 +62,8 @@ local function validate(n)
 end
 
 local function wxshopset(conn, account, data)
-	local appid, shop_name, shop_id, ssid, secretkey = data.appid, data.shop_name, data.shop_id, data.ssid, data.secretkey
-	if not (appid and shop_name and shop_id and ssid and secretkey) then
+	local appid, shop_name, shop_id, ssid, secretkey, wx = data.appid, data.shop_name, data.shop_id, data.ssid, data.secretkey, tonumber(data.wx)
+	if not (appid and shop_name and shop_id and ssid and secretkey and wx) then
 		return {status = 1, data = "invalid param"}
 	end
 
@@ -84,15 +92,23 @@ local function wxshopset(conn, account, data)
 		end 
 	end 
 
+	local authopt = get_wx_switch()
+	if not authopt then
+		authopt, change = {wx = wx}, true
+	elseif authopt.wx ~= wx then
+		authopt.wx, change = wx, true
+		log.debug("wx %s->%s", authopt.wx, wx)
+	end
+
 	if not change then 
 		return {status = 0, data = "ok"}	
 	end
 
 	local s = js.encode(nmap) 
 	save_safe(wxshoppath, s)
-	local cmd = string.format('PATH="/ugw/bin:$PATH" LUA_CPATH="/ugw/lib/?.so;$LUA_CPATH" LUA_PATH="/ugw/share-sc/?.lua;$LUA_PATH" lua /ugw/sh/init_scripts/reset_wx2cfg.lua')
-	os.execute(cmd)
-	os.execute("/ugw/sh/init_scripts/resetcfg.sh dev &")
+	save_safe(authoptpath, js.encode(authopt))
+
+	os.execute("/ugw/script/resetcfg.sh dev &")
 	return {status = 0, data = "ok"}
 end
 
