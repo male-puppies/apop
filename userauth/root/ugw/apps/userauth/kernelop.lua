@@ -24,6 +24,8 @@ local function get_policy()
 		local map = {
 			AuthPolicyName = item:get_name(),
 			Enable = 1, 
+			PolicyType = 1,
+			Timeout = 0,
 			AuthType = authtype,
 			Priority = pri,
 			IpRange = {{Start = item:get_ip1(), End = item:get_ip2()}},
@@ -87,6 +89,13 @@ local function get_all_user()
 	return user
 end
 
+local function bypass_mac(ip, mac)
+	local map = {}
+	map.AuthPolicy = {{AuthPolicyName = "bp" .. ip, AuthType = 2, PolicyType = 1, Timeout = 20, Enable = 1, Priority = 10, IpRange = {{Start = ip, End = ip}}}}
+	local cmd = string.format("auth_tool '%s'", js.encode(map))
+	read(cmd, io.popen)
+end
+
 --[[
 local function check_modify(path)
 	local attr = lfs.attributes(path)
@@ -128,6 +137,7 @@ return {
 	reset = reset, 
 	online = online, 
 	offline = offline, 
+	bypass_mac = bypass_mac,
 	get_all_user = get_all_user, 
 	-- check_network = check_network,
 	check_ip_route = check_ip_route,
