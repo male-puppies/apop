@@ -3,6 +3,8 @@ local lfs = require("lfs")
 local log = require("log")
 local pkey = require("key") 
 local js = require("cjson.safe")  
+local common = require("common")
+local read = common.read
 
 local rds, pcli 
 
@@ -20,74 +22,45 @@ local function apmupdatefireware(conn, group, data)
 end
 
 local function apmfirewarelist(conn, group, data) 
-	local romdir = "/tmp/www/webui/rom"
-	if not lfs.attributes(romdir) then 
-		return {status = 0, data = {}}	
-	end 
-
-	local vers = {}
-	for filename in lfs.dir(romdir) do 
-		local version = filename:match("(.+%.%d%d%d%d%d%d%d%d%d%d%d%d)")
-		local _ = version and table.insert(vers, version)
+	local narr = {}
+	local dir = "/www/rom/"
+	if not lfs.attributes(dir) then 
+		return {status = 0, data = narr}
 	end
-	return {status = 0, data = vers}	
-end
 
-local function apmfirewaredownload(conn, group, data)
-	assert(conn and conn.rds and group)
-	rds, pcli = conn.rds, conn.pcli
+	local aptype_map = {}
+	for filename in lfs.dir(dir) do 
+		local aptype = filename:match("(.+)%.version$")
+		if aptype then  
+			local map = aptype_map[aptype] or {}
+			map.old = read(dir .. "/" .. filename):match("(.-)\n")
+			aptype_map[aptype] = map
+		end
+	end
+
+	local map = js.decode(read("/etc/config/thin_version.json") or "{}")
+	for aptype, item in pairs(map) do 
+		local map = aptype_map[aptype] or {}
+		map.new = item.version
+		aptype_map[aptype] = map
+	end
 	
-	local ver_arr = data
-	if type(ver_arr) ~= "table" then 
-		return {status = 1, data = "error"}
-	end
-
-	local arr = {"lua", "/ugw/script/checkaprom.lua", "download", "default"}
-	for _, v in ipairs(ver_arr) do 
-		table.insert(arr, v)
+	for k, item in pairs(aptype_map) do 
+		table.insert(narr, {cur = item.old, new = item.new})
 	end 
-	table.insert(arr, "&")
-	local cmd = table.concat(arr, " ")
-	log.debug("cmd %s", cmd)
-	os.execute(cmd)
-	return {status = 0, data = "ok"}	
+
+	return {status = 0, data = narr}	
 end
 
--- local function newest_version(conn, group, data) 
--- 	local data = {host = "default", arr = {"QM1439", "QM1438"}}
--- 	local map = data 
--- 	local host, arr = map.host, map.arr 
--- 	if not (host and arr and #arr > 0) then 
--- 		return {status = 1, data = "invalid param"}	 
--- 	end 
+local function apmfwdownload()
+	os.execute("touch /tmp/download_ap_firmware; /etc/init.d/chkfirmware restart")
+	return {status = 0, data = "Downloading"}
+end
 
--- 	local narr = {"version", host}
--- 	for _, v in ipairs(arr) do 
--- 		table.insert(narr, v)
--- 	end 
-
--- 	local cmd = string.format("timeout -t 4 lua /ugw/script/checkaprom.lua %s", table.concat(narr, " "))
--- 	print("TODO cmd", cmd)
--- 	-- os.execute(cmd)
--- 	local fp = io.open("/tmp/ap.version", "r")
--- 	if not fp then 
--- 		return {status = 1, "check version fail"}
--- 	end 
-
--- 	local narr = {}
--- 	for line in fp:lines() do 
--- 		table.insert(narr, line)
--- 	end 
--- 	fp:close()
-
--- 	return {status = 0, data = line}
--- end
-
-return { 
-	-- newest_version = newest_version,
+return {  
 	apmfirewarelist = apmfirewarelist,
 	apmupdatefireware = apmupdatefireware,
-	apmfirewaredownload = apmfirewaredownload,
+	apmfwdownload = apmfwdownload,
 }
 
  

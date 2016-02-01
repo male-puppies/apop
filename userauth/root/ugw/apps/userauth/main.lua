@@ -1,18 +1,21 @@
 local se = require("se")
 local log = require("log")
+local md5 = require("md5")
 local sandc = require("sandc")
+local wxauth = require("wxauth") 
 local js = require("cjson.safe")
+local request = require("request")
 local kernelop = require("kernelop") 
 local dispatcher = require("dispatcher")
 
-local mqtt
+
+local mqtt  
+
 local function cursec()
 	return math.floor(se.time())
 end
 
 local cmd_map = {
-	auth = dispatcher.auth,
-
 	user_set = dispatcher.user_set,
 	user_del = dispatcher.user_del,
 	user_add = dispatcher.user_add,
@@ -80,17 +83,22 @@ local function set_timeout(timeout, again, cb)
 	end)
 end
 
-local function main()
+local function init()
+	os.execute("lua adchk.lua")
 	kernelop.reset()
-
+	wxauth.init()
+	wxauth.run()
 	mqtt = create_mqtt()
+end
 
+local function main()
+	init()
 	set_timeout(10, 10, timeout_save)
 	-- set_timeout(5, 5, kernelop.check_network)
 	set_timeout(120, 120, dispatcher.update_user)
 	set_timeout(1, 20, dispatcher.update_online)
 	set_timeout(0.1, 30, dispatcher.adjust_elapse)
-	set_timeout(30, 30, kernelop.check_ip_route)
+	set_timeout(30, 30, kernelop.check_ip_route) 
 end
 
 log.setdebug(true)

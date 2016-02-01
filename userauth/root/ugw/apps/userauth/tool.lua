@@ -1,8 +1,8 @@
 local uci = require("uci")
 local js = require("cjson.safe") 
-local myutil = require("myutil")
+local common = require("common")
 
-local read, write = myutil.read, myutil.write
+local read, write = common.read, common.save
 
 --[[
 local function get_firewall()

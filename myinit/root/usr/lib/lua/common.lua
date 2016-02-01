@@ -1,6 +1,6 @@
 local function read(path, func)
 	func = func and func or io.open
-	local fp = func(path, "r")
+	local fp, err = func(path, "r")
 	if not fp then
 		return nil, err
 	end

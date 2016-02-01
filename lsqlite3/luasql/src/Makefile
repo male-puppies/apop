@@ -1,0 +1,3 @@
+all:
+	$(CC) luasql.c ls_sqlite3.c -o sqlite3.so -fpic -shared -llua -I../../../sqlite3.9/sqlite-autoconf-3090100/ -L../../../sqlite3.9/sqlite-autoconf-3090100/ -lsqlite3
+	#$(CC) luasql.c ls_sqlite3.c -o sqlite3.so -fpic -shared -I../../../lua53/lua-5.1.5/src/ -L../../../lua53/lua-5.3.1/src/ -llua53 -I../../../sqlite3.9/sqlite-autoconf-3090100/ -L../../../sqlite3.9/sqlite-autoconf-3090100/ -lsqlite3

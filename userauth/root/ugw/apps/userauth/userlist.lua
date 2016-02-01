@@ -1,8 +1,8 @@
 local usr = require("user")
-local util = require("myutil")
+local common = require("common")
 local js = require("cjson.safe")
 
-local read, write = util.read, util.write 
+local read, save, save_safe = common.read, common.save, common.save_safe
 
 local method = {}
 local mt = {__index = method}
@@ -55,9 +55,8 @@ function method.save(ins)
 	end 
 	ins.change = false
 	local s = js.encode(ins.usermap)
-	local tmp = ins.path .. ".tmp"
-	local _ = write(tmp, s) or error("save fail")
-	os.execute(string.format("mv %s %s; sync", tmp, ins.path))
+	save_safe(ins.path, s)
+	os.execute("sync")
 end
 
 function method.show(ins)

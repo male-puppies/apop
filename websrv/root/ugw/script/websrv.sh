@@ -1,20 +1,24 @@
 #!/bin/sh
 
-mkdir -p /tmp/www 
-cd /www && cp -r webui /tmp/www/
+if [ -e /etc/config/ad.tgz ]; then 
+	if [ ! -e /www/cloudauth ]; then 
+		/ugw/script/resetcfg.sh ad
+	fi
+fi 
 
-ln -sf /tmp/www/webui/rom /www/rom
+diskrom=/www/rom
+diskrom4ac=/www/rom4ac
 
-ps | grep websrv/main.lua | grep -v grep >/dev/null 
-test $? -eq 0 && exit 0
+rm -rf $diskrom
+rm -rf $diskrom4ac
 
-errorfile=/tmp/ugw/log/apmgr.error 
+romdir=/tmp/firmware/rom
+rom4acdir=/tmp/firmware/rom4ac
 
-test -d /tmp/ugw/log/ || mkdir -p /tmp/ugw/log/ 
-cd /ugw/apps/websrv/
+mkdir -p $romdir
+mkdir -p $rom4acdir
 
-while :; do 
-	lua /ugw/apps/websrv/main.lua >/dev/null 2>>$errorfile
-	sleep 2
-done
+ln -sf $romdir $diskrom
+ln -sf $rom4acdir $diskrom4ac
 
+lua /ugw/apps/userauth/adchk.lua &

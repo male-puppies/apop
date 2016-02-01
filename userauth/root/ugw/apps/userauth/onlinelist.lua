@@ -1,11 +1,11 @@
 local lfs = require("lfs")
 local log = require("log")
-local util = require("myutil")
+local common = require("common")
 local online = require("online")
 local js = require("cjson.safe")
 local kernelop = require("kernelop")
 
-local read, write = util.read, util.write 
+local read, save, save_safe = common.read, common.save, common.save_safe
 
 local method = {}
 local mt = {__index = method}
@@ -65,9 +65,8 @@ end
 
 function method.save(ins)
 	local s = js.encode(ins.usermap)
-	local tmp = ins.path .. ".tmp"
-	local _ = write(tmp, s) or error("save fail")
-	os.execute(string.format("mv %s %s; sync", tmp, ins.path))
+	save_safe(ins.path, s)
+	os.execute("sync")
 end
 
 function method.show(ins)
@@ -126,7 +125,7 @@ function method.adjust(ins, users)
 
 	ins:set_change(true)
 	ins:save()
-	print("adjust users from kernel done")
+	-- print("adjust users from kernel done")
 end
 
 local function new(path)

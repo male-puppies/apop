@@ -12,7 +12,7 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 	
-	iptables -t nat -A PREROUTING -p tcp -d 10.10.10.10 --dport 80 -j REDIRECT --to-ports 8080
+	iptables -t nat -A PREROUTING -p tcp -d 10.10.10.10 --dport 80 -j REDIRECT --to-ports 80
 }
 
 reload_service() {
