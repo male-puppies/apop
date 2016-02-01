@@ -1,4 +1,11 @@
 #!/bin/sh
+
+if [ -e /etc/config/ad.tgz ]; then 
+	if [ ! -e /www/cloudauth ]; then 
+		/ugw/script/resetcfg.sh ad
+	fi
+fi 
+
 diskrom=/www/rom
 diskrom4ac=/www/rom4ac
 
