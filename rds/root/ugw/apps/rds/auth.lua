@@ -9,7 +9,7 @@ local mac_part = "[0-9a-z][0-9a-z]"
 local mac_pattern = string.format("^%s:%s:%s:%s:%s:%s$", mac_part, mac_part, mac_part, mac_part, mac_part, mac_part)	
 
 local function errmsg(msg)
-	return {status = 1, msg = msg}
+	return {status = 1, data = msg}
 end
 
 local function get_status(s, d)
@@ -20,7 +20,7 @@ local function check_user(map)
 	local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
 	local expire, remain = map.expire, map.remain 
 
-	if not (name and #name >= 4 and #name <= 32) then 
+	if not (name and #name >= 1 and #name <= 32) then 
 		return nil, "名字格式错误！"
 	end 
 
@@ -86,7 +86,7 @@ end
 local function userdel(conn, group, arr)
 	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli)
 	for _, name in ipairs(arr) do 
-		if not (#name >= 4 and #name <= 32) then 
+		if not (#name >= 1 and #name <= 32) then 
 			return get_status(1, "无效的账号！")  
 		end 
 	end 
@@ -125,7 +125,7 @@ end
 
 local function check_policy(map)
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
-	if not (name and #name >= 4 and #name <= 32) then  
+	if not (name and #name >= 1 and #name <= 32) then  
 		return nil, errmsg("认证名格式错误！")
 	end 
 
@@ -155,7 +155,7 @@ end
 local function policydel(conn, group, arr)
 	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli)
 	for _, name in pairs(arr) do 
-		if not (#name >= 4 and #name < 32) then 
+		if not (#name >= 1 and #name < 32) then 
 			return get_status(1, "无效的认证名！")
 		end 
 	end
@@ -177,7 +177,7 @@ local function policyadj(conn, group, arr)
 	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli)
 
 	for _, name in pairs(arr) do  
-		if not (#name >= 4 and #name < 32) then 
+		if not (#name >= 1 and #name < 32) then 
 			return get_status(1, "无效的认证名！")
 		end 
 	end
