@@ -398,7 +398,7 @@ local function override_adcfg()
 	if lfs.attributes(o_ad..".".."del") then
 		os.execute("rm "..o_ad..".".."del")
 	end
-	os.execute("/ugw/sh/init_scripts/resetcfg.sh ad &")
+	os.execute("/ugw/script/resetcfg.sh ad &")
 	return true
 end
 

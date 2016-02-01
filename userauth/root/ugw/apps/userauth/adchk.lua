@@ -22,7 +22,7 @@ local function copy_webui(srcdir)
 		webdir=$tmpwww/webui
 		rm -rf $tmpwww
 		mkdir $tmpwww
-		cp -rf %s $tmpwww
+		cp -rf %s $tmpwww/webui
 		echo '%s' > $tmpwww/adtype
 		deldir=$wwwdir.del
 		rm -rf $deldir
@@ -32,7 +32,7 @@ local function copy_webui(srcdir)
 		ln -sf /tmp/firmware/rom $webdir/rom 
 		ln -sf /tmp/firmware/rom4ac $webdir/rom4ac 
 		rm -rf $deldir
-	]], srcdir, srcdir)
+	]], srcdir, srcdir) 
 	os.execute(cmd)
 end
 
@@ -43,7 +43,7 @@ if not map then
 	return copy_webui(local_webdir)
 end
 
-if tonumber(map.switch) ~= 0 then 
+if tonumber(map.switch) ~= 1 then 
 	print("cloud switch not 1")
 	return copy_webui(local_webdir)
 end
