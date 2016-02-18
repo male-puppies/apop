@@ -200,15 +200,38 @@ local function set_switch_vlan(curs, data)
 	end
 
 	local vlan = {}
+	-- for i = 0, 4 do
+		-- if i < (5 - #wan_arr) and i >= #lan_arr then
+			-- local tmp = vlan["vlan1"] or ""
+			-- tmp = tmp .. i .. " "
+			-- vlan["vlan1"] = tmp
+		-- else
+			-- local tmp = vlan["vlan" .. (i + 1)] or ""
+			-- tmp = tmp .. i .. " "
+			-- vlan["vlan" .. (i + 1)] = tmp
+		-- end
+	-- end
+
+	local arrv = {}
+	for _, l in ipairs(lan_arr) do
+		local lvid = l:match("lan(%d)")
+		if lvid ~= 0 then
+			vlan["vlan" .. (lvid + 1)] = lvid .. " "
+			table.insert(arrv, tonumber(lvid))
+		end
+	end
+	
+	for _, w in ipairs(wan_arr) do
+		local wvid = w:match("wan(%d)")
+		vlan["vlan" .. (5 - wvid)] = (4 - wvid) .. " "
+		table.insert(arrv, tonumber(4 - wvid))
+	end
+
 	for i = 0, 4 do
-		if i < (5 - #wan_arr) and i >= #lan_arr then
+		if not utl.in_table(i, arrv) then
 			local tmp = vlan["vlan1"] or ""
 			tmp = tmp .. i .. " "
 			vlan["vlan1"] = tmp
-		else
-			local tmp = vlan["vlan" .. (i + 1)] or ""
-			tmp = tmp .. i .. " "
-			vlan["vlan" .. (i + 1)] = tmp
 		end
 	end
 	
