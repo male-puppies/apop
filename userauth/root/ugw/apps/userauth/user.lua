@@ -3,6 +3,10 @@ local expand = require("expand")
 local BIND_NONE = "none"
 local BIND_MAC = "mac"
 
+local UT_WEB = "web"
+local UT_SMS = "sms"
+local UT_WECHAT = "wechat"
+
 local fields = {
 	name = "",
 	pwd = "",
@@ -145,6 +149,10 @@ local function check(map)
 		return nil, "剩余时间格式错误！"
 	end
 
+	--if not (utype and (utype == UT_WECHAT or utype == UT_WEB or utype == UT_SMS)) then 
+	--	return nil, "用户类型错误！"
+	--end
+
 	return true
 end
 
@@ -154,4 +162,7 @@ return {
 	setmeta = setmeta, 
 	BIND_MAC = BIND_MAC, 
 	BIND_NONE = BIND_NONE,
+	UT_WEB = UT_WEB,
+	UT_SMS = UT_SMS,
+	UT_WECHAT = UT_WECHAT,
 }
