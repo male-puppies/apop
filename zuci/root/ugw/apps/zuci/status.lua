@@ -90,7 +90,7 @@ local function getstatus(group, data)
 	local stat = read("/proc/stat")
 	local a1,a2,a3,a4,a5,a6,a7 = stat:match("[cpu ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)")
 	local rv = {
-		version		= boardinfo.release.description or "",
+		version		= boardinfo.release.version or "",
 		uptime		= sysinfo.uptime or 0,
 		times		= os.date("%Y-%m-%d %H:%M:%S"),
 		loadavg		= sysinfo.load or { 0, 0, 0 },
