@@ -54,7 +54,8 @@ local function nextn(ns, n)
 	local total = n > #ap_arr and #ap_arr or n
 	for i = 1, total do
 		local item = ap_arr[1]
-		if now - item[2] <= min_intervel then
+		local d = now - item[2]
+		if 0 <= d and d <= min_intervel then
 			break
 		end
 		local item = table.remove(ap_arr, 1)
