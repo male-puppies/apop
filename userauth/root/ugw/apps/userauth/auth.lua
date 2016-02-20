@@ -148,7 +148,7 @@ local function save_sms_user(phoneno, password, expire)
 	local user = {
 		name = phoneno,
 		pwd = password,
-		desc = "短信认证用户",
+		desc = "露脤脨脜脠脧脰陇脫脙禄搂",
 		enable = 1,
 		multi = 0,
 		bind = "none",
@@ -174,7 +174,7 @@ cmd_map["/PhoneNo"] = function(map)
 
 	local last, now = last_sms_map[phoneno], cursec()
 	if last and now - last <= sms_interval then 
-		return {status = 1, data = string.format("同一个终端, %s秒内只允许短信申请一次,请注意查收短信", sms_interval)}
+		return {status = 1, data = string.format("脥卢脪禄赂枚脰脮露脣, %s脙毛脛脷脰禄脭脢脨铆露脤脨脜脡锚脟毛脪禄麓脦,脟毛脳垄脪芒虏茅脢脮露脤脨脜", sms_interval)}
 	end
 	last_sms_map[phoneno] = now
 
@@ -237,45 +237,60 @@ local function start_server()
 end
 
 local function init() 
-	local s = read("/tmp/www/adtype")
-	if s and s:find("cloudauth") then 
-		authopt.adtype = "cloud"
-	end
-	
-	local s = read("/etc/config/authopt.json")
-	local map = js.decode(s) or {}
-	local sms, wx = tonumber(map.sms or "0") or 0, tonumber(map.wx or "0") or 0
-	authopt.sms, authopt.wx = sms, wx
-	if authopt.wx ~= 1 then
-		return 
-	end
-
-	local s = read("/etc/config/wx_config.json")
-	local map = js.decode(s)
-	if not map then 
-		authopt.wx = 0
-		log.error("invalid wx config, reset wx to 0")
-		return
+	local init_authopt = function()
+		local s = read("/tmp/www/adtype")
+		if s and s:find("cloudauth") then 
+			authopt.adtype = "cloud"
+		end
+		
+		local s = read("/etc/config/authopt.json")
+		local map = js.decode(s) or {}
+		local sms, wx = tonumber(map.sms or "0") or 0, tonumber(map.wx or "0") or 0
+		authopt.sms, authopt.wx = sms, wx
 	end 
 
-	local shop_id, appid, sk, ssid = map.shop_id, map.appid, map.secretkey, map.ssid
-	if not (shop_id and appid and sk and ssid) then 
-		authopt.wx = 0
-		log.error("invalid wx config, %s", s)
-		return
+	local init_wechat = function()
+		if authopt.wx ~= 1 then
+			return 
+		end
+
+		local s = read("/etc/config/wx_config.json")
+		local map = js.decode(s)
+		if not map then 
+			authopt.wx = 0
+			log.error("invalid wx config, reset wx to 0")
+			return
+		end 
+
+		local shop_id, appid, sk, ssid = map.shop_id, map.appid, map.secretkey, map.ssid
+		if not (shop_id and appid and sk and ssid) then 
+			authopt.wx = 0
+			log.error("invalid wx config, %s", s)
+			return
+		end 
+
+		wx_param = {appid = appid, shop_id = shop_id, sk = sk, ssid = ssid}
 	end 
 
-	wx_param = {appid = appid, shop_id = shop_id, sk = sk, ssid = ssid}
+	local init_sms = function()
+		-- authopt.sms = 1
+		if authopt.sms ~= 1 then
+			print(authopt.sms)
+			return 
+		end
 
-	if not send_sms.init() then 
-		log.info("send_sms.init fail. reset authopt.sms = 0")
-		authopt.sms = 0
+		if not send_sms.init() then 
+			log.info("send_sms.init fail. reset authopt.sms = 0")
+			authopt.sms = 0
+		end
 	end 
+
+	local _ = init_authopt(), init_wechat(), init_sms()
 end
 
 local function run()
 	se.go(start_server)
-
+	send_sms.run()
 	math.randomseed(os.time())
 	set_timeout(5, 5, clear_wx_wait)
 	set_timeout(5, 5, save_wx_user)

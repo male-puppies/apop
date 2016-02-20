@@ -62,6 +62,7 @@ local function try_connect(host, port)
 end
 
 local function get_active_addr()
+
 	while true do 
 		local host, port = try_connect(g_kvmap.ac_host, g_kvmap.ac_port)
 		if host then
@@ -191,6 +192,9 @@ local function main()
 	local _ = read_id(), load() 
 	if not lfs.attributes("/tmp/invalid_account") then
 		se.go(start_local)
+		while g_kvmap.ac_host == "" do  
+			se.sleep(1)
+		end
 		se.go(start_remote)
 	end
 	local _ = lfs.attributes("/tmp/invalid_account") and log.error("invalid account")
