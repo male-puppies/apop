@@ -195,3 +195,14 @@ section p.bottom span.tipSpan {
 	font-size: 13px;
 	padding-left: 20px;
 }
+.auth {
+	padding-top:20px;
+}
+.auth p {
+	line-height: 30px;
+}
+.wx-sms,
+.wx,
+.sms {
+	display: none;
+}
