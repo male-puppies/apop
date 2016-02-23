@@ -44,7 +44,7 @@ cmd_map["/authopt"] = function(map)
 		return {status = 1, data = "invalid param"}
 	end
 	kernelop.bypass_mac(ip, mac)
-	return authopt
+	return {wx = authopt.wx, sms = authopt.sms}
 end
 
 cmd_map["/wxlogin2info"] = function(map) 
@@ -92,7 +92,7 @@ local function save_wx_user()
 		local user = {
 			name = openid,
 			pwd = "123456",
-			desc = "default",
+			desc = "微信认证用户",
 			enable = 1,
 			multi = 0,
 			bind = "none",
@@ -148,7 +148,7 @@ local function save_sms_user(phoneno, password, expire)
 	local user = {
 		name = phoneno,
 		pwd = password,
-		desc = "¶ÌÐÅÈÏÖ¤ÓÃ»§",
+		desc = "短信认证用户",
 		enable = 1,
 		multi = 0,
 		bind = "none",
@@ -174,7 +174,7 @@ cmd_map["/PhoneNo"] = function(map)
 
 	local last, now = last_sms_map[phoneno], cursec()
 	if last and now - last <= sms_interval then 
-		return {status = 1, data = string.format("Í¬Ò»¸öÖÕ¶Ë, %sÃëÄÚÖ»ÔÊÐí¶ÌÐÅÉêÇëÒ»´Î,Çë×¢Òâ²éÊÕ¶ÌÐÅ", sms_interval)}
+		return {status = 1, data = string.format("一个号码,5分钟之内,只允许注册一次,请注意查收短信", sms_interval)}
 	end
 	last_sms_map[phoneno] = now
 
@@ -246,7 +246,7 @@ local function init()
 		local s = read("/etc/config/authopt.json")
 		local map = js.decode(s) or {}
 		local sms, wx = tonumber(map.sms or "0") or 0, tonumber(map.wx or "0") or 0
-		authopt.sms, authopt.wx = sms, wx
+		authopt.sms, authopt.wx, authopt.redirect = sms, wx, map.redirect
 	end 
 
 	local init_wechat = function()
@@ -286,6 +286,7 @@ local function init()
 	end 
 
 	local _ = init_authopt(), init_wechat(), init_sms()
+	dispatcher.set_authopt(authopt)
 end
 
 local function run()

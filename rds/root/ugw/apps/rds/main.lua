@@ -19,6 +19,7 @@ local upgrade = require("upgrade")
 local request = require("request")
 local collect = require("collect")
 local account = require("account")
+local authopt = require("authopt")
 local glbcfg = require("globalcfg")
 local load = require("loadbalance") 
 local upaps = require("apmupdateaps")
@@ -86,6 +87,10 @@ local cmd_func = {
 	WxShopSet 		=	wxshop.wxshopset,
 	SmsList 		=	sms.smslist,
 	SmsSet 			= 	sms.smsset,
+	SmsResetCounter 	= sms.smsresetcounter,
+
+	AuthOptList 		= authopt.authoptlist,
+	AuthOptSet			= authopt.authoptset,
 }
 
 local function init_rds()
