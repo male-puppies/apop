@@ -44,7 +44,7 @@ function timeWait(wait) {
 	if (wait == 0) {
 		$("#smsGetcap").attr("disabled", false);	
 		$("#smsGetcap").html("获取验证码").removeClass("getsuccess").addClass("getshover");
-		wait = 30;
+		wait = 60;
 	} else {
 		$("#smsGetcap").attr("disabled", true);
 		$("#smsGetcap").html('重新发送' + wait).removeClass("getshover").addClass("getsuccess");
@@ -71,7 +71,7 @@ function getCap(){
 		},
 		function (d){
 			if (d.status == 0) {
-				timeWait(30);
+				timeWait(60);
 				$("p#get_warn").hide();
 				$("p#get_success").html("获取验证码成功！").show();
 			} else {
