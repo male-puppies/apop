@@ -7,6 +7,8 @@ local kernelop = require("kernelop")
 local userlist = require("userlist")
 local onlinelist = require("onlinelist")
 
+local authopt
+
 local function status(msg, ok)
 	print(msg, ok)
 	return {status = ok and 0 or 1, data = msg}
@@ -32,7 +34,7 @@ local function auth(map)
 	local ol = onlinelist.ins()
 	if ol:exist_mac(mac) then
 		kernelop.online(mac)
-		return status("已在线！", true)
+		return status(authopt.redirect or "ok", true)
 	end
 
 	local ul = userlist.ins()
@@ -69,7 +71,7 @@ local function auth(map)
 
 	login_success(mac, ip, username)
 
-	return status("ok", true)
+	return status(authopt.redirect or "ok", true)
 end
 
 local function setup_update_online()
@@ -354,9 +356,15 @@ local function adjust_elapse()
 	ol:adjust(kernelop.get_all_user())
 end
 
+local function set_authopt(opt)
+	authopt = opt
+end
+
 return {
 	save = save,
 	auth = auth, 
+
+	set_authopt = set_authopt,
 	
 	update_user = update_user,
 	update_online = setup_update_online(), 
