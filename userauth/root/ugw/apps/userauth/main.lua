@@ -4,12 +4,14 @@ local md5 = require("md5")
 local auth = require("auth") 
 local sandc = require("sandc") 
 local js = require("cjson.safe")
+local common = require("common")
 local request = require("request")
 local kernelop = require("kernelop") 
 local dispatcher = require("dispatcher")
 
 
 local mqtt  
+local read, save, save_safe = common.read, common.save, common.save_safe
 
 local function cursec()
 	return math.floor(se.time())
@@ -56,6 +58,34 @@ local function timeout_save()
 	dispatcher.save()
 end
 
+local adtype_path = "/tmp/www/adtype"
+local cloud_path = "/etc/config/cloud.json"
+local function chk_adtype()
+	if not lfs.attributes(adtype_path) then 
+		log.error("missing %s", adtype_path)
+		return 
+	end 
+
+	local s = read(adtype_path) 					assert(s)
+	local cur_switch = s:find("webui") and 0 or 1 
+
+	if not lfs.attributes(cloud_path) then 
+		return 
+	end 
+
+	local map = js.decode((read(cloud_path)))
+	if not map then 
+		log.error("invalid %s", cloud_path)
+		return 
+	end 
+
+	local cfg_switch = tonumber(map.switch) 	assert(cfg_switch)
+	if cfg_switch ~= cur_switch then 
+		log.error("why switch not match %s %s", cur_switch, cfg_switch)
+		os.exit(1)
+	end 
+end
+
 local function create_mqtt()
 	local auth_module = "a/ac/userauth"
 	local mqtt = sandc.new(auth_module)
@@ -84,7 +114,8 @@ local function set_timeout(timeout, again, cb)
 end
 
 local function init()
-	os.execute("lua adchk.lua")
+	local ret = os.execute("lua adchk.lua")
+	log.info("init web %s", tostring(ret))
 	kernelop.reset()
 	auth.init()  
 end
@@ -99,6 +130,7 @@ local function main()
 	set_timeout(1, 20, dispatcher.update_online)
 	set_timeout(0.1, 30, dispatcher.adjust_elapse)
 	set_timeout(30, 30, kernelop.check_ip_route) 
+	set_timeout(10, 10, chk_adtype)
 end
 
 log.setdebug(true)

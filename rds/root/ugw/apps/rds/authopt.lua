@@ -6,11 +6,11 @@ local read, save_safe = common.read, common.save_safe
 local authoptpath = "/etc/config/authopt.json"
 
 local function get_authopt() 
-	return js.decode((read(authoptpath))) or {}
+	return js.decode((read(authoptpath))) or {redirect = ""}
 end
 
 local function authoptlist(conn, account, data)
-	return {status = 0, data = get_authopt() or {redirect = ""}
+	return {status = 0, data = get_authopt()}
 end
 
 local function authoptset(conn, account, map) 
