@@ -1,0 +1,179 @@
+input {
+	box-sizing: border-box;
+}
+/* 短信验证 */
+#maskgray{
+	display:none;
+	width:100%;
+	height: 100%;
+	position: fixed;
+	top:0;
+	left:0;
+	background:#000;
+	filter:alpha(opacity=20);
+	-moz-opacity:0.2;
+	-khtml-opacity: 0.2;
+	opacity: 0.2;
+	z-index:99999;
+}
+#sms{
+	display:none;
+	width:310px;
+	height:220px;
+	position:fixed;
+	margin-left:-155px;
+	margin-top:-110px;
+	background:#FFF;
+	top:50%;
+	left:50%;
+	border:1px solid #ddd;
+	z-index:99999;
+}
+#sms .sms-top{
+	background:#f7f7f7;
+	height:40px;
+	position:relative;
+}
+#sms .sms-top h2{
+	margin:0;
+	padding:0 0 0 10px;
+	font-size:14px;
+	font-weight:bold;
+	line-height:40px;
+}
+#sms .sms-top a.sms-close {
+	position:absolute;
+	top:10px;
+	right:10px;
+	cursor:pointer;
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	overflow: hidden;
+}
+#sms .sms-top a.sms-close:hover::before, #sms .sms-top a.sms-close:hover::after {
+  background: #333;
+}
+#sms .sms-top a.sms-close::before, #sms .sms-top a.sms-close::after {
+  content: '';
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  top: 50%;
+  left: 0;
+  margin-top: -1px;
+  background: #999;
+}
+#sms .sms-top a.sms-close::before {
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+#sms .sms-top a.sms-close::after {
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}
+.sms-main{
+	padding:6px 12px 12px;
+}
+.sms-main .smswarn{
+	height:20px;
+	line-height:20px;
+	font-size:13px;
+	margin:0;
+	padding:0 0 3px 0;
+	color:#F00;
+}
+#smsPhone{
+	box-sizing: border-box;
+	border: 1px solid #ddd;
+	width: 100%;
+	height: 34px;
+	line-height: 20px;
+	padding: 7px;
+	outline: none;
+	margin-bottom: 12px;
+	font-size: 16px;
+}
+#smsCaptcha{
+	box-sizing: border-box;
+	border:1px solid #ddd;
+	width:140px;
+	height:34px;
+	line-height:20px;
+	padding:7px;
+	outline:none;
+	margin-bottom:12px;
+	font-size: 16px;
+}
+#smsGetcap{
+	border:1px solid #ddd;
+	height:34px;
+	line-height:20px;
+	width:130px;
+	text-align:center;
+	float:right;
+	outline:none;
+	color:#666666;
+}
+.getshover{
+	background:#f1f1f1;
+	transition: background .5s;
+	-moz-transition: background .5s;	/* Firefox 4 */
+	-webkit-transition: background .5s;	/* Safari 和 Chrome */
+	-o-transition: background .5s;
+}
+.getshover:hover{
+	background:#ddd;
+}
+#smsGetcap.getsuccess{
+	color:#999;
+	border:1px solid #f1f1f1;
+	background:#f7f7f7;
+}
+#smsSubmit{
+	border:1px solid #ddd;
+	padding:0 40px;
+	height:34px;
+	outline:none;
+	color:#666666;
+	background:#f1f1f1;
+	transition: background .5s;
+	-moz-transition: background .5s;	/* Firefox 4 */
+	-webkit-transition: background .5s;	/* Safari 和 Chrome */
+	-o-transition: background .5s;
+}
+#smsSubmit:hover{
+	background:#ddd;
+}
+p#get_warn{
+	display:none;
+	background:#fff2f2;
+	border:1px solid #ff8080;
+	padding-left:6px;
+	line-height:16px;
+	float:right;
+	width:154px;
+	font-size:12px;
+	color:#6b6b6b;
+	overflow:hidden;
+	min-height:32px;
+}
+p#get_success{
+	display:none;
+	background:#ecfed6;
+	border:1px solid #61ae00;
+	padding-left:6px;
+	line-height:16px;
+	float:right;
+	width:154px;
+	font-size:12px;
+	color:#6b6b6b;
+	overflow:hidden;
+	min-height:32px;
+}

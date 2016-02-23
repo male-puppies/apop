@@ -7,7 +7,9 @@
 <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
 <title>Web UI</title>
 <link href="static/css/normal_ws.css" rel="stylesheet">
+<link href="static/css/scard.css" rel="stylesheet">
 <script src="static/js/jquery-1.11.1.min.js" type="text/javascript"></script>
+<script src="static/js/scard.js" type="text/javascript"></script>
 <script type="text/javascript">
 var g_redirect="http://www.baidu.com";
 $(function() {
@@ -20,9 +22,10 @@ $(function() {
 		obj,
 		function(d) {
 			if (d.wx == 1) {
-				$(".wx").show();
-			} else {
-				$(".wx").hide();
+				$(".wx,.wx-sms").show();
+			}
+			if (d.sms == 1) {
+				$(".sms,.wx-sms").show();
 			}
 		},
 		"json"
@@ -133,10 +136,11 @@ function call_weixin() {
 					<span style="min-width: 46px;"></span>
 					<input id="login" style="width:80px;cursor:pointer;" type="button" value="登录" />
 				</li>
-				<li class="wx" style="position: relative;left: -56px;padding-top:20px;display:none;">
+				<li class="auth">
 					<label>
-						<span style="min-width: 46px;">其它登录方式:</span>
-						<a style="padding-left:14px;" href="javascript:;" onclick="call_weixin()">微信认证</a>
+						<p class="wx-sms">其它登录方式:</p>
+						<p class="wx"><a href="javascript:;" onclick="call_weixin()">微信认证</a></p>
+						<p class="sms"><a href="javascript:;" onclick="showRecharge()">短信认证</a></p>
 					</label>
 				</li>
 			</ul>
