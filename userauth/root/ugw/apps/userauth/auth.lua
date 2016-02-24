@@ -47,8 +47,8 @@ cmd_map["/authopt"] = function(map)
 	return {wx = authopt.wx, sms = authopt.sms}
 end
 
-cmd_map["/wxlogin2info"] = function(map) 
-	if authopt.wx ~= 1 then 
+cmd_map["/wxlogin2info"] = function(map)
+	if authopt.adtype == "local" and authopt.wx ~= 1 then 
 		return {status = 1, data = "not support wx"}
 	end
 
@@ -162,7 +162,7 @@ end
 
 local last_sms_map, sms_interval = {}, 300
 cmd_map["/PhoneNo"] = function(map)   
-	if authopt.sms ~= 1 then 
+	if authopt.adtype == "local" and authopt.sms ~= 1 then 
 		return {status = 1, data = "authopt disable"}	
 	end
 
@@ -196,6 +196,12 @@ cmd_map["/PhoneNo"] = function(map)
 	
 	return {status = 0, data = "ok"}
 end
+
+cmd_map["/webui/login.html"] = function(map)  
+	kernelop.bypass_mac(map.ip, map.mac)
+	return {status = 0, data = "ok"}
+end
+
 
 local function clear_wx_wait()
 	local max, now = 0, cursec()
@@ -250,10 +256,6 @@ local function init()
 	end 
 
 	local init_wechat = function()
-		if authopt.wx ~= 1 then
-			return 
-		end
-
 		local s = read("/etc/config/wx_config.json")
 		local map = js.decode(s)
 		if not map then 
@@ -273,12 +275,6 @@ local function init()
 	end 
 
 	local init_sms = function()
-		-- authopt.sms = 1
-		if authopt.sms ~= 1 then
-			print(authopt.sms)
-			return 
-		end
-
 		if not send_sms.init() then 
 			log.info("send_sms.init fail. reset authopt.sms = 0")
 			authopt.sms = 0
