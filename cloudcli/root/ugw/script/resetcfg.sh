@@ -16,7 +16,8 @@ reset_ad() {
 	test -e $cloudpath && mv $cloudpath $deldir
 	mv $tmpdir $cloudpath
 	rm -rf $deldir
-	#echo "done" > $adpath #TODO open
+	rm -rf /tmp/www 
+	/etc/init.d/userauth restart
 }
 
 reset_dev() { 

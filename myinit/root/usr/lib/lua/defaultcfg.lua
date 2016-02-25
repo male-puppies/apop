@@ -4,7 +4,7 @@ local function default_cloud()
 		ac_host = "",
 		ac_port = "61886",
 		descr = "", 
-		switch = "1",
+		switch = "0",
 	}
 end 
 

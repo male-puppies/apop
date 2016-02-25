@@ -9,8 +9,7 @@ local authoptpath = "/etc/config/authopt.json"
 local read, save, save_safe = common.read, common.save, common.save_safe
 
 local function read_config()
-	local s = read(cloudpath)
-	local map = js.decode(s)
+	local map = js.decode((read(cloudpath)))
 	if map and map.ac_host then 
 		return map 
 	end 
@@ -18,9 +17,8 @@ local function read_config()
 	return defaultcfg.default_cloud()
 end
 
-local function read_wxshop()
-	local s = read(wxshoppath)
-	local map = js.decode(s)
+local function read_wxshop() 
+	local map = js.decode((read(wxshoppath)))
 	if map and map.shop_id then 
 		return map
 	end 
@@ -28,9 +26,8 @@ local function read_wxshop()
 	return defaultcfg.default_wxshop()
 end
 
-local function get_wx_switch()
-	local s = read(authoptpath)
-	return js.decode(s)
+local function get_wx_switch() 
+	return js.decode((read(authoptpath)))
 end
 
 local function wxshoplist(conn, account, data)
@@ -111,7 +108,6 @@ local function wxshopset(conn, account, data)
 	os.execute("/ugw/script/resetcfg.sh dev &")
 	return {status = 0, data = "ok"}
 end
-
 
 return {
 	wxshopset = wxshopset,

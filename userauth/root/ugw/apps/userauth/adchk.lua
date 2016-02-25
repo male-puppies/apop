@@ -1,4 +1,5 @@
 local lfs = require("lfs")
+local log = require("log")
 local common = require("common")
 local js = require("cjson.safe")
 
@@ -10,9 +11,10 @@ local cloud_webdir = "/www/cloudauth"
 local adtype_path = "/tmp/www/adtype"
 
 local function copy_webui(srcdir)
+	log.info("use web %s", srcdir)
 	local s = read(adtype_path)
 	if s and s:find(srcdir) then 
-		print("nothing change")
+		log.info("nothing change %s %s", adtype_path, srcdir)
 		return 
 	end 
 
@@ -33,23 +35,25 @@ local function copy_webui(srcdir)
 		ln -sf /tmp/firmware/rom4ac $webdir/rom4ac 
 		rm -rf $deldir
 	]], srcdir, srcdir) 
-	os.execute(cmd)
+	local ret = os.execute(cmd)
+	log.info("adchk res %s %s", tostring(ret), read(adtype_path))
 end
 
+log.setmodule("adchk")
 local s = read(cloud_path)
 local map = js.decode(s)
 if not map then 
-	print("invalid", cloud_path)
+	log.error("invalid %s", cloud_path)
 	return copy_webui(local_webdir)
 end
 
 if tonumber(map.switch) ~= 1 then 
-	print("cloud switch not 1")
+	log.info("cloud switch not 1")
 	return copy_webui(local_webdir)
 end
 
 if not lfs.attributes(cloud_webdir) then 
-	print("not find", cloud_webdir)
+	log.info("not find %s", cloud_webdir)
 	return copy_webui(local_webdir)
 end
 
