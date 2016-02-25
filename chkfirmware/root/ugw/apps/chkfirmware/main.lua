@@ -11,8 +11,14 @@ local cloud_cfg = "/etc/config/cloud.json"
 local ac_version = "/etc/config/ac_version.json"
 local thin_version = "/etc/config/thin_version.json"
 local new_version = "/tmp/memfile/new_version.txt"
-local current_version = "/etc/openwrt_version"
 local host, port, actype = "cloud.trylong.cn", 80, "7621"
+local current_version = "/etc/openwrt_release"
+local function get_current_version() 
+	local s = read(current_version)
+	local tp = s:match("DISTRIB_ID='(.-)'"):gsub("%s", "")
+	local ver = s:match("DISTRIB_RELEASE='(.-)'"):gsub("%s", "")
+	return string.format("%s-%s", tp, ver)
+end
 
 local function nslookup(host)
 	local ip = host
@@ -136,7 +142,7 @@ local function download_ac_firmware(actype)
 		return os.remove(flag)
 	end 
 
-	local curver = read(current_version):gsub("%s", "")
+	local curver = get_current_version()
 	if version <= curver then
 		return os.remove(flag)
 	end
@@ -169,7 +175,7 @@ local function chk_new_ac()
 		return os.remove(ac_version)
 	end
 	
-	local curver = read(current_version):gsub("%s", "")
+	local curver = get_current_version()
 	os.remove(new_version)
 	if map.version <= curver then
 		print("not find", map.version, curver)
