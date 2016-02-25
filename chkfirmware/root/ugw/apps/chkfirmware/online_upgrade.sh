@@ -1,5 +1,6 @@
 #!/bin/sh
 
+firmware_path=/etc/config/firmware.json
 errlog="/tmp/ugw/log/apmgr.error" 
 
 log() {
@@ -25,7 +26,12 @@ done
 
 log "$flag was deleted, check firmware"
 
-version_file=/www/rom4ac/AC1032.version
+actype=`cat $firmware_path | grep actype | awk -F: '{print $2}' | awk -F\" '{print $2}'`
+if [ $? -ne 0 ]; then 
+	log "read firmware.json to get actype fail"
+	exit 1
+fi
+version_file=/www/rom4ac/$actype.version
 test -e $version_file || err_exit "not find $version_file"
 
 image=/www/rom4ac/`head -1 $version_file`
