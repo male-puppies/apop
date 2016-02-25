@@ -90,11 +90,12 @@ local function getstatus(group, data)
 	local stat = read("/proc/stat")
 	local a1,a2,a3,a4,a5,a6,a7 = stat:match("[cpu ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)[ ](%d+)")
 	local rv = {
-		version		= boardinfo.release.version or "",
-		uptime		= sysinfo.uptime or 0,
-		times		= os.date("%Y-%m-%d %H:%M:%S"),
-		loadavg		= sysinfo.load or { 0, 0, 0 },
-		usercount	= read("auth_tool '{\"GetAllUser\":1}' | grep st:1 | wc -l", io.popen),
+		distribution	= boardinfo.release.distribution or "",
+		version			= boardinfo.release.version or "",
+		uptime			= sysinfo.uptime or 0,
+		times			= os.date("%Y-%m-%d %H:%M:%S"),
+		loadavg			= sysinfo.load or { 0, 0, 0 },
+		usercount		= read("auth_tool '{\"GetAllUser\":1}' | grep st:1 | wc -l", io.popen),
 		--cpuidle		= read("/tmp/cpu_idle") or "90",
 		cpu_stat    = {
 			user = a1,
