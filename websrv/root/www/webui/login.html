@@ -80,7 +80,11 @@ function login_action() {
 		},
 		function(d) {
 			if (d.status == 0) {
-				window.location.href = d.data;
+				if (d.data == "ok") {
+					window.location.href = "http://www.baidu.com";
+				} else {
+					window.location.href = d.data;
+				}
 			} else {
 				alert("登录失败！" + (d.data ? d.data : ""));
 			}
