@@ -184,6 +184,7 @@ local function loop_check_restore()
 	end
 end
 
+--[[
 local function check_uptime()
 	local timeout = 300
 	while true do
@@ -200,6 +201,11 @@ local function check_uptime()
 		print("missing %s", config_normal_flag)
 		se.sleep(1)
 	end
+end
+]]
+
+local function check_uptime()
+	se.sleep(300)
 end
 
 local function run()
