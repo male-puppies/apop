@@ -177,7 +177,7 @@ local function apinfo(group, aparr)
 
 		apid_map[apid] = {
 			ip_address = kvmap.ip, 	
-			ap_describe = kvmap.desc, 	
+			ap_describe = kvmap.desc or "", 	
 			mac = apid,
 			current_users = tonumber(stmap["2g#users"] or "0") + tonumber(stmap["5g#users"] or "0"),
 			radio = table.concat(js.decode(kvmap.barr) or {}, ","),
