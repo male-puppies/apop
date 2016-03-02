@@ -28,6 +28,17 @@ local uci = require("muci")
 	-- end
 -- end
 
+local function read(path, func)
+	func = func and func or io.open
+	local fp = func(path, "rb")
+	if not fp then 
+		return 
+	end 
+	local s = fp:read("*a")
+	fp:close()
+	return s
+end
+
 local function random_string(len)
 	local templete = "abcdefghijklmnopqrstuvwxyz"
 	local maxlen = 26
@@ -74,14 +85,17 @@ local function setlogintime(path, loginid)
 		end
 	end
 
+	local uptime = read("/proc/uptime")
+	uptime = math.floor(uptime:match("(.+)%s.+")) or 0
+	
 	for k, v in pairs(map) do
 		local val = tonumber(v) or 0
-		if os.time() - val < 3600 then
+		if uptime - val < 3600 then
 			smap[k] = v
 		end
 	end
 	
-	smap[loginid] = os.time()
+	smap[loginid] = uptime
 	local s = js.encode(smap)
 	local file, err = io.open(path, "wb")
 	local _ = file or log.fatal("open %s fail %s", tmp, err)
@@ -224,8 +238,8 @@ local function synctimes(group, data)
 
 	local cmd = string.format("date -s %q >/dev/null 2>/dev/null", data.times)
 	os.execute(cmd)
-	local path = "/tmp/memfile/logintime.json"
-	setlogintime(path, data.loginid)
+	-- local path = "/tmp/memfile/logintime.json"
+	-- setlogintime(path, data.loginid)
 	
 	local times = os.date("%Y-%m-%d %H:%M:%S")
 	return {status = 0, data = times}
