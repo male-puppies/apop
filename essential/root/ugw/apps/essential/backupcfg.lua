@@ -12,7 +12,7 @@ local last_map = {}
 
 local function read(path, func)
 	func = func and func or io.open
-	local fp = func(path, "rb")
+	local fp = func(path, "r")
 	if not fp then 
 		return 
 	end 
