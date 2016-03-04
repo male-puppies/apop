@@ -1,0 +1,67 @@
+#!/bin/sh
+mac_addr_pattern=
+mac_addr_pattern='^[0-9a-fA-F]{2}[-:]?'
+mac_addr_pattern=${mac_addr_pattern}'[0-9a-fA-F]{2}[-:]?'
+mac_addr_pattern=${mac_addr_pattern}'[0-9a-fA-F]{2}[-:]?'
+mac_addr_pattern=${mac_addr_pattern}'[0-9a-fA-F]{2}[-:]?'
+mac_addr_pattern=${mac_addr_pattern}'[0-9a-fA-F]{2}[-:]?'
+mac_addr_pattern=${mac_addr_pattern}'[0-9a-fA-F]{2}'     
+#echo $mac_addr_pattern        
+                                       
+#invalid:1;valid:0
+check_mac() {
+	local ret=1
+	if [ -z $1 ];then
+		echo "check_mac:input valid"
+		return $ret
+	fi
+	local mac_addr=$1
+	echo $mac_addr | grep -q -E -w "$mac_addr_pattern"  #strict regexp match
+    ret=$?
+	if [ $ret -ne 0 ];then
+		echo "check_mac:[$mac_addr] is invalid"
+	fi
+	return $ret
+}
+
+
+if [ $# -eq 0 ]; then
+        echo "usage:"     
+        echo "    ugw_factory_mac -set mac '78d38daabbc1'"
+        echo "    ugw_factory_mac -read mac"
+        exit
+fi
+
+
+if [ "$1""z" == "-read""z" ]; then
+	echo -e "\n AC-MAC: "
+	#dd if=/tmp/mac bs=2 skip=28672 count=3 2>/dev/null | hexdump -v -n 6 -e '5/1 "%02x:" 1/1 "%02x"'
+	dd if=/dev/mtd2 bs=2 skip=28672 count=3 2>/dev/null | hexdump -v -n 6 -e '5/1 "%02x:" 1/1 "%02x"'
+	echo -e "\n\n"
+	exit
+fi
+
+
+if [ "$1""z" != "-set""z" ]; then
+	exit
+fi
+
+if [ "$2""z" == "mac""z" ]; then
+		local mac_addr=$3
+		check_mac $mac_addr
+		local valid=$?
+		if [ $valid -ne 0 ];then
+			exit
+		fi	
+		#deprecate ':'and'-'
+		mac_addr=${mac_addr//:/}
+		mac_addr=${mac_addr//-/}
+		if [ ${#mac_addr} -eq 12 ];then
+			#echo "0000:$mac_addr" | xxd -r | dd of=/tmp/mac bs=2 seek=28672 count=3
+			echo "0000:$mac_addr" | xxd -r | dd of=/dev/mtdblock2 bs=2 seek=28672 count=3
+			echo "set mac $mac_addr success"
+		else
+			echo "format mac [$mac_addr] failed"
+		fi
+		exit
+fi
