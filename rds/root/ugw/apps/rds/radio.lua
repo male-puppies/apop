@@ -35,11 +35,27 @@ local function get_karr(apid, kparr)
 	return karr
 end
 
+local function get_online(group, aparr)
+	local hkey = "ol/" .. group
+	local varr = rds:hmget(hkey, aparr)
+
+	local olmap = {}
+	for i = 1, #aparr do 
+		local k, v = aparr[i], varr[i]
+		v = v == false and 0 or v
+		olmap[k] = v
+	end 
+	return olmap
+end
+
 local function get_band_apmap(group)
 	local karr = {keys.c_ap_list}
 	local varr = pcli:query(group, karr) 	assert(varr) 
 	local aparr = js.decode(varr[1]) 			assert(aparr)
 
+	local olmap = get_online(group, aparr)
+	-- local olmap = {}
+	
 	local band_apmap, desc_karr = {}, {}
 	for _, apid in ipairs(aparr) do
 		table.insert(desc_karr, pkey.desc(apid))
@@ -71,14 +87,14 @@ local function get_band_apmap(group)
 		desc_map[k] = v
 	end 
 
-	return band_apmap, desc_map
+	return band_apmap, desc_map, olmap
 end
 
 local function radiolist(conn, group, data) 
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli) 
 
-	local band_apmap, desc_map = get_band_apmap(group) 
-
+	local band_apmap, desc_map, olmap = get_band_apmap(group) 
+print(js.encode(band_apmap))
 	local resarr = {}
 	for band, apmap in pairs(band_apmap) do  
 		for apid, map in pairs(apmap) do 
@@ -96,7 +112,11 @@ local function radiolist(conn, group, data)
 				wlanstate = ms.count(js.decode(map.run or "{}") or {}),
 				ap_describe = desc_map[apid],
 			}
-			table.insert(resarr, item)
+
+			--show online ap only
+			if (tonumber(olmap[apid]) == 1) then
+				table.insert(resarr, item)
+			end
 		end 
 	end 
 
