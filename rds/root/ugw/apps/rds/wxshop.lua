@@ -60,36 +60,21 @@ end
 
 local function wxshopset(conn, account, data)
 	local appid, shop_name, shop_id, ssid, secretkey, wx = data.appid, data.shop_name, data.shop_id, data.ssid, data.secretkey, tonumber(data.wx)
-	if not (appid and shop_name and shop_id and ssid and secretkey and wx) then
+	if wx == 1 and not (appid and shop_name and shop_id and ssid and secretkey and wx) then
 		return {status = 1, data = "invalid param"}
 	end
+	
 
 	local cloud = read_config()
 	if tonumber(cloud.switch) == 1 then 
 		return {status = 0, data = "ok"}	
 	end
 
-	if not validate(data) then 
+	if wx == 1 and not validate(data) then 
 		return {status = 1, data = "invalid param"}
 	end 
-	
-	local nmap = {
-		appid = appid,
-		shop_name = shop_name,
-		shop_id = shop_id,
-		ssid = ssid,
-		secretkey = secretkey,
-	}
-	local o, change = read_wxshop(), false
-	for k, ov in pairs(o) do 
-		local nv = nmap[k]
-		if ov ~= nv then 
-			change = true
-			log.debug("wxshop %s %s->%s", k, ov, nv)
-		end 
-	end 
 
-	local authopt = get_wx_switch()
+	local authopt, change = get_wx_switch(), false
 	if not authopt then
 		authopt, change = {wx = wx}, true
 	elseif authopt.wx ~= wx then
@@ -97,12 +82,34 @@ local function wxshopset(conn, account, data)
 		log.debug("wx %s->%s", authopt.wx, wx)
 	end
 
+	if wx == 1 then
+		local nmap = {
+			appid = appid,
+			shop_name = shop_name,
+			shop_id = shop_id,
+			ssid = ssid,
+			secretkey = secretkey,
+		}
+		local o = read_wxshop()
+		for k, ov in pairs(o) do 
+			local nv = nmap[k]
+			if ov ~= nv then 
+				change = true
+				log.debug("wxshop %s %s->%s", k, ov, nv)
+			end 
+		end 
+		
+		if not change then
+			return {status = 0, data = "ok"}
+		end
+		
+		local s = js.encode(nmap) 
+		save_safe(wxshoppath, s)
+	end
+
 	if not change then 
 		return {status = 0, data = "ok"}	
 	end
-
-	local s = js.encode(nmap) 
-	save_safe(wxshoppath, s)
 	save_safe(authoptpath, js.encode(authopt))
 
 	os.execute("/ugw/script/resetcfg.sh dev &")
