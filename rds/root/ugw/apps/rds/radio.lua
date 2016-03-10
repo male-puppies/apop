@@ -94,7 +94,7 @@ local function radiolist(conn, group, data)
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli) 
 
 	local band_apmap, desc_map, olmap = get_band_apmap(group) 
-print(js.encode(band_apmap))
+
 	local resarr = {}
 	for band, apmap in pairs(band_apmap) do  
 		for apid, map in pairs(apmap) do 
