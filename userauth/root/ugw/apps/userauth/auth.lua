@@ -43,7 +43,9 @@ cmd_map["/authopt"] = function(map)
 	if not (ip and mac) then 
 		return {status = 1, data = "invalid param"}
 	end
-	kernelop.bypass_mac(ip, mac)
+	if authopt.wx and authopt.wx ~= 0 then
+		kernelop.bypass_mac(ip, mac)	
+	end
 	return {wx = authopt.wx, sms = authopt.sms}
 end
 
@@ -198,7 +200,9 @@ cmd_map["/PhoneNo"] = function(map)
 end
 
 cmd_map["/webui/login.html"] = function(map)  
-	kernelop.bypass_mac(map.ip, map.mac)
+	if authopt.wx and authopt.wx ~= 0 then
+		kernelop.bypass_mac(map.ip, map.mac)
+	end
 	return {status = 0, data = "ok"}
 end
 
