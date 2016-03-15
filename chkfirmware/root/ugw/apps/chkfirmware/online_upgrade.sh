@@ -38,7 +38,41 @@ image=/www/rom4ac/`head -1 $version_file`
 test -e $image || err_exit "missing $image"
 nickname=/tmp/upgrade.img
 mv $image $nickname
-/sbin/sysupgrade -T $nickname >> $errlog 2>&1
+
+mkdir -p /tmp/UploadBrush
+tar -zxf $nickname -C /tmp/UploadBrush/
+
+image_tmp=/tmp/UploadBrush/UploadBrush-bin.img
+txt_tmp=/tmp/UploadBrush/bin_random.txt
+test -e $image_tmp || err_exit "missing $image_tmp"
+test -e $txt_tmp || err_exit "missing $txt_tmp"
+
+bin_img=`md5sum $image_tmp | awk '{print $1}'`
+if [ $? -ne 0 ]; then 
+	log "md5sum $image_tmp fail"
+	exit 1
+fi
+
+str_rdm=`cat /etc/binrandom.json | grep bin_random | awk -F: '{print $2}' | awk -F\" '{print $2}'`
+if [ $? -ne 0 ]; then 
+	log "read binrandom.json to get bin_random fail"
+	exit 1
+fi
+bin_rdm=`echo -n $str_rdm | md5sum | awk '{print $1}'`
+if [ $? -ne 0 ]; then 
+	log "md5sum $str_rdm fail"
+	exit 1
+fi
+
+bin2=${bin_img}${bin_rdm}
+bin_random1=`echo -n $bin2 | md5sum | awk '{print $1}'`
+bin_random2=`cat $txt_tmp`
+
+if [ "$bin_random1" -ne "$bin_random2" ]; then
+	err_exit "Not equal md5sum, invalid image $image"
+fi
+	
+/sbin/sysupgrade -T $image_tmp >> $errlog 2>&1
 test $? -eq 0 || err_exit "invalid image $image"
 touch /tmp/sysupgrade
 /ugw/script/stop_all.sh
