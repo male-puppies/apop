@@ -153,6 +153,7 @@ local function download_ac_firmware(actype)
 		local over = s:match("(.-)\n") 
 		if version <= over then
 			print("no need to download", version, over)
+			os.remove(flag)
 			return
 		end
 	end 
