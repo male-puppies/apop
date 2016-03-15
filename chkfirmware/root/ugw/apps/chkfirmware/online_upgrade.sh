@@ -66,15 +66,19 @@ fi
 
 bin2=${bin_img}${bin_rdm}
 bin_random1=`echo -n $bin2 | md5sum | awk '{print $1}'`
+if [ $? -ne 0 ]; then 
+	log "md5sum $bin_random1 fail"
+	exit 1
+fi
 bin_random2=`cat $txt_tmp`
 
-if [ "$bin_random1" -ne "$bin_random2" ]; then
+if [ "$bin_random1" != "$bin_random2" ]; then
 	err_exit "Not equal md5sum, invalid image $image"
 fi
-	
+
 /sbin/sysupgrade -T $image_tmp >> $errlog 2>&1
 test $? -eq 0 || err_exit "invalid image $image"
 touch /tmp/sysupgrade
 /ugw/script/stop_all.sh
-/sbin/sysupgrade $nickname >> $errlog 2>&1
+/sbin/sysupgrade $image_tmp >> $errlog 2>&1
 reboot
