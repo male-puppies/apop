@@ -276,7 +276,7 @@ end
 local function uploadbrush(group, data)
 	local image_tmp = "/tmp/UploadBrush/UploadBrush-bin.img"
 	local txt_tmp = "/tmp/UploadBrush/bin_random.txt"
-	local s_random = "/etc/firmware.json"
+	local s_random = "/etc/binrandom.json"
 	-- local s_random = "ROUTER-AnIPttmRm0NSCjEfy7xfsq2xK"
 
 	os.execute("mkdir -p /tmp/UploadBrush")
