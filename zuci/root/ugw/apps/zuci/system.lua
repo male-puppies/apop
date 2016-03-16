@@ -277,6 +277,7 @@ local function uploadbrush(group, data)
 	local image_tmp = "/tmp/UploadBrush/UploadBrush-bin.img"
 	local txt_tmp = "/tmp/UploadBrush/bin_random.txt"
 	local s_random = "/etc/binrandom.json"
+	local distrib_id = "/etc/openwrt_release"
 	-- local s_random = "ROUTER-AnIPttmRm0NSCjEfy7xfsq2xK"
 
 	os.execute("mkdir -p /tmp/UploadBrush")
@@ -289,13 +290,20 @@ local function uploadbrush(group, data)
 	else
 		return {status = 1, data = "badupload"}
 	end
+
+	local ver_str = read(distrib_id)
+	local version = ver_str:match("DISTRIB_ID='(.-)'"):gsub("%s", "")
+	if not version then
+		return {status = 1, data = "badupload"}
+	end
+	
 	local str_img = string.format("md5sum %q | awk '{print $1}'", image_tmp)
 	local bin_img = read(str_img, io.popen)
 	if not bin_img then
 		return {status = 1, data = "badupload"}
 	end
 
-	local bin_random1 = md5.sumhexa(bin_img:gsub("%s+$", "") .. md5.sumhexa(rdm_map.bin_random))
+	local bin_random1 = md5.sumhexa(bin_img:gsub("%s+$", "") .. md5.sumhexa(version .. rdm_map.bin_random))
 	local bin_random2 = read(txt_tmp)
 	if not (bin_random1 and bin_random2)  then
 		return {status = 1, data = "badupload"}

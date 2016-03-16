@@ -58,7 +58,12 @@ if [ $? -ne 0 ]; then
 	log "read binrandom.json to get bin_random fail"
 	exit 1
 fi
-bin_rdm=`echo -n $str_rdm | md5sum | awk '{print $1}'`
+version=`cat /etc/openwrt_release | grep DISTRIB_ID | awk -F= '{print $2}' | awk -F\' '{print $2}'`
+if [ $? -ne 0 ]; then 
+	log "read openwrt_release to get DISTRIB_ID fail"
+	exit 1
+fi
+bin_rdm=`echo -n ${version}${str_rdm} | md5sum | awk '{print $1}'`
 if [ $? -ne 0 ]; then 
 	log "md5sum $str_rdm fail"
 	exit 1
