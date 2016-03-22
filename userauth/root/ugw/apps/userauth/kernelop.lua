@@ -40,6 +40,19 @@ local function get_global()
 	return {CheckOffline = 60, RedirectUrl = "http://10.10.10.10/webui"}
 end
 
+local function get_bypassurl()
+
+	local url = {}
+	table.insert(url, {["host"] = "ifeng.com", ["uri"]="/", ["action"] = 1})
+	table.insert(url, {["host"] = "captive.apple.com", ["uri"]= "/hotspot-detect.html", ["action"] = 1})
+	table.insert(url, {["host"] = "wifi.weixin.qq.com", ["uri"] ="/resources/js/wechatticket/wechatutil.js", ["action"] = 1})
+	table.insert(url, {["host"] = "wifi.weixin.qq.com", ["uri"] ="/operator", ["action"] = 1})
+	table.insert(url, {["host"] = "short.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
+	table.insert(url, {["host"] = "minorshort.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
+	table.insert(url, {["host"] = "dns.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
+	return url
+end
+
 local function reset(iface_arr)
 	local iface_arr = iface_arr and iface_arr or get_iface()
 	last_iface_count = #iface_arr
@@ -48,6 +61,7 @@ local function reset(iface_arr)
 		AuthPolicy = get_policy(),
 		InterfaceInfo = iface_arr,
 		GlobaleAuthOption = get_global(),
+		BypassUrl = get_bypassurl(),
 	}
 	
 	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", js.encode(cfg))
