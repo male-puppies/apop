@@ -35,7 +35,7 @@ end
 
 local cmd_map = {}
 cmd_map["/cloudonline"] = function(map)
-	return {status = 0, data = authopt}
+	return {status = 1, data = authopt}
 end 
 
 cmd_map["/authopt"] = function(map)
