@@ -60,10 +60,11 @@ end
 
 local function wxshopset(conn, account, data)
 	local appid, shop_name, shop_id, ssid, secretkey, wx = data.appid, data.shop_name, data.shop_id, data.ssid, data.secretkey, tonumber(data.wx)
-	if wx == 1 and not (appid and shop_name and shop_id and ssid and secretkey and wx) then
-		return {status = 1, data = "invalid param"}
+	if wx and wx == 1 then
+		if not (appid and shop_name and shop_id and ssid and secretkey and wx) then
+			return {status = 1, data = "invalid param"}
+		end
 	end
-	
 
 	local cloud = read_config()
 	if tonumber(cloud.switch) == 1 then 
