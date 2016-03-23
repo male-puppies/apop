@@ -43,9 +43,8 @@ end
 local function get_bypassurl()
 
 	local url = {}
-	table.insert(url, {["host"] = "ifeng.com", ["uri"]="/", ["action"] = 1})
 	table.insert(url, {["host"] = "captive.apple.com", ["uri"]= "/hotspot-detect.html", ["action"] = 1})
-	table.insert(url, {["host"] = "wifi.weixin.qq.com", ["uri"] ="/resources/js/wechatticket/wechatutil.js", ["action"] = 1})
+	table.insert(url, {["host"] = "wifi.weixin.qq.com", ["uri"] ="/resources", ["action"] = 1})
 	table.insert(url, {["host"] = "wifi.weixin.qq.com", ["uri"] ="/operator", ["action"] = 1})
 	table.insert(url, {["host"] = "short.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
 	table.insert(url, {["host"] = "minorshort.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
