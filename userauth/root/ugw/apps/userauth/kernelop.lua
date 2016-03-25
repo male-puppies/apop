@@ -43,12 +43,10 @@ end
 local function get_bypassurl()
 
 	local url = {}
-	table.insert(url, {["host"] = "captive.apple.com", ["uri"]= "/hotspot-detect.html", ["action"] = 1})
-	table.insert(url, {["host"] = "wifi.weixin.qq.com", ["uri"] ="/resources", ["action"] = 1})
-	table.insert(url, {["host"] = "wifi.weixin.qq.com", ["uri"] ="/operator", ["action"] = 1})
-	table.insert(url, {["host"] = "short.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
-	table.insert(url, {["host"] = "minorshort.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
-	table.insert(url, {["host"] = "dns.weixin.qq.com", ["uri"] ="/cgi-bin", ["action"] = 1})
+	table.insert(url, {["host"] = string.lower("*apple.com"), ["uri"]= "/hotspot-detect.html", ["action"] = 1})
+	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/resources", ["action"] = 1})
+	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/operator", ["action"] = 1})
+	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/cgi-bin", ["action"] = 1})
 	return url
 end
 
@@ -104,7 +102,7 @@ end
 
 local function bypass_mac(ip, mac)
 	local map = {}
-	map.AuthPolicy = {{AuthPolicyName = "bp" .. ip, AuthType = 2, PolicyType = 1, Timeout = 20, Enable = 1, Priority = 10, IpRange = {{Start = ip, End = ip}}}}
+	map.AuthPolicy = {{AuthPolicyName = "bp" .. ip, AuthType = 1, PolicyType = 1, Timeout = 20, Enable = 1, Priority = 10, IpRange = {{Start = ip, End = ip}}}}
 	local cmd = string.format("auth_tool '%s'", js.encode(map))
 	read(cmd, io.popen)
 end

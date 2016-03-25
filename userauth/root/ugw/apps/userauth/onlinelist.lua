@@ -24,8 +24,8 @@ function method.exist_user(ins, name)
 end
 
 function method.add(ins, mac, ip, name)
-	assert(not ins.usermap[mac])
-	local user = online.new()
+	--assert(not ins.usermap[mac])
+	local user = ins.usermap[mac] or online.new()
 	user:set_mac(mac)
 	user:set_ip(ip)
 	user:set_name(name)
