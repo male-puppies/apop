@@ -80,7 +80,6 @@ function againCallWechat() {
 }
 
 function macAutoAuth() {
-	console.log(info)
 	$.post(
 		"/weixin2_login",
 		{
@@ -125,7 +124,6 @@ myHandler = function(error) {
 function createIframe(){
 	var iframe = document.createElement("iframe");
 	iframe.style.cssText = "display:none;width:0px;height:0px;";
-	alert("load iframe")
 	document.body.appendChild(iframe);
 	loadIframe = iframe;
 }
