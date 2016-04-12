@@ -90,15 +90,13 @@ function macAutoAuth() {
 		function(d) {
 			console.log(d);
 			if (d.status == 0) {
-				console.log(d.data)
-				console.log(d.data.substring(0, 4))
 				if (d.data && d.data != "" && d.data != "ok" && d.data.substring(0, 4) == "http") {
-					//window.location.href = d.data;
+					window.location.href = d.data;
 				} else {
-					//window.location.href = "http://163.com";
+					window.location.href = "http://www.baidu.com";
 				}
 			} else {
-				alert("认证失败！");
+				alert("认证失败！请尝试刷新页面重新操作！");
 			}
 		},
 		"json"

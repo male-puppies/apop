@@ -140,7 +140,7 @@ cmd_map["/weixin2_login"] = function(map)
 	print("wx auth ok", ip, mac)
 	dispatcher.login_success(mac, ip, openid)
 	
-	local s = read("/etc/config/authopt")
+	local s = read("/etc/config/authopt.json")
 	if s then
 		local map = js.decode(s)
 		if map and map.redirect and map.redirect ~= "" then
