@@ -605,7 +605,7 @@ end
 local function setwanconfig(group, data)
 	local curs = uci.cursor()
 	if type(data) ~= "table" then
-		log.debug("error setwanconfig %s", data);
+		log.debug("Invalid parameter setwanconfig");
 		return {status = 1, data = "参数错误"} 
 	end
 	
@@ -691,7 +691,7 @@ end
 local function setlanconfig(group, data)
 	local curs = uci.cursor()
 	if type(data) ~= "table" and type(data.dhcp) ~= "table" then
-		log.debug("error setlanconfig %s", data);
+		log.debug("Invalid parameter setlanconfig");
 		return {status = 1, data = "参数错误"} 
 	end
 	
@@ -748,7 +748,7 @@ end
 local function addroutes(group, data)
 	local curs = uci.cursor()
 	if type(data) ~= "table" then
-		log.debug("error addroutes %s", data);
+		log.debug("Invalid parameter addroutes");
 		return {status = 1, data = "参数错误"} 
 	end
 	
@@ -780,7 +780,7 @@ end
 local function updateroutes(group, data)
 	local curs = uci.cursor()
 	if type(data) ~= "table" then
-		log.debug("error updateroutes %s", data);
+		log.debug("Invalid parameter updateroutes");
 		return {status = 1, data = "参数错误"} 
 	end
 	
@@ -825,7 +825,7 @@ end
 local function deleteroutes(group, data)
 	local curs = uci.cursor()
 	if type(data) ~= "table" then
-		log.debug("error deleteroutes %s", data);
+		log.debug("Invalid parameter deleteroutes");
 		return {status = 1, data = "参数错误"} 
 	end
 	
@@ -842,7 +842,7 @@ local function deleteroutes(group, data)
 	local mark = curs:delete("network", data[".name"])
 	if not mark then
 		log.debug("error updateroutes section")
-		return {status = 1, data = "无效的接口名"}
+		return {status = 1, data = ""}
 	end
 	
 	local mit = curs:commit("network")
