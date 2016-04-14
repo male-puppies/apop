@@ -11,7 +11,7 @@ local function call(...)
 	return os.execute(...) / 256
 end
 
-function in_table(value, tbl)
+local function in_table(value, tbl)
 	for _, v in ipairs(tbl) do
 		if v == value then
 			return true
