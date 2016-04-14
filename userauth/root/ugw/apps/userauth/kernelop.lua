@@ -5,6 +5,9 @@ local policy = require("policy")
 local memfile = require("memfile")
 local policies = require("policies")
 
+local auth_step1 = 1
+local auth_step2 = 2
+
 local last_iface_count
 local read, save, save_safe = common.read, common.save, common.save_safe
 local userauth_config = "/tmp/memfile/userauth_config.json"
@@ -29,6 +32,7 @@ local function get_policy()
 			AuthType = authtype,
 			Priority = pri,
 			IpRange = {{Start = item:get_ip1(), End = item:get_ip2()}},
+			Step = auth_step2,
 		}
 		table.insert(polarr, map)
 		pri = pri - 1 	assert(pri >= 0)
@@ -41,12 +45,12 @@ local function get_global()
 end
 
 local function get_bypassurl()
-
 	local url = {}
-	table.insert(url, {["host"] = string.lower("*apple.com"), ["uri"]= "/hotspot-detect.html", ["action"] = 1})
-	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/resources", ["action"] = 1})
-	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/operator", ["action"] = 1})
-	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/cgi-bin", ["action"] = 1})
+	table.insert(url, {["host"] = string.lower("*apple.com"), ["uri"]= "/hotspot-detect.html", ["action"] = 1, ["step"] = auth_step1})
+	table.insert(url, {["host"] = string.lower("*apple.com"), ["uri"]= "/hotspot-detect.html", ["action"] = 1, ["step"] = auth_step2})
+	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/resources", ["action"] = 1, ["step"] = auth_step2})
+	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/operator", ["action"] = 1, ["step"] = auth_step2})
+	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/cgi-bin", ["action"] = 1, ["step"] = auth_step2})
 	return url
 end
 
@@ -100,9 +104,21 @@ local function get_all_user()
 	return user
 end
 
-local function bypass_mac(ip, mac)
+local function bypass_mac(ip, mac, step)
+	local auth_step 
 	local map = {}
-	map.AuthPolicy = {{AuthPolicyName = "bp" .. ip, AuthType = 1, PolicyType = 1, Timeout = 20, Enable = 1, Priority = 10, IpRange = {{Start = ip, End = ip}}}}
+	map.AuthPolicy = {
+			{
+				AuthPolicyName = "bp" .. ip, 
+				AuthType = 1, 
+				PolicyType = 1, 
+				Timeout = 25, 
+				Enable = 1, 
+				Priority = 10, 
+				IpRange = {{Start = ip, End = ip}},
+				Step = step,
+			}
+		}
 	local cmd = string.format("auth_tool '%s'", js.encode(map))
 	read(cmd, io.popen)
 end
