@@ -18,6 +18,8 @@ local wx_auth_timeout = 20
 local wx_wait = {queue = {}, ext_map = {}}
 local authopt = {sms = 0, wx = 0, adtype = "local"}
 
+local auth_step1 = 1
+local auth_step2 = 2
 local tcp_addr = "tcp://127.0.0.1:9989"
 
 local function cursec()
@@ -43,9 +45,9 @@ cmd_map["/authopt"] = function(map)
 	if not (ip and mac) then 
 		return {status = 1, data = "invalid param"}
 	end
-	if authopt.wx and authopt.wx ~= 0 then
-		kernelop.bypass_mac(ip, mac)
-	end
+	-- if authopt.wx and authopt.wx ~= 0 then
+	-- 	kernelop.bypass_mac(ip, mac, auth_step1)
+	-- end
 	return {wx = authopt.wx, sms = authopt.sms}
 end
 
@@ -79,7 +81,7 @@ cmd_map["/wxlogin2info"] = function(map)
 	print("cache", extend, sec, mac)
 	wx_wait.ext_map[mac] = extend
 	table.insert(wx_wait.queue, {extend = extend, mac = mac, active = sec})
-	
+	kernelop.bypass_mac(map.ip, map.mac, auth_step2)
 	return res
 end 
 
@@ -209,7 +211,7 @@ end
 
 cmd_map["/webui/login.html"] = function(map)  
 	if authopt.wx and authopt.wx ~= 0 then
-		kernelop.bypass_mac(map.ip, map.mac)
+		kernelop.bypass_mac(map.ip, map.mac, auth_step1)
 	end
 	return {status = 0, data = "ok"}
 end
