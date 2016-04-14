@@ -60,16 +60,21 @@ end
 
 local function touchpwd(curs)
 	assert(curs)
-	
-	local mark = true
+
 	if not io.open("/etc/config/password") then
 		os.execute("touch /etc/config/password")
-		if not curs:section("password", "password", "password", {pwd = "admin"}) then
-			mark = false
+		curs:section("password", "password", "password", {pwd = "admin"})
+		curs:commit("password")
+		return false
+	else
+		if not curs:get("password", "password", "pwd") then
+			curs:section("password", "password", "password", {pwd = "admin"})
+			curs:commit("password")
+			return false
 		end
 	end
 
-	return mark
+	return true
 end
 
 local function setlogintime(path, loginid)
@@ -117,14 +122,10 @@ local function login(group, data)
 	
 	local touch = touchpwd(curs)
 	if not touch then
-		return {status = 1, data = ""}
+		curs = uci.cursor()
 	end
 	
-	local pwd = curs:get("password", "password", "pwd")
-	if not pwd then
-		curs:section("password", "password", "password", {pwd = "admin"})
-		pwd = "admin"
-	end
+	local pwd = curs:get("password", "password", "pwd") or "admin"
 	if data.password ~= pwd then
 		return {status = 1, data = "密码错误！"}
 	end
@@ -137,12 +138,7 @@ local function login(group, data)
 	map.md5 = md5.sumhexa(pwd)
 	map.id = loginid
 
-	if curs:commit("password") then
-		return {status = 0, data = map}
-	else
-		log.debug("error login commit fail")
-		return {status = 1, data = ""}
-	end
+	return {status = 0, data = map}
 end
 
 local function updatelogintime(group, data)
@@ -160,9 +156,9 @@ local function setpassword(group, data)
 	
 	local touch = touchpwd(curs)
 	if not touch then
-		return {status = 1, data = ""}
+		curs = uci.cursor()
 	end
-	
+
 	local opwd = curs:get("password", "password", "pwd") or "admin"
 	if data.opwd ~= opwd then
 		return {status = 1, data = "原密码错误！"}
