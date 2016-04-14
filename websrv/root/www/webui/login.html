@@ -93,23 +93,11 @@ function login_action() {
 	)
 }
 
-function weixin_login_action(d) {
-	Wechat_GotoRedirect(d.AppID, d.Extend, d.TimeStamp, d.Sign, d.ShopID, d.AuthUrl, d.Mac, d.SSID, d.BSSID); 
-}
-
 function call_weixin() {
 	var params = window.location.search;
-	var obj = {};
-	obj.now = new Date().getTime();
-	$.post(
-		"/wxlogin2info" + params,
-		obj,
-		weixin_login_action,
-		"json"
-	);
+	window.location.href = "wx-auth.html" + params;
 }
 </script>
-<script type="text/javascript" src="http://wifi.weixin.qq.com/resources/js/wechatticket/wechatutil.js"></script>
 </head>
 
 <body>
