@@ -404,7 +404,7 @@ end
 
 
 local function get_text_cfg_files()
-	local file_map = {}
+	local file_cnt, file_map = 0, {}
 
     for file in lfs.dir(const.text_dir) do
 	    if file ~= "." and file ~= ".." then
@@ -413,12 +413,15 @@ local function get_text_cfg_files()
 	        if attr.mode ~= "directory" then
 	        	if string.find(file, ".json") then
 	        		file_map[file] = "1"
+				file_cnt = file_cnt + 1
 	        	end
 			end
 	    end
 	end
-
-	return file_map
+	if file_cnt != 0 then
+		return file_map
+	end
+	return nil
 end
 
 
