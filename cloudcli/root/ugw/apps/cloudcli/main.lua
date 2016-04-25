@@ -418,7 +418,7 @@ local function get_text_cfg_files()
 			end
 	    end
 	end
-	if file_cnt != 0 then
+	if file_cnt ~= 0 then
 		return file_map
 	end
 	return nil
