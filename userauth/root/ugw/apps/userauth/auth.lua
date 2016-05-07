@@ -210,9 +210,10 @@ cmd_map["/PhoneNo"] = function(map)
 end
 
 cmd_map["/webui/login.html"] = function(map)  
-	if authopt.wx and authopt.wx ~= 0 then
-		kernelop.bypass_mac(map.ip, map.mac, auth_step1)
-	end
+	kernelop.bypass_mac(map.ip, map.mac, auth_step1)
+	--if authopt.wx and authopt.wx ~= 0 then
+	--	kernelop.bypass_mac(map.ip, map.mac, auth_step1)
+	--end
 	return {status = 0, data = "ok"}
 end
 
