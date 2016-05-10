@@ -51,6 +51,16 @@ cmd_map["/authopt"] = function(map)
 	return {wx = authopt.wx, sms = authopt.sms}
 end
 
+cmd_map["/bypass_host"] = function(map)
+	local ip, mac = map.ip, map.mac
+	if not (ip and mac) then 
+		return {status = 1, data = "invalid param"}
+	end
+		
+	kernelop.bypass_mac(ip, mac, auth_step1)
+	return {status = 0, data = "ok"}
+end
+
 cmd_map["/wxlogin2info"] = function(map)
 	if authopt.adtype == "local" and authopt.wx ~= 1 then 
 		return {status = 1, data = "not support wx"}
@@ -210,7 +220,7 @@ cmd_map["/PhoneNo"] = function(map)
 end
 
 cmd_map["/webui/login.html"] = function(map)  
-	kernelop.bypass_mac(map.ip, map.mac, auth_step1)
+	--kernelop.bypass_mac(map.ip, map.mac, auth_step1)
 	--if authopt.wx and authopt.wx ~= 0 then
 	--	kernelop.bypass_mac(map.ip, map.mac, auth_step1)
 	--end
