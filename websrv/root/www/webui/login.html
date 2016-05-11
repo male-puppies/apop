@@ -22,10 +22,12 @@ $(function() {
 		obj,
 		function(d) {
 			if (d.wx == 1) {
-				$(".auth .weixin,.font").show();
+				$(".auth,.font").show();
+				$(".weixin").css("display", "inline-block");
 			}
 			if (d.sms == 1) {
-				$(".auth .sms,.font").show();
+				$(".auth,.font").show();
+				$(".sms").css("display", "inline-block");
 			}
 		},
 		"json"
