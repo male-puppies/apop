@@ -101,7 +101,7 @@ function web_action() {
 					window.location.href = "http://www.baidu.com";
 				}
 			} else {
-				$(".web-confirm .tips").html("登录失败！" + (d.data ? d.data : ""));
+				$(".web-confirm .tips").html("登录失败！");
 			}
 		},
 		"json"
@@ -127,7 +127,7 @@ function sms_action() {
 					window.location.href = "http://www.baidu.com";
 				}
 			} else {
-				$(".sms-confirm .tips").html("登录失败！" + (d.data ? d.data : ""));
+				$(".sms-confirm .tips").html("登录失败！");
 			}
 		},
 		"json"
@@ -136,7 +136,7 @@ function sms_action() {
 
 function auto_action(data) {
 	if (typeof data.Mac == "undefined" && typeof data.Extend == "undefined") {
-		alert("登录失败！" + (d.data ? d.data : ""));
+		alert("登录失败！");
 		return;
 	}
 	$.post(
@@ -153,7 +153,7 @@ function auto_action(data) {
 					window.location.href = "http://www.baidu.com";
 				}
 			} else {
-				alert("登录失败！" + (d.data ? d.data : ""));
+				alert("登录失败！");
 			}
 		},
 		"json"
