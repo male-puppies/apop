@@ -106,7 +106,7 @@ local function save_wx_user()
 		local user = {
 			name = openid,
 			pwd = "123456",
-			desc = "微信认证用户",
+			desc = "",
 			enable = 1,
 			multi = 0,
 			bind = "none",

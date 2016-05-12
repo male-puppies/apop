@@ -1,148 +1,96 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta http-equiv="content-type" content="text/html;charset=utf-8">
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" /> 
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0" />
-<title>Web UI</title>
-<link href="static/css/normal_ws.css" rel="stylesheet">
-<link href="static/css/scard.css" rel="stylesheet">
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>认证中心</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="format-detection" content="telephone=no">
+<link href="static/css/index.css" rel="stylesheet">
 <script src="static/js/jquery-1.11.1.min.js" type="text/javascript"></script>
-<script src="static/js/scard.js" type="text/javascript"></script>
-<script type="text/javascript">
+<script src="static/js/index.js" type="text/javascript"></script>
+<script>
 var g_redirect="http://www.baidu.com";
 $(function() {
 	var obj = {}
 	obj.now = new Date().getTime();
 	var params = window.location.search;
-	$("#login").on("click", login_action);
 	$.post(
 		"/authopt" + params,
 		obj,
 		function(d) {
 			if (d.wx == 1) {
-				$(".wx,.wx-sms").show();
+				$(".auth,.font").show();
+				$(".weixin").css("display", "inline-block");
 			}
 			if (d.sms == 1) {
-				$(".sms,.wx-sms").show();
+				$(".auth,.font").show();
+				$(".sms").css("display", "inline-block");
 			}
 		},
 		"json"
 	);
 });
-
-function login_action() {
-	var params = window.location.search,
-		username = $("#username").val(),
-		password = $("#password").val();
-	var sarr = window.location.search.substring(1).split("&");
-	var obj = {}
-	for (var i = 0; i < sarr.length; i++) {
-		var tokens = sarr[i].split("=");
-		if (tokens.length == 2) {
-			obj[tokens[0]] = tokens[1];
-		}
-	}
-	
-	if (!(obj.hasOwnProperty("mac") && obj.hasOwnProperty("ip"))) {
-		alert("非法参数！尝试重新加载！");
-		return;
-	}
-	
-	var mac = obj.mac;
-	var ip = obj.ip;
-	
-	var mac_reg = /^[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$/;
-	var ip_reg = /^[1-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/
-	if (!(mac_reg.test(mac) && ip_reg.test(ip))) {
-		alert("非法参数！尝试重新加载！");
-		return;
-	}
-
-	if (username == "" || password == "") {
-		alert("请输入帐号或密码！");
-		return;
-	}
-
-	if (password.length < 4) {
-		alert("密码错误！");
-		return;
-	}
-	
-	$.post(
-		"/cloudlogin" + params,
-		{
-			username: username,
-			password: password,
-			mac: mac, 
-			ip: ip
-		},
-		function(d) {
-			if (d.status == 0) {
-				if (d.data == "ok") {
-					window.location.href = "http://www.baidu.com";
-				} else {
-					window.location.href = d.data;
-				}
-			} else {
-				alert("登录失败！" + (d.data ? d.data : ""));
-			}
-		},
-		"json"
-	)
-}
-
-function call_weixin() {
-	var params = window.location.search;
-	window.location.href = "wx-auth.html" + params;
-}
 </script>
 </head>
 
 <body>
-<header class="p-header" id="p-header">
-	<div class="title">网络认证中心</div> 
-</header>
 <div class="big">
-	<!-- Basic  -->
-	<section id="ugw-basic" class="shadow">
-		<div class="page-header">
-			<h1>登录</h1>
+	<div class="big-m">
+		<div class="main">
+			<div class="top">
+				<p>认证中心</p>
+			</div>
+			
+			<div class="login">
+				<div class="text-input">
+					<div class="input">
+						<input id="web_user" type="text" placeholder="账号" />
+					</div>
+					<div class="input">
+						<input id="web_pwd" type="text" placeholder="密码" />	
+					</div>
+				</div>
+				<div class="web-confirm">
+					<div class="tips" style="height:28px;line-height:28px;font-size:14px;color:#f00"></div>
+				</div>
+				<div class="btn-input">
+					<input type="button" onclick="web_action();" value="登录" />
+				</div>
+			</div>
+			
+			<div class="a-login">
+				<div class="font clearfix">
+					<p class="left"><i></i></p>
+					<p class="mid">其它登录方式</p>
+					<p class="right"><i></i></p>
+				</div>
+				<div class="auth">
+					<a class="weixin" href="javascript:;" onclick="call_weixin();"></a>
+					<a class="sms" href="javascript:;" onclick="call_sms();"></a>
+				</div>
+			</div>
 		</div>
-		<div class="row-fluid">
-			<ul style="width: 280px; margin: 0 auto;">
-				<li>
-					<label>
-						<span style="min-width: 46px;">帐号:</span>
-						<input id="username" type="text" />
-					</label>
-				</li>
-				<li>
-					<label>
-						<span style="min-width: 46px;">密码:</span>
-						<input id="password" type="password" />
-					</label>
-				</li>
-				<li>
-					<span style="min-width: 46px;"></span>
-					<input id="login" style="width:80px;cursor:pointer;" type="button" value="登录" />
-				</li>
-				<li class="auth">
-					<label>
-						<p class="wx-sms">其它登录方式:</p>
-						<p class="wx"><a href="javascript:;" onclick="call_weixin()">微信认证</a></p>
-						<p class="sms"><a href="javascript:;" onclick="showRecharge()">短信认证</a></p>
-					</label>
-				</li>
-			</ul>
-		</div>
-	</section>
-</div>
-<footer class="footer">
-	<div class="container">
-		<p>Copyright © 2015 YXA10015907</p>
 	</div>
-</footer>
+</div>
+
+<div class="mengban"></div>
+<div class="alertbox sms-confirm">
+    <div class="alert-title">短信认证</div>
+	<div class="tips"></div>
+    <div class="number">
+		<input id="sms_user" type="tel" placeholder="请输入手机号码" />
+	</div>
+    <div class="code">
+		<input id="sms_pwd" type="tel" placeholder="请输入验证码" />
+		<span id="sms_code" onclick="sms_code();">获取验证码</span>
+	</div>
+    <div class="btns">
+        <span class="cancle">取消</span>
+        <span onclick="sms_action();">确定</span>
+    </div>
+</div>
 </body>
 </html>
