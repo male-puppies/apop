@@ -60,7 +60,9 @@ local function reset(iface_arr)
 		BypassUrl = get_bypassurl(),
 	}
 	
-	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", js.encode(cfg))
+	local cfg_str = js.encode(cfg) assert(cfg_str)
+	cfg_str = string.gsub(cfg_str, '"BypassUrl":{}', '"BypassUrl":[]') assert(cfg_str)
+	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", cfg_str)
 	log.debug("%s", cmd)
 	read(cmd, io.popen)
 end
