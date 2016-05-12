@@ -209,6 +209,28 @@ local function onlineget(conn, group, data)
 	return pcli:query_auth({cmd = "online_get", data = {group = group, data = data}}) or get_status(1, "error")
 end 
 
+
+local function check_whitelist(map)
+	return true, "ok"
+end
+
+
+local function whitelistset(conn, group, arr)
+	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli)
+	local ret, err = check_whitelist(arr) 
+	if not ret then 
+		return get_status(1, err)
+	end 
+
+	return pcli:query_auth({cmd = "whitelist_set", data = {group = group, data = arr}}) or get_status(1, "error")
+end
+
+local function whitelistget(conn, group, data)
+	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli) 
+	return pcli:query_auth({cmd = "whitelist_get", data = {group = group, data = data}}) or get_status(1, "error")
+end 
+
+
 return {
 	useradd = useradd,
 	userdel = userdel,
@@ -222,4 +244,6 @@ return {
 	policyget = policyget,
 	onlinedel = onlinedel,
 	onlineget = onlineget,
+	whitelistset = whitelistset,
+	whitelistget = whitelistget,
 }

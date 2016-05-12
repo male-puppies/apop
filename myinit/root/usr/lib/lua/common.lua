@@ -1,3 +1,5 @@
+local lfs = require("lfs")
+
 local function read(path, func)
 	func = func and func or io.open
 	local fp, err = func(path, "r")
@@ -24,4 +26,12 @@ local function save_safe(path, s)
 	os.execute(cmd)
 end
 
-return {read = read, save = save, save_safe = save_safe}
+
+local function file_exist(file)
+	if file and lfs.attributes(file, "mode") then
+		return true
+	end
+	return false
+end
+
+return {read = read, save = save, save_safe = save_safe, file_exist = file_exist}

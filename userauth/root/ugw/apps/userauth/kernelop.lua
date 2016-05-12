@@ -4,6 +4,7 @@ local js = require("cjson.safe")
 local policy = require("policy")
 local memfile = require("memfile")
 local policies = require("policies")
+local hostlist = require("hostlist")
 
 local auth_step1 = 1
 local auth_step2 = 2
@@ -45,16 +46,7 @@ local function get_global()
 end
 
 local function get_bypassurl()
-	local url = {}
-	table.insert(url, {["host"] = string.lower("*apple.com"), ["uri"]= "/hotspot-detect.html", ["action"] = 1, ["step"] = auth_step1})
-	table.insert(url, {["host"] = string.lower("connect.rom.miui.com"), ["uri"]= "/generate_204", ["action"] = 1, ["step"] = auth_step1})
-	
-	table.insert(url, {["host"] = string.lower("*apple.com"), ["uri"]= "/hotspot-detect.html", ["action"] = 1, ["step"] = auth_step2})
-	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/resources", ["action"] = 1, ["step"] = auth_step2})
-	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/operator", ["action"] = 1, ["step"] = auth_step2})
-	table.insert(url, {["host"] = string.lower("*weixin.qq.com*"), ["uri"] ="/cgi-bin", ["action"] = 1, ["step"] = auth_step2})
-	table.insert(url, {["host"] = string.lower("*miui.com"), ["uri"]= "/generate_204", ["action"] = 1, ["step"] = auth_step2})
-	return url
+	return hostlist.get_bypassurl()
 end
 
 local function reset(iface_arr)

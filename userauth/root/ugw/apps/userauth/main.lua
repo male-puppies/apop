@@ -31,6 +31,8 @@ local cmd_map = {
 
 	online_del = dispatcher.online_del,
 	online_get = dispatcher.online_get,
+	whitelist_set = dispatcher.whitelist_set,
+	whitelist_get = dispatcher.whitelist_get,
 }
 
 local function on_message(topic, data)

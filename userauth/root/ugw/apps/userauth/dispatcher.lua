@@ -6,6 +6,7 @@ local policies = require("policies")
 local kernelop = require("kernelop")
 local userlist = require("userlist")
 local onlinelist = require("onlinelist")
+local hostlist = require("hostlist")
 
 local authopt
 
@@ -360,6 +361,18 @@ local function set_authopt(opt)
 	authopt = opt
 end
 
+local function whitelist_get(data) 
+	return {status = 0, data = hostlist.whitelist_get()}
+end
+
+
+local function whitelist_set(map)
+	local group, map = map.group, map.data
+	hostlist.whitelist_set(map)
+	kernelop.reset()
+	return {status = 0}
+end
+
 return {
 	save = save,
 	auth = auth, 
@@ -385,4 +398,7 @@ return {
 
 	adjust_elapse = adjust_elapse,
 	login_success = login_success,
+
+	whitelist_set = whitelist_set,
+	whitelist_get = whitelist_get,
 }
