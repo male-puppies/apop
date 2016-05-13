@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ac9531_reset_button
 	SECTION:=Applications
 	CATEGORY:=Puppies
-	TITLE:=self init script
+	TITLE:=QCA9531 Reset Button
 endef
 
 define Package/ac9531_reset_button/description
