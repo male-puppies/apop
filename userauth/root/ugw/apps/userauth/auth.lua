@@ -95,15 +95,13 @@ cmd_map["/wxlogin2info"] = function(map)
 	return res
 end 
 
-local openid_map = {}
 local function add_wx_user(openid)
-	openid_map[openid] = 1 
-end
-
-local function save_wx_user()
-	local del, arr = {}, {}
-	for openid in pairs(openid_map) do 
-		local user = {
+	local ul = userlist.ins()
+	if ul:exist(openid)  then
+		return
+	end
+	local arr = {}
+	local user = {
 			name = openid,
 			pwd = "123456",
 			desc = "",
@@ -114,21 +112,10 @@ local function save_wx_user()
 			expire = {0, os.date("%Y%m%d") .. " 000000"},
 			remain = {0, 0},
 		}
-		table.insert(arr, user)
-		table.insert(del, openid)
-	end
-
-	if #del == 0 then 
-		return 
-	end 
-
-	for _, openid in ipairs(del) do 
-		assert(openid)
-		openid_map[openid] = nil
-	end 
-
+	table.insert(arr, user)
 	dispatcher.user_add({group = "default", data = arr}, true)
 end
+
 
 cmd_map["/weixin2_login"] = function(map)  
 	local extend, openid = map.extend, map.openid
@@ -315,7 +302,6 @@ local function run()
 	send_sms.run()
 	math.randomseed(os.time())
 	set_timeout(5, 5, clear_wx_wait)
-	set_timeout(5, 5, save_wx_user)
 end
 
 return {run = run, init = init}
