@@ -31,10 +31,12 @@ $(function() {
 		"json"
 	);
 
-	nodeTimesAuto(6);
+	nodeTimesAuto(9);
 	setTimeout(function() {
 		call_weixin();
 	}, 500);
+	
+	document.addEventListener('visibilitychange', putNoResponse, false);
 });
 
 function weixin_login_action(d) {
@@ -63,16 +65,14 @@ function nodeTimesAuto(count) {
 		} else {
 			doShowAutoAuth();
 		}
-	}, 1500);
+	}, 1000);
 }
 
 function doShowAutoAuth() {
 	$(".main .btn b").css("display", "none");
 	$(".main .btn span").html("尝试再次打开微信");
 	$(".main .btn").attr("onclick", "againCallWechat()");
-	if (falseJump == true) {
-		$(".main .left").css("display", "block");
-	}
+	$(".main .left").css("display", "block");
 }
 
 function againCallWechat() {
@@ -106,19 +106,19 @@ function putNoResponse(ev){
 	clearTimeout(noResponse);
 }	
 
-function errorJump() {
+function errorJump(result) {
+	var ua = navigator.userAgent;
 	var now = new Date().getTime();
 	if ((now - callUpTimestamp) > 4*1000) {
 		falseJump = false;
 		return;
 	}
+	if (ua.indexOf("Chrome") != -1) {
+		document.location = result.data;
+	}
 	falseJump = true;
 	//alert('该浏览器不支持自动跳转微信请手动打开微信\n如果已跳转请忽略此提示');
 }
- 
-myHandler = function(error) {
-	errorJump();
-};
  
 function createIframe(){
 	var iframe = document.createElement("iframe");
@@ -134,14 +134,12 @@ function jsonpCallback(result) {
 		var ua = navigator.userAgent;              
 		if (ua.indexOf("iPhone") != -1 || ua.indexOf("iPod") != -1 || ua.indexOf("iPad") != -1) {   //iPhone             
 			document.location = result.data;
-		} else if (ua.indexOf("Chrome") != -1) {
-			document.location = result.data;
 		} else {
 			createIframe();
 			callUpTimestamp = new Date().getTime();
 			loadIframe.src = result.data;
 			noResponse = setTimeout(function(){
-				errorJump();
+				errorJump(result);
 			},3000);
 		}			    
 	} else if (result && !result.success) {
