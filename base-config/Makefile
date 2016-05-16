@@ -20,9 +20,9 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
-	SECTION:=Applications
-	CATEGORY:=Puppies
-	TITLE:=Base config setup for this board
+  SECTION:=Applications
+  CATEGORY:=Puppies
+  TITLE:=Base config setup for this board 
 endef
 
 define Package/$(PKG_NAME)/description
