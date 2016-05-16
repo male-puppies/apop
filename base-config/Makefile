@@ -6,14 +6,16 @@
 #
 
 include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=base-config
-PKG_VERSION:=1.0.0
+PKG_VERSION:=2015-08-20
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Chen Minqiang <ptpt52@gmail.com>
 PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=
+PKG_MAINTAINER:=helloshiki <aquariusye@163.com>
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
