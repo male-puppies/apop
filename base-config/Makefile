@@ -19,37 +19,25 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/$(PKG_NAME)/Default
+  SECTION:=Applications
+  CATEGORY:=Puppies
+  SUBMENU:=Base config setup for this board
+  DEPENDS:=
+endef
+
 define Package/$(PKG_NAME)
-	SECTION:=Applications
-	CATEGORY:=Puppies
-	TITLE:=Base config setup for this board
+  $(call Package/$(PKG_NAME)/Default)
+  TITLE:=$(PKG_NAME)
 endef
 
 define Package/$(PKG_NAME)/description
-	Base config for this board
-endef
-
-define Build/Prepare
-	true
-endef
-
-define Build/Compile
-	true
+  Base config for this board
 endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/base_config
 endef
-
-define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/base_config.config $(1)/etc/config/base_config
-ifeq ($(CONFIG_TARGET_ar71xx_generic_AP143),y)
-	$(INSTALL_DATA) ./files/ap143.defaults $(1)/etc/uci-defaults/95-base-config
-endif
-endef
-
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
@@ -62,11 +50,26 @@ fi
 exit 0
 endef
 
-define Package/$(PKG_NAME)/prerm
-	true
-	exit 0
+define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/base_config.config $(1)/etc/config/base_config
+ifeq ($(CONFIG_TARGET_ar71xx_generic_AP143),y)
+	$(INSTALL_DATA) ./files/ap143.defaults $(1)/etc/uci-defaults/95-base-config
+endif
 endef
 
+define Build/Configure
+  true
+endef
+
+define Build/Prepare
+  true
+endef
+
+define Build/Compile
+  true
+endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
 
