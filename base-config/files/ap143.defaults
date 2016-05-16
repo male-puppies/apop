@@ -1,0 +1,21 @@
+#!/bin/sh
+
+initialized=`uci get base_config.@status[0].initialized`
+[ x$initialized = x1 ] && exit 0
+
+uci -q batch <<-EOT
+delete network.lan
+set network.lan0=interface
+set network.lan0.ifname='eth0 eth1'
+set network.lan0.proto=static
+set network.lan0.type=bridge
+set network.lan0.ipaddr='172.16.0.1'
+set network.lan0.netmask='255.255.0.0'
+EOT
+uci commit network
+
+touch /etc/config/base_config
+uci get base_config.@status[0] || uci add base_config status
+uci set base_config.@status[0].initialized='1'
+uci commit base_config
+exit 0
