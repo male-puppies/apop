@@ -17,16 +17,10 @@ PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/$(PKG_NAME)/Default
-  SECTION:=Applications
-  CATEGORY:=Puppies
-  SUBMENU:=Base config setup for this board
-  DEPENDS:=
-endef
-
 define Package/$(PKG_NAME)
-  $(call Package/$(PKG_NAME)/Default)
-  TITLE:=$(PKG_NAME)
+	SECTION:=Applications
+	CATEGORY:=Puppies
+	TITLE:=Base config setup for this board
 endef
 
 define Package/$(PKG_NAME)/description
