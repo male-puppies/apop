@@ -104,7 +104,28 @@ local function add_wx_user(openid)
 	local user = {
 			name = openid,
 			pwd = "123456",
-			desc = "",
+			desc = "微信认证用户",
+			enable = 1,
+			multi = 0,
+			bind = "none",
+			maclist = {},
+			expire = {0, os.date("%Y%m%d") .. " 000000"},
+			remain = {0, 0},
+		}
+	table.insert(arr, user)
+	dispatcher.user_add({group = "default", data = arr}, true)
+end
+
+local function add_auto_user(name)
+	local ul = userlist.ins()
+	if ul:exist(name)  then
+		return
+	end
+	local arr = {}
+	local user = {
+			name = name,
+			pwd = "123456",
+			desc = "一键认证用户",
 			enable = 1,
 			multi = 0,
 			bind = "none",
@@ -147,6 +168,63 @@ cmd_map["/weixin2_login"] = function(map)
 		end
 	end
 	return {status = 0, data = "ok"}
+end
+
+cmd_map["/auto_login"] = function(map)
+	local auto_switch = read("/tmp/www/webui/auto_switch.json")
+	if not auto_switch then
+		return {status = 1, data = "not open auto auth"}
+	end
+	
+	local g_map, g_redirect = js.decode(auto_switch), ""
+	if g_map then
+		g_redirect = g_map.g_redirect or ""
+	end
+
+	local ip, mac = map.ip, map.mac
+	if not ip then
+		return {status = 1, data = "invalid param"}
+	end
+
+	if not mac then
+		local s = read("/proc/net/arp")
+		if not s then
+			return {status = 1, data = "not find arp"}
+		end
+		
+		s = s .. "\n"
+		local smap = {}
+		for line in string.gmatch(s, "(.-)\n") do
+			local lip, lmac = line:match("(%d+.%d+.%d+.%d+).-(%w%w:%w%w:%w%w:%w%w:%w%w:%w%w).-")
+			if lip and lmac then
+				smap[lip] = lmac
+			end
+		end
+	
+		mac = smap[ip]
+	end
+	if not mac then
+		return {status = 1, data = "not find mac"}
+	end
+	
+	local name = "auto-" .. mac
+	add_auto_user(name)
+	
+	dispatcher.login_success(mac, ip, name)
+	
+	if g_redirect and g_redirect ~= "" then
+		return {status = 0, data = g_redirect}
+	end
+
+	local s = read("/etc/config/authopt.json")
+	if s then
+		local map = js.decode(s)
+		if map and map.redirect and map.redirect ~= "" then
+			return {status = 0, data = map.redirect}
+		end
+	end
+	return {status = 0, data = "ok"}
+	
 end
 
 cmd_map["/cloudlogin"] = function(map)  
