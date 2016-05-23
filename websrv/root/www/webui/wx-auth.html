@@ -113,7 +113,7 @@ function errorJump(result) {
 		falseJump = false;
 		return;
 	}
-	if (ua.indexOf("Chrome") != -1) {
+	if (ua.indexOf("Chrome") != -1 && ua.indexOf("MI ") == -1 && ua.indexOf("QQBrowser") == -1) {
 		document.location = result.data;
 	}
 	falseJump = true;
