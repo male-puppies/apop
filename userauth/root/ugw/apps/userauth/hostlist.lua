@@ -59,7 +59,7 @@ local function get_bypassurl()
 	local whitelist = whitelist_get()
 	if whitelist and #whitelist > 0 then
 		for _, host in ipairs(whitelist) do
-			if host and #host > 3 then
+			if host and string.len(host) > 3 then
 				local info1 = {["host"] = host, ["uri"] = "", ["action"] = 1, ["step"] = auth_step1}
 				local info2 = {["host"] = host, ["uri"] = "", ["action"] = 1, ["step"] = auth_step2}
 				table.insert(bypassurl, info1)
