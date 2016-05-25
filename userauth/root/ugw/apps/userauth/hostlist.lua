@@ -21,6 +21,9 @@ local function hostlist_get(list_type)
 		return {}
 	end
 	local map = js.decode(s) or {}
+	if list_type == allist then
+		return map 
+	end
 	return map[list_type] or {}
 end
 
