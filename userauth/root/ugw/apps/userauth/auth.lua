@@ -171,25 +171,27 @@ cmd_map["/weixin2_login"] = function(map)
 end
 
 cmd_map["/auto_login"] = function(map)
-	local auto_switch = read("/tmp/www/webui/auto_switch.json")
-	if not auto_switch then
-		return {status = 1, data = "not open auto auth"}
-	end
-	
-	local g_map, g_redirect = js.decode(auto_switch), ""
-	if g_map then
-		g_redirect = g_map.g_redirect or ""
+	local ads_config = read("/tmp/www/webui/ads_config.json")
+	if not ads_config then
+		return {status = 1, data = "配置错误"}
 	end
 
-	local ip, mac = map.ip, map.mac
+	local g_map, g_redirect = js.decode(ads_config), ""
+	if not (g_map and g_map.auth and g_map.auth.auto == "true") then
+		return {status = 1, data = "未开启一键认证"}
+	end
+	
+	g_redirect = g_map.g_redirect or ""
+
+	local ip, mac, username = map.ip, map.mac, map.username
 	if not ip then
-		return {status = 1, data = "invalid param"}
+		return {status = 1, data = "无效参数"}
 	end
 
 	if not mac then
 		local s = read("/proc/net/arp")
 		if not s then
-			return {status = 1, data = "not find arp"}
+			return {status = 1, data = "arp错误"}
 		end
 		
 		s = s .. "\n"
@@ -204,13 +206,15 @@ cmd_map["/auto_login"] = function(map)
 		mac = smap[ip]
 	end
 	if not mac then
-		return {status = 1, data = "not find mac"}
+		return {status = 1, data = "未找到的MAC地址"}
 	end
 	
-	local name = "auto-" .. mac
-	add_auto_user(name)
+	if not username then
+		username = "auto-" .. mac
+	end
+	add_auto_user(username)
 	
-	dispatcher.login_success(mac, ip, name)
+	dispatcher.login_success(mac, ip, username)
 	
 	if g_redirect and g_redirect ~= "" then
 		return {status = 0, data = g_redirect}

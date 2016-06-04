@@ -40,7 +40,16 @@ $(function() {
 });
 
 function weixin_login_action(d) {
-	info = d;
+	if (typeof d.status != "undefined") {
+		if (d.status == 0 && typeof d.data != "undefined") {
+			info = d.data;
+			d = d.data;
+		} else {
+			console.log("error get wxlogin2info")
+		}
+	} else {
+		info = d;
+	}
 	Wechat_GotoRedirect(d.AppID, d.Extend, d.TimeStamp, d.Sign, d.ShopID, d.AuthUrl, d.Mac, d.SSID, d.BSSID); 
 }
 
@@ -72,7 +81,26 @@ function doShowAutoAuth() {
 	$(".main .btn b").css("display", "none");
 	$(".main .btn span").html("尝试再次打开微信");
 	$(".main .btn").attr("onclick", "againCallWechat()");
-	$(".main .left").css("display", "block");
+	if (is_phone()) {
+		$(".main .left").css("display", "block");
+	}
+}
+
+function is_phone() {
+	var sUserAgent = navigator.userAgent.toLowerCase();
+	var bIsIpad = sUserAgent.match(/ipad/i) == "ipad";
+	var bIsIphoneOs = sUserAgent.match(/iphone os/i) == "iphone os";
+	var bIsMidp = sUserAgent.match(/midp/i) == "midp";
+	var bIsUc7 = sUserAgent.match(/rv:1.2.3.4/i) == "rv:1.2.3.4";
+	var bIsUc = sUserAgent.match(/ucweb/i) == "ucweb";
+	var bIsAndroid = sUserAgent.match(/android/i) == "android";
+	var bIsCE = sUserAgent.match(/windows ce/i) == "windows ce";
+	var bIsWM = sUserAgent.match(/windows mobile/i) == "windows mobile";
+	if (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 function againCallWechat() {
