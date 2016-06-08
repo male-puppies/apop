@@ -231,6 +231,22 @@ local function whitelistget(conn, group, data)
 end 
 
 
+local function wechatwhitelistset(conn, group, arr)
+	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli)
+	local ret, err = check_whitelist(arr) 
+	if not ret then 
+		return get_status(1, err)
+	end 
+
+	return pcli:query_auth({cmd = "wechatwhitelist_set", data = {group = group, data = arr}}) or get_status(1, "error")
+end
+
+local function wechatwhitelistget(conn, group, data)
+	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli) 
+	return pcli:query_auth({cmd = "wechatwhitelist_get", data = {group = group, data = data}}) or get_status(1, "error")
+end 
+
+
 return {
 	useradd = useradd,
 	userdel = userdel,
@@ -246,4 +262,6 @@ return {
 	onlineget = onlineget,
 	whitelistset = whitelistset,
 	whitelistget = whitelistget,
+	wechatwhitelistset = wechatwhitelistset,
+	wechatwhitelistget = wechatwhitelistget,
 }

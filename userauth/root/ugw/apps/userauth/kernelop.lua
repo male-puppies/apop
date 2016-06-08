@@ -49,6 +49,11 @@ local function get_bypassurl()
 	return hostlist.get_bypassurl()
 end
 
+local function get_wechat_bypassurl()
+	return hostlist.get_wechat_bypassurl()
+end
+
+
 local function reset(iface_arr)
 	local iface_arr = iface_arr and iface_arr or get_iface()
 	last_iface_count = #iface_arr
@@ -58,10 +63,12 @@ local function reset(iface_arr)
 		InterfaceInfo = iface_arr,
 		GlobaleAuthOption = get_global(),
 		BypassUrl = get_bypassurl(),
+		WechatBypassUrl = get_wechat_bypassurl(),
 	}
 	
 	local cfg_str = js.encode(cfg) assert(cfg_str)
 	cfg_str = string.gsub(cfg_str, '"BypassUrl":{}', '"BypassUrl":[]') assert(cfg_str)
+	cfg_str = string.gsub(cfg_str, '"WechatBypassUrl":{}', '"WechatBypassUrl":[]') assert(cfg_str)
 	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", cfg_str)
 	log.debug("%s", cmd)
 	read(cmd, io.popen)

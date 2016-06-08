@@ -33,6 +33,8 @@ local cmd_map = {
 	online_get = dispatcher.online_get,
 	whitelist_set = dispatcher.whitelist_set,
 	whitelist_get = dispatcher.whitelist_get,
+	wechatwhitelist_set = dispatcher.wechatwhitelist_set,
+	wechatwhitelist_get = dispatcher.wechatwhitelist_get,
 }
 
 local function on_message(topic, data)

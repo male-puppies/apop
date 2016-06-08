@@ -75,6 +75,9 @@ local cmd_func = {
 	OnlineGet			= auth.onlineget,
 	WhiteListSet 		= auth.whitelistset,
 	WhiteListGet		= auth.whitelistget,
+	WechatWhiteListSet 	= auth.wechatwhitelistset,
+	WechatWhiteListGet	= auth.wechatwhitelistget,
+
 	SetGlobal			= flow.setglobal,
 	GetFlow				= flow.getflow,
 	InsRules			= flow.insrules,

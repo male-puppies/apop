@@ -7,6 +7,8 @@ local read, save_safe, file_exist = common.read, common.save_safe, common.file_e
 
 local blacklist = "blacklist"
 local whitelist = "whitelist"
+local wechatblacklist = "wechat_blacklist"
+local wechatwhitelist = "wechat_whitelist"
 local alllist = "allist"
 local hostlist = "/etc/config/hostlist.json"
 local auth_step1 = 1
@@ -41,8 +43,16 @@ local function whitelist_get()
 	return hostlist_get(whitelist)
 end
 
+local function wechatwhitelist_get() 
+	return hostlist_get(wechatwhitelist)
+end
+
 local function blacklist_get() 
 	return hostlist_get(blacklist)
+end
+
+local function wechatwhitelist_get() 
+	return hostlist_get(wechatwhitelist)
 end
 
 
@@ -56,8 +66,12 @@ local function blacklist_set(host_list)
 	return {status = 0, data = "ok"}
 end
 
+local function wechatwhitelist_set(host_list) 
+	hostlist_set(wechatwhitelist, host_list or {})
+	return {status = 0, data = "ok"}
+end
 
-local function get_bypassurl()
+local function get_wechat_bypassurl()
 	local bypassurl = {}
 	local whitelist = whitelist_get()
 	if whitelist and #whitelist > 0 then
@@ -73,12 +87,28 @@ local function get_bypassurl()
 	return bypassurl
 end
 
+local function get_bypassurl()
+	local bypassurl = {}
+	local whitelist = wechatwhitelist_get()
+	if whitelist and #whitelist > 0 then
+		for _, host in ipairs(whitelist) do
+			if host and string.len(host) > 3 then
+				table.insert(bypassurl, {["host"] = host})
+			end
+		end
+	end
+	return bypassurl
+end
+
 
 return {
 	whitelist_set = whitelist_set, 
 	whitelist_get = whitelist_get,
 	blacklist_set = blacklist_set, 
 	blacklist_get = blacklist_get,
+	wechatwhitelist_set = wechatwhitelist_set, 
+	wechatwhitelist_get = wechatwhitelist_get,
 	get_bypassurl = get_bypassurl,
+	get_wechat_bypassurl = get_wechat_bypassurl,
 }
 
