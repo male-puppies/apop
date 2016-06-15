@@ -133,6 +133,7 @@ local function main()
 	set_timeout(120, 120, dispatcher.update_user)
 	set_timeout(1, 20, dispatcher.update_online)
 	set_timeout(0.1, 30, dispatcher.adjust_elapse)
+	set_timeout(0.1, 60, dispatcher.adjust_offtime)
 	set_timeout(30, 30, kernelop.check_ip_route) 
 	set_timeout(10, 10, chk_adtype)
 end

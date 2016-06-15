@@ -23,12 +23,15 @@ function method.exist_user(ins, name)
 	return false
 end
 
-function method.add(ins, mac, ip, name)
+function method.add(ins, mac, ip, name, offtime)
 	--assert(not ins.usermap[mac])
 	local user = ins.usermap[mac] or online.new()
 	user:set_mac(mac)
 	user:set_ip(ip)
 	user:set_name(name)
+	if offtime then
+		user:set_offtime(offtime)
+	end
 	ins.usermap[mac], ins.change = user, true
 	-- user:show()
 end
@@ -108,7 +111,7 @@ function method.adjust(ins, users)
 
 	-- sync
 	for mac, item in pairs(users) do 
-		if item.type == 2 then 
+		if item.tp == 2 then 
 			if item.st == 1 then 
 				local user = usermap[mac] 
 				if not user then 
@@ -126,6 +129,22 @@ function method.adjust(ins, users)
 	ins:set_change(true)
 	ins:save()
 	-- print("adjust users from kernel done")
+end
+
+function method.offtime(ins, users)
+	local usermap = ins.usermap
+	
+	for mac, item in pairs(users) do 
+		if item.tp == 2 and item.st == 1 then 
+			local user = usermap[mac] 
+			if user and user.elapse and user.offtime and tonumber(user.offtime) ~= 0 then
+				if tonumber(user.elapse) >= tonumber(user.offtime) then
+					log.debug("%s expired offline", mac)
+					ins:del_mac(mac) -- offline
+				end
+			end 
+		end
+	end
 end
 
 local function new(path)

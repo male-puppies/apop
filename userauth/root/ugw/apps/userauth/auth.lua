@@ -35,6 +35,24 @@ local function set_timeout(timeout, again, cb)
 	end)
 end
 
+local function get_mac(ip)
+	local s = read("/proc/net/arp")
+	if not s then
+		return nil
+	end
+	
+	s = s .. "\n"
+	local smap = {}
+	for line in string.gmatch(s, "(.-)\n") do
+		local lip, lmac = line:match("(%d+.%d+.%d+.%d+).-(%w%w:%w%w:%w%w:%w%w:%w%w:%w%w).-")
+		if lip and lmac then
+			smap[lip] = lmac
+		end
+	end
+
+	return smap[ip] or nil
+end
+
 local cmd_map = {}
 cmd_map["/cloudonline"] = function(map)
 	return {status = 1, data = authopt}
@@ -137,6 +155,27 @@ local function add_auto_user(name)
 	dispatcher.user_add({group = "default", data = arr}, true)
 end
 
+local function add_qrcode_user(name)
+	local ul = userlist.ins()
+	if ul:exist(name)  then
+		return
+	end
+	local arr = {}
+	local user = {
+			name = name,
+			pwd = "123456",
+			desc = "二维码认证用户",
+			enable = 1,
+			multi = 0,
+			bind = "none",
+			maclist = {},
+			expire = {0, os.date("%Y%m%d") .. " 000000"},
+			remain = {0, 0},
+		}
+	table.insert(arr, user)
+	dispatcher.user_add({group = "default", data = arr}, true)
+end
+
 
 cmd_map["/weixin2_login"] = function(map)  
 	local extend, openid = map.extend, map.openid
@@ -189,21 +228,7 @@ cmd_map["/auto_login"] = function(map)
 	end
 
 	if not mac then
-		local s = read("/proc/net/arp")
-		if not s then
-			return {status = 1, data = "arp错误"}
-		end
-		
-		s = s .. "\n"
-		local smap = {}
-		for line in string.gmatch(s, "(.-)\n") do
-			local lip, lmac = line:match("(%d+.%d+.%d+.%d+).-(%w%w:%w%w:%w%w:%w%w:%w%w:%w%w).-")
-			if lip and lmac then
-				smap[lip] = lmac
-			end
-		end
-	
-		mac = smap[ip]
+		mac = get_mac(ip)
 	end
 	if not mac then
 		return {status = 1, data = "未找到的MAC地址"}
@@ -228,7 +253,98 @@ cmd_map["/auto_login"] = function(map)
 		end
 	end
 	return {status = 0, data = "ok"}
+end
+
+cmd_map["/qr_login_action"] = function(map)
+	local ip, times, sign, onlinetime = map.ip, map.times, map.sign, map.onlinetime
+	if not (ip and times and sign) then
+		return {status = 1, data = "参数错误"}
+	end
 	
+	local qr_config = read("/etc/config/qr_config.json")
+	if not qr_config then
+		return {status = 1, data = "配置错误"}
+	end
+	
+	local qr_map = js.decode(qr_config)
+	if not onlinetime or onlinetime == "" then
+		onlinetime = qr_map.onlinetime
+	end
+
+	if not (qr_map and onlinetime and qr_map.qr_key and qr_map.expiry) then
+		return {status = 1, data = "未开启二维码认证"}
+	end
+
+	local msign = md5.sumhexa(qr_map.qr_key .. "qrcode" .. times .. onlinetime)
+	msign = msign:sub(1, 8)
+	if sign ~= msign then
+		return {status = 1, data = "二维码错误"}
+	end
+
+	if tonumber(qr_map.expiry) ~= 0 and (os.time() - times) > (tonumber(qr_map.expiry) * 60) then
+		return {status = 1, data = "二维码已过期"}
+	end
+	
+	local mac = get_mac(ip)
+	if not mac then
+		return {status = 1, data = "请检查是否连接正确wifi"}
+	end
+	
+	local username = "qrcode-" .. mac
+	add_qrcode_user(username)
+	dispatcher.login_success(mac, ip, username, (onlinetime * 60))
+	
+	local ads_config, g_redirect = read("/tmp/www/webui/ads_config.json")
+	if ads_config then
+		local g_map = js.decode(ads_config)
+		if g_map and g_map.g_redirect then
+			g_redirect = g_map.g_redirect
+		end
+	end
+	
+	if g_redirect then
+		return {status = 0, data = g_redirect}
+	end
+	
+	local s = read("/etc/config/authopt.json")
+	if s then
+		local map = js.decode(s)
+		if map and map.redirect and map.redirect ~= "" then
+			return {status = 0, data = map.redirect}
+		end
+	end
+	return {status = 0, data = "ok"}
+end
+
+cmd_map["/get_qrcode"] = function(map)
+	local times, onlinetime = map.times, map.onlinetime
+	if not times then
+		return {status = 1, data = "参数错误"}
+	end
+	
+	local qr_config = read("/etc/config/qr_config.json")
+	if not qr_config then
+		return {status = 1, data = "配置错误"}
+	end
+	
+	local qr_map = js.decode(qr_config)
+	if not (qr_map and qr_map.qr_key and qr_map.onlinetime) then
+		return {status = 1, data = "未开启二维码认证"}
+	end
+	if not onlinetime or onlinetime == "" then
+		onlinetime = qr_map.onlinetime
+	end
+	local str = qr_map.qr_key .. "qrcode" .. times .. onlinetime
+	local cmd = string.format("echo -n '%s' | md5sum | cut -d ' ' -f1", str)
+	local sign = read(cmd, io.popen)
+	if not sign then
+		return {status = 1, data = ""}
+	end
+	
+	local s = sign:sub(1, 8)
+	
+	local url = string.format("http://10.10.10.10/qr_login?t=%s&s=%s&o=%s", times, s, onlinetime)
+	return {status = 0, data = url}
 end
 
 cmd_map["/cloudlogin"] = function(map)  

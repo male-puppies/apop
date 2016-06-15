@@ -10,6 +10,17 @@ local hostlist = require("hostlist")
 
 local authopt
 
+local function read(path, func)
+	func = func and func or io.open
+	local fp, err = func(path, "r")
+	if not fp then
+			return nil, err
+	end
+	local s = fp:read("*a")
+	fp:close()
+	return s
+end
+
 local function status(msg, ok)
 	print(msg, ok)
 	return {status = ok and 0 or 1, data = msg}
@@ -19,10 +30,20 @@ local function get_timestamp()
 	return  os.date("%Y%m%d %H%M%S") 
 end
 
-local function login_success(mac, ip, username)
+local function login_success(mac, ip, username, expire)
 	kernelop.online(mac)
 	local ol = onlinelist.ins()
-	ol:add(mac, ip, username)
+	if not expire then
+		expire = 0
+		local s = read("/etc/config/web_config.json")
+		if s then
+			local map = js.decode(s)
+			if map and map.interval then
+				expire = map.interval
+			end
+		end
+	end
+	ol:add(mac, ip, username, tonumber(expire))
 	ol:show()
 end 
 
@@ -357,6 +378,11 @@ local function adjust_elapse()
 	ol:adjust(kernelop.get_all_user())
 end
 
+local function adjust_offtime()
+	local ol = onlinelist.ins()
+	ol:offtime(kernelop.get_all_user())
+end
+
 local function set_authopt(opt)
 	authopt = opt
 end
@@ -410,6 +436,7 @@ return {
 	online_get = online_get,
 
 	adjust_elapse = adjust_elapse,
+	adjust_offtime = adjust_offtime,
 	login_success = login_success,
 
 	whitelist_set = whitelist_set,
