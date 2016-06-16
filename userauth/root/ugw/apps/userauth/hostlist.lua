@@ -75,7 +75,7 @@ end
 
 local function get_wechat_bypassurl()
 	local bypassurl = {}
-	local whitelist = whitelist_get()
+	local whitelist = wechatwhitelist_get()
 	if whitelist and #whitelist > 0 then
 		for _, host in ipairs(whitelist) do
 			if host and string.len(host) > 3 then
@@ -91,7 +91,7 @@ end
 
 local function get_bypassurl()
 	local bypassurl = {}
-	local whitelist = wechatwhitelist_get()
+	local whitelist = whitelist_get()
 	if whitelist and #whitelist > 0 then
 		for _, host in ipairs(whitelist) do
 			if host and string.len(host) > 3 then
