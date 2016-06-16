@@ -135,7 +135,7 @@ function method.offtime(ins, users)
 	local usermap = ins.usermap
 	
 	for mac, item in pairs(users) do 
-		if item.tp == 2 and item.st == 1 then 
+		if item.tp ~= 1 and item.st == 1 then 
 			local user = usermap[mac] 
 			if user and user.elapse and user.offtime and tonumber(user.offtime) ~= 0 then
 				if tonumber(user.elapse) >= tonumber(user.offtime) then
