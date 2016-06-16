@@ -34,6 +34,8 @@ local function hostlist_set(list_type, list)
 	local old_map = hostlist_get(allist)
 	new_map[blacklist] = old_map[blacklist] or {}
 	new_map[whitelist] = old_map[whitelist] or {}
+	new_map[wechatblacklist] = old_map[wechatblacklist] or {}
+	new_map[wechatwhitelist] = old_map[wechatwhitelist] or {}
 	new_map[list_type] = list
 	save_safe(hostlist, js.encode(new_map) or {})
 	return true
