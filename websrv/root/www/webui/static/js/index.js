@@ -113,7 +113,7 @@ function sms_action() {
 	if (warn_sms_pwd() == true) return;
 
 	$.post(
-		"../../cloudlogin",
+		"/phonelogin",
 		{
 			"UserName": $("#sms_user").val(),
 			"Password": $("#sms_pwd").val()
@@ -182,8 +182,7 @@ function sms_code() {
 	$.post(
 		"/PhoneNo",
 		{
-			"UserName" : $("#sms_user").val(),
-			"Ssid" : gSsid		//ssid
+			"UserName" : $("#sms_user").val()
 		},
 		function (d) {
 			if (d.status == 0) {
@@ -191,9 +190,9 @@ function sms_code() {
 				$(".sms-confirm .tips").html("<span style='color:green;'>获取验证码成功</span>");
 			} else {
 				if (typeof d.data != "undefined") {
-					$(".sms-confirm .tips").html(d.data);
+					$(".sms-confirm .tips").html("获取验证码失败！" + d.data);
 				} else {
-					$(".sms-confirm .tips").html("获取验证码失败");
+					$(".sms-confirm .tips").html("获取验证码失败！");
 				}
 			}
 		},
