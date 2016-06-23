@@ -757,12 +757,12 @@ end
 
 local function report_status() 
 	local get_state = function()
-		local firmware = read("/ugw/etc/version") or ""
+		local firmware = read("/etc/openwrt_version") or ""
 		local uptime = read("uptime | awk  -F, '{print $1}'", io.popen) or ""
 		return {firmware = firmware:gsub("[ \t\r\n]$", ""), uptime = uptime:gsub("[ \t\r\n]$", "")}
 	end
 
-	se.sleep(30)
+	se.sleep(3)
 	while true do  
 		local map = {
 			out_topic = "a/ac/report",
@@ -773,7 +773,7 @@ local function report_status()
 			},
 		} 
 		mqtt:publish("a/ac/proxy", js.encode(map))
-		se.sleep(1800)
+		se.sleep(600)
 	end
 end
 
