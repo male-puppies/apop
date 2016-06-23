@@ -1,4 +1,5 @@
 local se = require("se") 
+local log = require("log")
 local js = require("cjson.safe") 
 local baseclient = require("baseclient2")
 
@@ -91,7 +92,9 @@ local function new()
 		response_map = {},  
 	}
 	setmetatable(obj, mt_ext)
-
+	ins:set_callback("on_disconnect", function(...)
+		log.fatal("%s", js.encode({...}))
+	end)
 	ins:set_callback("on_message", function(payload)    
 		local map = js.decode(payload)
 
