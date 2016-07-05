@@ -1025,7 +1025,7 @@ local function addfirewall(group, data)
 	
 	local mit = curs:commit("firewall")
 	if mit then
-		utl.call("/etc/init.d/firewall restart")
+		utl.call("/etc/init.d/firewall reload")
 		return {status = 0, data = ""}
 	else
 		log.debug("error addfirewall commit")
@@ -1070,7 +1070,7 @@ local function setfirewall(group, data)
 	
 	local mit = curs:commit("firewall")
 	if mit then
-		utl.call("/etc/init.d/firewall restart")
+		utl.call("/etc/init.d/firewall reload")
 		return {status = 0, data = ""}
 	else
 		log.debug("error setfirewall commit")
@@ -1103,7 +1103,7 @@ local function deletefirewall(group, data)
 	
 	local mit = curs:commit("firewall")
 	if mit then
-		utl.call("/etc/init.d/firewall restart")
+		utl.call("/etc/init.d/firewall reload")
 		return {status = 0, data = ""}
 	else
 		log.debug("error deletefirewall commit")
