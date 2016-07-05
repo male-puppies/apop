@@ -39,7 +39,9 @@ local function wlaninfo(group, wlanid)
 	local st = {
 		{k = keys.c_wssid, 			desc = "ssid"},
 		{k = keys.c_whide, 			desc = "hide"},
-		{k = keys.c_wstate, 			desc = "state"},
+		{k = keys.c_wvlanenable, 	desc = "vlanenable"},
+		{k = keys.c_wvlanid, 		desc = "vlanid"},
+		{k = keys.c_wstate, 		desc = "state"},
 		{k = keys.c_wencry, 		desc = "encryption"},
 		{k = keys.c_wpasswd, 		desc = "password"},
 		{k = keys.c_wband, 			desc = "band"}, 
@@ -121,6 +123,8 @@ local function wlanlist(conn, group, data)
 		resmap[map.ssid] = {
 			SSID = map.ssid or "",
 			hide = map.hide or "",
+			vlanEnable = map.vlanenable or "0",
+			vlanID = map.vlanid or "",
 			enable = (function()
 						if type(map.state) ~= "string" then
 							return ""
@@ -204,6 +208,33 @@ web_map.hide = {
 				return nil, errmsg("invalid hide")
 			end 
 			return hide
+		end
+	}
+web_map.vlanEnable = {
+		k = keys.c_wvlanenable, 
+		func = function(s)
+			local valid = {["0"] = 1, ["1"] = 1} 
+			local vlanenable = tostring(s)
+			if not vlanenable or type(vlanenable) ~= "string" or not valid[vlanenable] then 
+				log.error("error vlanenable %s", s or "")
+				return nil, errmsg("invalid vlanenable")
+			end 
+			return vlanenable
+		end
+	}
+web_map.vlanID = {
+		k = keys.c_wvlanid,
+		func = function(vlanid)
+			if not vlanid or type(vlanid) ~= "string" then
+				return nil, errmsg("invalid vlanid")
+			end
+			if not tonumber(vlanid) then
+				return ""
+			end
+			if tonumber(vlanid) > 4095 then
+				return nil, errmsg("invalid vlanid number")
+			end
+			return vlanid
 		end
 	}
 web_map.apList = {
@@ -457,6 +488,8 @@ local function get_kp_val_map(map)
 		[web_map.hide.k] = map[web_map.hide.k], 
 		[web_map.apList.k] = map[web_map.apList.k],
 		[web_map.SSID.k] = map[web_map.SSID.k],
+		[web_map.vlanID.k] = map[web_map.vlanID.k],
+		[web_map.vlanEnable.k] = map[web_map.vlanEnable.k],
 	}
 	
 	if map[web_map.encrypt.k] ~= "none"	then 
@@ -482,12 +515,12 @@ local function check_change(group, kvmap)
 
 	local change_kvmap, change_karr = {}, {}
 	for i = 1, #karr do 
-		if not rarr[i] then 
-			log.error("missing %s", karr[i])
-			return errmsg("error rds")
-		end
+		-- if not rarr[i] then 
+			-- log.error("missing %s", karr[i])
+			-- return errmsg("error rds")
+		-- end
 
-		assert(type(rarr[i]) == "string")
+		-- assert(type(rarr[i]) == "string")
 
 		if rarr[i] ~= varr[i] then
 			if type(varr[i]) == "table" then 

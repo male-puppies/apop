@@ -117,6 +117,16 @@ local function find_ap_config(group, apid)
 		for _, kp in ipairs(kparr) do
 			local k = pkey.key(kp, {WLANID = wlanid})
 			local v = cfgget(group, k)
+			if kp == "w#WLANID#wvlanenable" then
+				if not v then
+					v = "0"
+				end
+			end
+			if kp == 'w#WLANID#wvlanid' then
+				if not v then
+					v = ""
+				end
+			end
 			local _ = v or log.fatal("missing %s", k)
 			map[k] = v
 		end

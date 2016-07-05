@@ -40,7 +40,18 @@ mt_ext.__index = {
 	end, 
 
 	query = function(ins, group, karr)
-		return ins:request_common("a/ac/cfgmgr/query", {group = group, karr = karr})
+		local rs, e = ins:request_common("a/ac/cfgmgr/query", {group = group, karr = karr})
+		if not rs then 
+			return nil, e 
+		end 
+			
+		for i = 1, #rs do 
+			if type(rs[i]):find("userdata") then 
+				rs[i] = nil 
+			end 
+		end
+		return rs
+		-- return ins:request_common("a/ac/cfgmgr/query", {group = group, karr = karr})
 	end,
 
 	modify = function(ins, data) 
