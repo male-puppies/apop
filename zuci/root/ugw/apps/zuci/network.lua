@@ -990,6 +990,127 @@ local function setmwan(group, data)
 	end
 end
 
+local function getfirewall(group, data)
+	local curs = uci.cursor()
+	
+	local map = {}
+	curs:foreach("firewall", "redirect", 
+		function(x)
+			table.insert(map, x)
+		end
+	)
+
+	return {status = 0, data = map}
+end
+
+local function addfirewall(group, data)
+	local curs = uci.cursor()
+	if type(data) ~= "table" then
+		log.debug("Invalid parameter addfirewall");
+		return {status = 1, data = "参数错误"} 
+	end
+	
+	for key, val in pairs(data) do
+		if not (key == "target" or key == "src" or key == "dest" or key == "proto" or key == "src_dport" or key == "dest_ip" or key == "dest_port" or key == "name" or key == "enabled") then
+			log.debug("error addfirewall %s", key)
+			return {status = 1, data = "参数错误"}
+		end
+	end
+	
+	local mark = curs:section("firewall", "redirect", nil, data)
+	if not mark then
+		log.debug("error addfirewall section")
+		return {status = 1, data = ""}
+	end
+	
+	local mit = curs:commit("firewall")
+	if mit then
+		utl.call("/etc/init.d/firewall restart")
+		return {status = 0, data = ""}
+	else
+		log.debug("error addfirewall commit")
+		return {status = 1, data = ""}
+	end
+end
+
+local function setfirewall(group, data)
+	local curs = uci.cursor()
+	if type(data) ~= "table" then
+		log.debug("Invalid parameter setfirewall");
+		return {status = 1, data = "参数错误"} 
+	end
+	
+	if not data[".name"] then
+		log.debug("error setfirewall lost .name")
+		return {status = 1, data = "无效的规则"}
+	else
+		if curs:get("firewall", data[".name"]) ~= "redirect" then
+			log.debug("error setfirewall invalid .name")
+			return {status = 1, data = "无效的规则"}
+		end
+	end
+	
+	for key, val in pairs(data) do
+		if not (key == ".name" or key == "target" or key == "src" or key == "dest" or key == "proto" or key == "src_dport" or key == "dest_ip" or key == "dest_port" or key == "name" or key == "enabled") then
+			log.debug("error setfirewall %s", key)
+			return {status = 1, data = "参数错误"}
+		end
+	end
+	
+	if not delete_all_option(curs, "firewall", data[".name"]) then
+		log.debug("error delete_all_option firewall %s", data[".name"])
+		return {status = 1, data = ""}
+	end
+	
+	local mark = curs:tset("firewall", data[".name"], data)
+	if not mark then
+		log.debug("error setfirewall section")
+		return {status = 1, data = ""}
+	end
+	
+	local mit = curs:commit("firewall")
+	if mit then
+		utl.call("/etc/init.d/firewall restart")
+		return {status = 0, data = ""}
+	else
+		log.debug("error setfirewall commit")
+		return {status = 1, data = ""}
+	end
+end
+
+local function deletefirewall(group, data)
+	local curs = uci.cursor()
+	if type(data) ~= "table" then
+		log.debug("Invalid parameter deletefirewall");
+		return {status = 1, data = "参数错误"} 
+	end
+	
+	if not data[".name"] then
+		log.debug("error deletefirewall lost .name")
+		return {status = 1, data = "无效的规则"}
+	else
+		if curs:get("firewall", data[".name"]) ~= "redirect" then
+			log.debug("error deletefirewall invalid .name")
+			return {status = 1, data = "无效的规则"}
+		end
+	end
+	
+	local mark = curs:delete("firewall", data[".name"])
+	if not mark then
+		log.debug("error deletefirewall section")
+		return {status = 1, data = ""}
+	end
+	
+	local mit = curs:commit("firewall")
+	if mit then
+		utl.call("/etc/init.d/firewall restart")
+		return {status = 0, data = ""}
+	else
+		log.debug("error deletefirewall commit")
+		return {status = 1, data = ""}
+	end
+end
+
 return {
 	get_switches = get_switches,
 	iface_get_network = iface_get_network,
@@ -1012,4 +1133,8 @@ return {
 	-- setdhcpconfig = setdhcpconfig,
 	getmwan = getmwan,
 	setmwan = setmwan,
+	getfirewall = getfirewall,
+	addfirewall = addfirewall,
+	setfirewall = setfirewall,
+	deletefirewall = deletefirewall,
 }
