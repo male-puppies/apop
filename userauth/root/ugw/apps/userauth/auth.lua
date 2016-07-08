@@ -178,6 +178,7 @@ end
 
 
 cmd_map["/weixin2_login"] = function(map)  
+	local flag = 0
 	local extend, openid = map.extend, map.openid
 	if not (extend and openid) then 
 		return {status = 1, data = "invalid param"}
@@ -187,26 +188,31 @@ cmd_map["/weixin2_login"] = function(map)
 	if not (ip and mac) then 
 		return {status = 1, data = "invalid param1"}
 	end
-
-	local item = wx_wait.ext_map[mac]
-	if not item then 
-		return {status = 1, data = "invalid param2"}
-	end
-	wx_wait.ext_map[mac] = nil
-
-	add_wx_user(openid)
-
-	print("wx auth ok", ip, mac)
-	dispatcher.login_success(mac, ip, openid)
-	
-	local s = read("/etc/config/authopt.json")
-	if s then
-		local map = js.decode(s)
-		if map and map.redirect and map.redirect ~= "" then
-			return {status = 0, data = map.redirect}
+	if string.find(extend, "wx_scan") then
+		flag = 1
+	else
+		local item = wx_wait.ext_map[mac]
+		if not item then 
+			return {status = 1, data = "invalid param2"}
 		end
+		wx_wait.ext_map[mac] = nil
+		flag = 1
 	end
-	return {status = 0, data = "ok"}
+	if flag == 1 then
+		add_wx_user(openid)
+
+		print("wx auth ok", ip, mac)
+		dispatcher.login_success(mac, ip, openid)
+		
+		local s = read("/etc/config/authopt.json")
+		if s then
+			local map = js.decode(s)
+			if map and map.redirect and map.redirect ~= "" then
+				return {status = 0, data = map.redirect}
+			end
+		end
+		return {status = 0, data = "ok"}
+	end
 end
 
 cmd_map["/auto_login"] = function(map)
