@@ -403,13 +403,24 @@ local function wechatwhitelist_get(data)
 	return {status = 0, data = hostlist.wechatwhitelist_get()}
 end
 
-
 local function wechatwhitelist_set(map)
 	local group, map = map.group, map.data
 	hostlist.wechatwhitelist_set(map)
 	kernelop.reset()
 	return {status = 0}
 end
+
+local function macwhitelist_get(data)
+	return {status = 0, data = hostlist.macwhitelist_get()}
+end
+
+local function macwhitelist_set(map)
+	local group, map = map.group, map.data
+	hostlist.macwhitelist_set(map)
+	kernelop.reset()
+	return {status = 0}
+end
+
 
 
 return {
@@ -444,4 +455,9 @@ return {
 
 	wechatwhitelist_set = wechatwhitelist_set,
 	wechatwhitelist_get = wechatwhitelist_get,
+
+	macwhitelist_set = macwhitelist_set,
+	macwhitelist_get = macwhitelist_get,
+	
+	
 }

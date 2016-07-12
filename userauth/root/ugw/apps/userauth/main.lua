@@ -35,6 +35,8 @@ local cmd_map = {
 	whitelist_get = dispatcher.whitelist_get,
 	wechatwhitelist_set = dispatcher.wechatwhitelist_set,
 	wechatwhitelist_get = dispatcher.wechatwhitelist_get,
+	macwhitelist_get = dispatcher.macwhitelist_get,
+	macwhitelist_set = dispatcher.macwhitelist_set,
 }
 
 local function on_message(topic, data)

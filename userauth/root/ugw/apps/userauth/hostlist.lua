@@ -9,6 +9,7 @@ local blacklist = "blacklist"
 local whitelist = "whitelist"
 local wechatblacklist = "wechat_blacklist"
 local wechatwhitelist = "wechat_whitelist"
+local macwhitelist = "mac_whitelist"
 local alllist = "allist"
 local hostlist = "/etc/config/hostlist.json"
 local auth_step1 = 1
@@ -36,6 +37,7 @@ local function hostlist_set(list_type, list)
 	new_map[whitelist] = old_map[whitelist] or {}
 	new_map[wechatblacklist] = old_map[wechatblacklist] or {}
 	new_map[wechatwhitelist] = old_map[wechatwhitelist] or {}
+	new_map[macwhitelist] = old_map[macwhitelist] or {}
 	new_map[list_type] = list
 	save_safe(hostlist, js.encode(new_map) or {})
 	return true
@@ -57,6 +59,9 @@ local function wechatwhitelist_get()
 	return hostlist_get(wechatwhitelist)
 end
 
+local function macwhitelist_get()
+	return hostlist_get(macwhitelist)
+end
 
 local function whitelist_set(host_list) 
 	hostlist_set(whitelist, host_list or {})
@@ -70,6 +75,11 @@ end
 
 local function wechatwhitelist_set(host_list) 
 	hostlist_set(wechatwhitelist, host_list or {})
+	return {status = 0, data = "ok"}
+end
+
+local function macwhitelist_set(host_list)
+	hostlist_set(macwhitelist, host_list  or {})
 	return {status = 0, data = "ok"}
 end
 
@@ -104,6 +114,19 @@ local function get_bypassurl()
 	--return bypassurl
 end
 
+local function get_mac_bypassinfo()
+	local bypassmac = {}
+	local macwhitelist = macwhitelist_get()
+	if macwhitelist and #macwhitelist > 0 then 
+		for _, mac in ipairs(macwhitelist)do 
+			if mac and string.len (mac) > 3 then 
+			
+				table.insert(bypassmac, {["mac"] = mac, ["action"] = 1})
+			end 
+		end 
+	end 
+	return bypassmac
+end
 
 return {
 	whitelist_set = whitelist_set, 
@@ -112,7 +135,10 @@ return {
 	blacklist_get = blacklist_get,
 	wechatwhitelist_set = wechatwhitelist_set, 
 	wechatwhitelist_get = wechatwhitelist_get,
+	macwhitelist_set = macwhitelist_set,
+	macwhitelist_get = macwhitelist_get,
 	get_bypassurl = get_bypassurl,
 	get_wechat_bypassurl = get_wechat_bypassurl,
+	get_mac_bypassinfo = get_mac_bypassinfo,
 }
 

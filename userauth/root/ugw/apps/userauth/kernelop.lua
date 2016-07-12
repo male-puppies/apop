@@ -53,6 +53,9 @@ local function get_wechat_bypassurl()
 	return hostlist.get_wechat_bypassurl()
 end
 
+local function get_mac_bypassinfo()
+	return hostlist.get_mac_bypassinfo()
+end
 
 local function reset(iface_arr)
 	local iface_arr = iface_arr and iface_arr or get_iface()
@@ -64,15 +67,19 @@ local function reset(iface_arr)
 		GlobaleAuthOption = get_global(),
 		BypassUrl = get_bypassurl(),
 		WechatBypassUrl = get_wechat_bypassurl(),
+		MacBypassInfo = get_mac_bypassinfo(),
 	}
 	
 	local cfg_str = js.encode(cfg) assert(cfg_str)
 	cfg_str = string.gsub(cfg_str, '"BypassUrl":{}', '"BypassUrl":[]') assert(cfg_str)
 	cfg_str = string.gsub(cfg_str, '"WechatBypassUrl":{}', '"WechatBypassUrl":[]') assert(cfg_str)
+	cfg_str = string.gsub(cfg_str, '"MacBypassInfo":{}','"MacBypassInfo":[]') assert(cfg_str)
+	
 	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", cfg_str)
 	log.debug("%s", cmd)
 	read(cmd, io.popen)
 end
+
 
 local function update_user_status(mac_arr, action)
 	local st_arr = {}
