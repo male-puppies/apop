@@ -9,6 +9,7 @@ local const = require("constant")
 local online = require("online")
 
 local keys = const.keys 
+local allap_key = "allap" --wlan设置“对所有ap有效”的标记
 
 local function cfgset(g, k, v)
 	return cfgmgr.ins(g):set(k, v)
@@ -147,27 +148,29 @@ local function del_ap(map)
 	for _, apid in ipairs(apid_arr) do 
 		-- 从wlan的ap列表中删除apid 
 		local c_belong_s = cfgget(group, pkey.wlanids(apid)) 		assert(c_belong_s)
-		local c_wlan = js.decode(c_belong_s) 			assert(c_wlan)
+		local c_wlan = js.decode(c_belong_s) 						assert(c_wlan)
 		for _, wlanid in ipairs(c_wlan) do 
 			assert(#wlanid == 5)
 						
+			--被所有ap引用的wlan，其aplist为"allap"，需特殊处理,不需要删除具体的apid
 			local waplist_k = pkey.waplist(wlanid)
 			local s = cfgget(group, waplist_k)
-			local wlan_aplist = js.decode(s) 	assert(type(wlan_aplist) == "table")
-
-			local find = false
-			for i = 1, #wlan_aplist do 
-				local tmp = table.remove(wlan_aplist, 1)
-				if tmp == apid then 
-					find = true
-					break
+			local wlan_aplist = js.decode(s) or s 
+			if type(wlan_aplist) == "table" then
+				local find = false
+				for i = 1, #wlan_aplist do 
+					local tmp = table.remove(wlan_aplist, 1)
+					if tmp == apid then 
+						find = true
+						break
+					end
+					table.insert(wlan_aplist, tmp)
 				end
-				table.insert(wlan_aplist, tmp)
-			end
 
-			local _ = find or log.error("missing %s in %s", apid, s)
-			if find then  
-				cfgset(group, waplist_k, js.encode(wlan_aplist))
+				local _ = find or log.error("missing %s in %s", apid, s)
+				if find then  
+					cfgset(group, waplist_k, js.encode(wlan_aplist))
+				end
 			end
 		end
 
@@ -257,6 +260,22 @@ local function register(cmd)
 	for k, v in pairs(kvmap) do
 		k = k:find("^a#") and apid .. "#" .. k or k
 		local _ = cfgget(group, k) == nil and cfgset(group, k, v) 	-- 可能AP有新增配置，此时补上。已经存在的配置以AC为准
+	end
+
+	--对于所有ap都生效的wlan，在ap首次出现时，需要为其设置wlan列表
+	local ap_wlanlist = {}
+	local wlanlist = cfgget(group, keys.c_wlan_list) or "{}" 
+	wlanlist = js.decode(wlanlist)
+	for _, wlanid in ipairs(wlanlist) do
+		local aplist_k = pkey.waplist(wlanid)
+		local aparr = cfgget(group, aplist_k) assert(aparr)
+		if type(aparr) == "string" and aparr == allap_key then
+			table.insert(ap_wlanlist, wlanid)
+		end
+	end
+	if ap_wlanlist and #ap_wlanlist > 0 then
+		local wlan_belong_k = pkey.wlanids(apid)
+		cfgset(group, wlan_belong_k, js.encode(ap_wlanlist))
 	end
 
 	clear_old_apid(group, apid)
@@ -359,7 +378,7 @@ local function next_wlanid(group)
 end
 
 local function add_wlan(map)
-	local group, map = map.group, map.map  	assert(group and map)
+	local group, map, is_allap = map.group, map.map, map.allap  	assert(group and map)
 	local change_map, newmap = {}, {}
 
 	-- 选出下一个wlanid
@@ -375,12 +394,22 @@ local function add_wlan(map)
 	end
 
 	local aplist_k = pkey.waplist(wlanid)
-	change_map[aplist_k] = js.encode(map[keys.c_waplist])
+	if is_allap then
+		change_map[aplist_k] = allap_key
+	else
+		change_map[aplist_k] = js.encode(map[keys.c_waplist])
+	end
 	change_map[keys.c_wlan_current] = "" .. tonumber(wlanid)
 	
 	-- 更新版本号
+	local aparr
 	local ver = os.date("%Y%m%d %H%M%S") 
-	local aparr = js.decode(change_map[aplist_k]) 	assert(aparr)
+	if type(change_map[aplist_k]) == "string" then
+		aparr = aplist(group)
+	else
+		aparr = js.decode(change_map[aplist_k]) 	assert(aparr)
+	end
+
 	for _, apid in ipairs(aparr) do 
 		assert(#apid == 17)
 		
@@ -395,7 +424,6 @@ local function add_wlan(map)
 
 	-- 更新wlan_list
 	change_map[keys.c_wlan_list] = new_wlanlist
-
 	-- 更新配置文件和数据库
 	for k, v in pairs(change_map) do
 		cfgset(group, k, v)
@@ -442,7 +470,14 @@ local function del_wlan(map)
 		end
 
 		local k = pkey.waplist(wlanid) 
-		local aparr = js.decode(cfgget(group, k))	assert(aparr)
+		local aparr = cfgget(group, k)	assert(aparr)
+		--如果是allap,那么，临时获取“所有ap”列表
+		if type(aparr) == "string" and aparr == allap_key then
+			aparr = aplist(group) assert(aparr)
+		else
+			aparr = js.decode(aparr) assert(aparr)
+		end
+
 		for _, apid in ipairs(aparr) do 
 			assert(#apid == 17)
 			local tmp_map = del_map[apid] or {}  
@@ -488,8 +523,8 @@ local function del_wlan(map)
 end
 
 local function mod_wlan(map) 
-	local group, change, wlanid, op_map = map.group, map.change, map.wlanid, map.op_map 	assert(group and change and #wlanid == 5 and op_map)
-
+	--is_allap暂未使用，勿删
+	local group, change, wlanid, op_map, is_allap = map.group, map.change, map.wlanid, map.op_map, map.allap 	assert(group and change and #wlanid == 5 and op_map)
 	-- WLAN配置修改
 	local karr = {}
 	for _, kp in pairs(keys) do 
@@ -634,7 +669,6 @@ local function wlan_stat(map)
 	local group, arr = map.group, map.arr  	assert(group and arr)
 	local wlanid, state = arr[1], arr[2] 	assert(#wlanid == 5 and state ~= nil)
 	local ver = os.date("%Y%m%d %H%M%S")  
-
 	local change_map = {}
 	local wlan_state_k = pkey.wstate(wlanid)
 	change_map[wlan_state_k] = state
@@ -642,7 +676,12 @@ local function wlan_stat(map)
 	local aplist_k = pkey.waplist(wlanid)
 	local s = cfgget(group, aplist_k)
 
-	local aparr = js.decode(s) 	assert(aparr)
+	--如果是allap,那么，临时获取“所有ap”列表
+	local aparr = js.decode(s) or s assert(aparr)
+	if type(aparr) == "string" and aparr == allap_key then
+		aparr = aplist(group) 
+	end
+
 	for _, apid in pairs(aparr) do 
 		local fix = {}
 		local version_k = pkey.version(apid)
