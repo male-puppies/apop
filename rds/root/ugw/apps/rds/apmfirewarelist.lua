@@ -37,8 +37,8 @@ local function apmfirewarelist(conn, group, data)
 			aptype_map[aptype] = map
 		end
 	end
-
-	local map = js.decode(read("/etc/config/thin_version.json") or "{}")
+	--thin_version.json存在decode失败的可能性
+	local map = js.decode(read("/etc/config/thin_version.json") or "{}") or {}
 	for aptype, item in pairs(map) do 
 		local map = aptype_map[aptype] or {}
 		map.new = item.version
