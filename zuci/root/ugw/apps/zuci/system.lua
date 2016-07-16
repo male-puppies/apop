@@ -138,6 +138,12 @@ local function login(group, data)
 	map.md5 = md5.sumhexa(pwd)
 	map.id = loginid
 
+	local wpath = "/etc/config/check_wizard"
+	local wizard = read(wpath)
+	if not wizard then
+		map.wizard = "true"
+		os.execute("touch " .. wpath)
+	end
 	return {status = 0, data = map}
 end
 
