@@ -247,7 +247,8 @@ local function register(cmd)
 	local kvmap = data[3] 		assert(type(kvmap) == "table")
 
 	local ver = os.date("%Y%m%d %H%M%S")
-	kvmap[version_k] = ver
+	--version_k格式不符合a#
+	--kvmap[version_k] = ver
 
 	-- 加入AP列表
 	if not exist then 
@@ -261,7 +262,7 @@ local function register(cmd)
 		k = k:find("^a#") and apid .. "#" .. k or k
 		local _ = cfgget(group, k) == nil and cfgset(group, k, v) 	-- 可能AP有新增配置，此时补上。已经存在的配置以AC为准
 	end
-
+	
 	--对于所有ap都生效的wlan，在ap首次出现时，需要为其设置wlan列表
 	local ap_wlanlist = {}
 	local wlanlist = cfgget(group, keys.c_wlan_list) or "{}" 
@@ -277,6 +278,9 @@ local function register(cmd)
 		local wlan_belong_k = pkey.wlanids(apid)
 		cfgset(group, wlan_belong_k, js.encode(ap_wlanlist))
 	end
+
+	--更新version
+	cfgset(group, version_k, ver)
 
 	clear_old_apid(group, apid)
 
