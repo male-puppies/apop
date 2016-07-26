@@ -408,7 +408,7 @@ local function add_wlan(map)
 	-- 更新版本号
 	local aparr
 	local ver = os.date("%Y%m%d %H%M%S") 
-	if type(change_map[aplist_k]) == "string" then
+	if type(change_map[aplist_k]) == "string" and change_map[aplist_k] == allap_key then
 		aparr = aplist(group)
 	else
 		aparr = js.decode(change_map[aplist_k]) 	assert(aparr)

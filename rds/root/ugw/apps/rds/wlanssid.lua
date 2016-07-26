@@ -416,7 +416,8 @@ local function wlanadd(conn, group, data)
 	end
 
 	--选择对所有ap生效，即allap_key
-	if map[keys.c_waplist] and type(map[keys.c_waplist]) == "string" then
+	if (map[keys.c_waplist] and type(map[keys.c_waplist]) == "string"  
+	   and map[keys.c_waplist] == allap_key ) then
 		local aparr = allaplist(group) 		assert(aparr)
 		is_allap = true
 		map[keys.c_waplist] = aparr
