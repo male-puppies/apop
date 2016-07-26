@@ -5,6 +5,7 @@ local online = require("online")
 local js = require("cjson.safe")
 local kernelop = require("kernelop")
 
+local hostlist = "/etc/config/hostlist.json"
 local read, save, save_safe = common.read, common.save, common.save_safe
 
 local method = {}
@@ -95,6 +96,24 @@ end
 
 function method.adjust(ins, users)
 	local usermap = ins.usermap
+	local mac_map = {}
+	local s = read(hostlist)
+	if not s then
+		log.error("read hostlist.json failed.")
+	else
+		local r = js.decode(s)
+		if r and r.mac_whitelist then
+			local map = r.mac_whitelist
+			for _, v in ipairs(map) do
+			local l = string.lower(v)
+			if l then
+				mac_map[l] = 1
+			end
+		end
+		else
+			log.error("invalid hostlist.json.")
+		end
+	end
 
 	-- remove out of date
 	local del = {}
@@ -114,14 +133,18 @@ function method.adjust(ins, users)
 		if item.tp == 2 then 
 			if item.st == 1 then 
 				local user = usermap[mac] 
-				if not user then 
-					ins:del_mac(mac) -- offline
+				if not user then
+					if not mac_map[mac] then
+						ins:del_mac(mac) -- offline
+					end
 				else 
 					local _ = user:get_ip() ~= item.ip and log.debug("ip change %s->%s", js.encode(user), js.encode(item))
 					user:set_jf(item.jf):set_ip(item.ip)
 				end
 			else
-				ins:del_mac(mac) -- offline
+				if not mac_map[mac] then
+					ins:del_mac(mac) -- offline
+				end
 			end  
 		end
 	end
@@ -133,14 +156,34 @@ end
 
 function method.offtime(ins, users)
 	local usermap = ins.usermap
-	
+	local mac_map = {}
+	local s = read(hostlist)
+	if not s then
+		log.error("read hostlist.json failed.")
+	else
+
+		local r = js.decode(s)
+		if r and r.mac_whitelist then
+			local map = r.mac_whitelist
+			for _, v in ipairs(map) do
+			local l = string.lower(v)
+			if l then
+				mac_map[l] = 1
+			end
+		end
+		else
+			log.error("invalid hostlist.json.")
+		end
+	end
 	for mac, item in pairs(users) do 
 		if item.tp ~= 1 and item.st == 1 then 
 			local user = usermap[mac] 
 			if user and user.elapse and user.offtime and tonumber(user.offtime) ~= 0 then
 				if tonumber(user.elapse) >= tonumber(user.offtime) then
-					log.debug("%s expired offline", mac)
-					ins:del_mac(mac) -- offline
+					if not mac_map[mac] then
+						log.debug("%s expired offline", mac)
+						ins:del_mac(mac) -- offline
+					end
 				end
 			end 
 		end
