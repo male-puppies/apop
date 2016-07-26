@@ -7,6 +7,7 @@ local const = require("constant")
 local rds, pcli
 local keys = const.keys
 local mac_pattern = string.rep("[a-f0-9][a-f0-9]:", 5) .. "[a-f0-9][a-f0-9]"
+local allap_key = "allap" --wlan设置“对所有ap有效”的标记
 
 local function errmsg(fmt, ...)
 	return string.format(fmt, ...)
@@ -71,6 +72,14 @@ local function wlaninfo(group, wlanid)
 	return resmap
 end
 
+--获取当前所有ap
+local function allaplist(group) 
+	local karr = {keys.c_ap_list}
+	local varr = pcli:query(group, karr) assert(varr)
+	return js.decode(varr[1]) or {}
+end
+
+
 local function get_aps_check(group, wlan_map)
 	local list_arr, check_arr, wlanid_arr = {}, {}, {}
 	
@@ -83,9 +92,14 @@ local function get_aps_check(group, wlan_map)
 		log.error("error get wacid get_aps_check")
 		return nil, errmsg("error rds")
 	end
-	
 	for i = 1, #wlanid_arr do
-		check_arr[wlanid_arr[i]] = #js.decode(varr[i]) or 0
+		local ap_arr_cnt = 0 
+		if type(varr[i]) == "string" and varr[i] == allap_key then
+			ap_arr_cnt = #allaplist(group) or 0
+		else
+			ap_arr_cnt = #js.decode(varr[i]) or 0
+		end
+		check_arr[wlanid_arr[i]] = ap_arr_cnt
 	end
 
 	return check_arr
@@ -209,6 +223,11 @@ web_map.hide = {
 web_map.apList = {
 		k = keys.c_waplist, 
 		func = function(t)
+			--新增支持allap_key，满足“对所有ap生效”功能
+			if type(t) == "string" and t == allap_key then
+				return t
+			end
+
 			if type(t) ~= "table" then 
 				log.error("error apList %s", js.encode(t or {}))
 				return nil, errmsg("invalid ap_list")
@@ -352,7 +371,7 @@ end
 
 local function wlanadd(conn, group, data) 
 	rds, pcli = conn.rds, conn.pcli 	assert(rds and pcli)  
-
+	local is_allap = false
 	local map, err = param_validate(data)
 	if not map then 
 		return get_status(1, err) 
@@ -366,7 +385,15 @@ local function wlanadd(conn, group, data)
 		end
 	end
 
-	local res = pcli:modify({cmd = "add_wlan", data = {group = group, map = map}})
+	--选择对所有ap生效，即allap_key
+	if (map[keys.c_waplist] and type(map[keys.c_waplist]) == "string"  
+	   and map[keys.c_waplist] == allap_key ) then
+		local aparr = allaplist(group) 		assert(aparr)
+		is_allap = true
+		map[keys.c_waplist] = aparr
+	end
+
+	local res = pcli:modify({cmd = "add_wlan", data = {group = group, map = map, allap = is_allap}})
 	return res and get_status(0) or get_status(1, "modify fail") 
 end
 
@@ -479,30 +506,32 @@ local function check_change(group, kvmap)
 		log.error("mget %s fail", js.encode(karr))
 		return nil, errmsg("error rds")
 	end
-
 	local change_kvmap, change_karr = {}, {}
 	for i = 1, #karr do 
-		if not rarr[i] then 
-			log.error("missing %s", karr[i])
-			return errmsg("error rds")
-		end
-
-		assert(type(rarr[i]) == "string")
-
 		if rarr[i] ~= varr[i] then
-			if type(varr[i]) == "table" then 
-				local old, new = js.decode(rarr[i]), varr[i]
+			--old可取类型是字符串和数组，因此，需要特殊处理
+			local old = js.decode(rarr[i]) or rarr[i] assert(old)
+			local new =  varr[i]
+
+			if type(new) == "table" and type(old) == "table" then 
 				table.sort(old) table.sort(new)
 				if not ms.isEqual(old, new) then
 					local s = js.encode(new)
-					log.debug("change %s from %s to %s", karr[i], rarr[i], s)
+					log.debug("change %s from %s to %s", karr[i], js.encode(old), s)
 					change_kvmap[karr[i]] = s
 					table.insert(change_karr, karr[i])
 				end
-			else 
-				log.debug("modify change %s from %s to %s", karr[i], rarr[i], varr[i])
-				change_kvmap[karr[i]] = varr[i]
+
+			elseif type(new) == type(old) == "string" then
+				change_kvmap[karr[i]] = new
 				table.insert(change_karr, karr[i])
+				log.debug("change %s from %s to %s", karr[i], rarr[i], new)
+
+			else 
+		        --适配string与table间的修改，切记不可对string类型encode，否则会多出“”
+				change_kvmap[karr[i]] = type(new) == "string" and new or js.encode(new) 
+				log.debug("modify change %s from %s to %s", karr[i], 
+					js.encode(rarr[i]) or rarr[i], js.encode(new) or new)
 			end
 		end
 	end
@@ -510,11 +539,21 @@ local function check_change(group, kvmap)
 end
 
 local function collect_aparr(group, o, wlanid)
-	local new_aparr = o.apList 	assert(type(new_aparr) == "table")
-
+	local new_aparr, old_aparr = o.apList 
+	--如果是allap,那么，临时获取“所有ap”列表
+	if type(new_aparr) == "string" and new_aparr == allap_key then
+		new_aparr = allaplist(group)
+	end
+	assert(type(new_aparr) == "table")	
+	
 	local karr = {pkey.waplist(wlanid)}
 	local varr = pcli:query(group, karr)
-	local old_aparr = js.decode(varr and varr[1] or nil)
+	if varr and varr[1] and type(varr[1]) == "string" and varr[1] == allap_key then
+		old_aparr = allaplist(group)		assert(old_aparr) 
+	else
+		old_aparr = js.decode(varr and varr[1] or nil)
+	end
+
 	if type(old_aparr) ~= "table" then 
 		log.error("rds get fail")
 		return nil, errmsg("error rds")
@@ -553,6 +592,7 @@ end
 
 function modify_map.modify(group, o)
 	assert(type(o) == "table")
+	local is_allap = false
 	
 	local wlanid, ssid = o.ext_wlanid, o.SSID 
 	if type(wlanid) ~= "string" or type(ssid) ~= "string" or #wlanid ~= 5 or #ssid == 0 then 
@@ -595,13 +635,16 @@ function modify_map.modify(group, o)
 		log.debug("modify nothing changed")
 		return true 
 	end
-
 	local cmd_map, err = collect_aparr(group, o, wlanid)
 	if not cmd_map then 
 		return nil, err
 	end
+	--如果是allap,需要设置标记，cfgmgr处理
+	if type(o.apList) == "string" and o.apList == allap_key then
+		is_allap = true
+	end
 	
-	local res = pcli:modify({cmd = "mod_wlan", data = {group = group, change = change_kvmap, wlanid = wlanid, op_map = cmd_map}})
+	local res = pcli:modify({cmd = "mod_wlan", data = {group = group, change = change_kvmap, wlanid = wlanid, op_map = cmd_map, allap = is_allap}})
 	return true
 end
 
@@ -665,19 +708,26 @@ end
 
 local function list_check_ssid(group, wlanid)
 	assert(#wlanid == 5)
-
+	local is_allap, aparr = false
 	local karr = {pkey.waplist(wlanid)}
 	local varr = pcli:query(group, karr)
 	if not varr then 
 		return nil, errmsg("error mqtt")
 	end 
 
-	local aparr = js.decode(varr[1])
+	--如果是"allap",需要临时获取所有ap
+	if type(varr[1]) == "string" and varr[1] == allap_key then
+		aparr = allaplist(group)
+		is_allap = true
+	else
+		aparr = js.decode(varr[1])
+	end
+
 	if not aparr then 
 		log.error("get %s fail", k)
 		return nil, errmsg("error rds")
 	end
-	return aparr
+	return aparr, is_allap
 end 
 
 --[[
@@ -704,7 +754,7 @@ local function wlanlistaps(conn, group, data)
  		return get_status(0, apid_check_arr) 
  	end
 
- 	local check_aparr = list_check_ssid(group, wlanid)
+ 	local check_aparr, is_allap = list_check_ssid(group, wlanid)
  	if not check_aparr then 
  		return get_status(1, "error rds")
  	end 
@@ -719,8 +769,8 @@ local function wlanlistaps(conn, group, data)
  			item.check = "1"
  		end 
  	end 
-
-	return get_status(0, apid_check_arr) 
+ 	local data = {apid_arr = apid_check_arr, allap = is_allap}
+	return get_status(0, data) 
 end 
 
 return {
