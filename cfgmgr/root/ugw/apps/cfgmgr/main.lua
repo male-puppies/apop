@@ -107,7 +107,7 @@ topic_map["a/ac/cfgmgr/register"] = function(map)
 
 	set_login_time(group, apid)
 
-	local res, apid, apid_map = dispatch.register(map.pld)
+	local res, apid_map = dispatch.register(map.pld)
 	
 	local p = {
 		mod = map.mod,
