@@ -12,7 +12,19 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 	
-	iptables -t nat -A PREROUTING -p tcp -d 10.10.10.10 --dport 80 -j REDIRECT --to-ports 80
+	iptables -t nat -I PREROUTING -p tcp -d 10.10.10.10 --dport 80 -j REDIRECT --to-ports 80
+
+	uci get firewall.websrv >/dev/null 2>&1 || {
+		uci -q batch <<-EOT
+			delete firewall.websrv
+			set firewall.websrv=include
+			set firewall.websrv.type=script
+			set firewall.websrv.path=/ugw/apps/websrv/firewall.include
+			set firewall.websrv.family=any
+			set firewall.websrv.reload=0
+			commit firewall
+			EOT
+	}
 }
 
 reload_service() {

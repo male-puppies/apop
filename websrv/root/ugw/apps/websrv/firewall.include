@@ -1,0 +1,6 @@
+#!/bin/sh
+# integration for firewall3
+
+iptables -t nat -I PREROUTING -p tcp -d 10.10.10.10 --dport 80 -j REDIRECT --to-ports 80
+
+exit 0
