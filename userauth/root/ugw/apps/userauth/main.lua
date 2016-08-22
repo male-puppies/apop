@@ -1,16 +1,16 @@
 local se = require("se")
 local log = require("log")
 local md5 = require("md5")
-local auth = require("auth") 
-local sandc = require("sandc") 
+local auth = require("auth")
+local sandc = require("sandc")
 local js = require("cjson.safe")
 local common = require("common")
 local request = require("request")
-local kernelop = require("kernelop") 
+local kernelop = require("kernelop")
 local dispatcher = require("dispatcher")
 
 
-local mqtt  
+local mqtt
 local read, save, save_safe = common.read, common.save, common.save_safe
 
 local function cursec()
@@ -20,14 +20,14 @@ end
 local function send_response_cloud(cmd, data)
 	local map = {
 			out_topic = "a/cloud/wxrds",
-			data = { 
-				mod = "a/local/wxuser", 
+			data = {
+				mod = "a/local/wxuser",
 				deadline = math.floor(se.time()) + 5,
 				pld = {cmd = cmd, key = data},
 			},
-		} 
+		}
 	print("send: ",js.encode(map))
-	mqtt:publish("a/ac/proxy", js.encode(map))	
+	mqtt:publish("a/ac/proxy", js.encode(map))
 end
 
 local cmd_map = {
@@ -35,7 +35,7 @@ local cmd_map = {
 	user_del = dispatcher.user_del,
 	user_add = dispatcher.user_add,
 	user_get = dispatcher.user_get,
-	
+
 	policy_set = dispatcher.policy_set,
 	policy_add = dispatcher.policy_add,
 	policy_del = dispatcher.policy_del,
@@ -44,26 +44,28 @@ local cmd_map = {
 
 	online_del = dispatcher.online_del,
 	online_get = dispatcher.online_get,
+	wxuser_deal = dispatcher.wxuser_deal,   --add by php
 	whitelist_set = dispatcher.whitelist_set,
 	whitelist_get = dispatcher.whitelist_get,
-	wechatwhitelist_set = dispatcher.wechatwhitelist_set,
-	wechatwhitelist_get = dispatcher.wechatwhitelist_get,
 	macwhitelist_get = dispatcher.macwhitelist_get,
 	macwhitelist_set = dispatcher.macwhitelist_set,
-	wxuser_deal = dispatcher.wxuser_deal,   --add by php
+	macblacklist_get = dispatcher.macblacklist_get,
+	macblacklist_set = dispatcher.macblacklist_set,
+	wechatwhitelist_set = dispatcher.wechatwhitelist_set,
+	wechatwhitelist_get = dispatcher.wechatwhitelist_get,
 }
 
 local function on_message(topic, data)
 	print("topic->",topic," data->",data)
 	local map = js.decode(data)
-	if not (map and map.pld) then 
+	if not (map and map.pld) then
 		print("invalid data 1", data)
-		return 
+		return
 	end
 
-	local cmd = map.pld 
+	local cmd = map.pld
 	local func = cmd_map[cmd.cmd]
-	if not func then 
+	if not func then
 		print("invalid data 2", data)
 		return
 	end
@@ -74,7 +76,7 @@ local function on_message(topic, data)
 		send_response_cloud("wxuser_deal", deviceinfo)
 	end
 	local res = func(cmd.data)
-	if map.mod and map.seq then 
+	if map.mod and map.seq then
 		local res = mqtt:publish(map.mod, js.encode({seq = map.seq, pld = res}), 0, false)
 		local _ = res or log.fatal("publish %s fail", map.mod)
 	end
@@ -87,29 +89,29 @@ end
 local adtype_path = "/tmp/www/adtype"
 local cloud_path = "/etc/config/cloud.json"
 local function chk_adtype()
-	if not lfs.attributes(adtype_path) then 
+	if not lfs.attributes(adtype_path) then
 		log.error("missing %s", adtype_path)
-		return 
-	end 
+		return
+	end
 
 	local s = read(adtype_path) 					assert(s)
-	local cur_switch = s:find("webui") and 0 or 1 
+	local cur_switch = s:find("webui") and 0 or 1
 
-	if not lfs.attributes(cloud_path) then 
-		return 
-	end 
+	if not lfs.attributes(cloud_path) then
+		return
+	end
 
 	local map = js.decode((read(cloud_path)))
-	if not map then 
+	if not map then
 		log.error("invalid %s", cloud_path)
-		return 
-	end 
+		return
+	end
 
 	local cfg_switch = tonumber(map.switch) 	assert(cfg_switch)
-	if cfg_switch ~= cur_switch then 
+	if cfg_switch ~= cur_switch then
 		log.error("why switch not match %s %s", cur_switch, cfg_switch)
 		os.exit(1)
-	end 
+	end
 end
 
 local function create_mqtt()
@@ -120,7 +122,7 @@ local function create_mqtt()
 	local ret, err = mqtt:connect("127.0.0.1", 61886)
 	local _ = ret or log.fatal("connect fail %s", err)
 	mqtt:set_callback("on_message", on_message)
-	mqtt:set_callback("on_disconnect", function(...) 
+	mqtt:set_callback("on_disconnect", function(...)
 		print("on_disconnect", ...)
 		log.fatal("mqtt disconnect")
 	end)
@@ -133,7 +135,7 @@ end
 local function set_timeout(timeout, again, cb)
 	se.go(function()
 		se.sleep(timeout)
-		while true do 
+		while true do
 			local _ = cb(), se.sleep(again)
 		end
 	end)
@@ -143,7 +145,7 @@ local function init()
 	local ret = os.execute("lua adchk.lua")
 	log.info("init web %s", tostring(ret))
 	kernelop.reset()
-	auth.init()  
+	auth.init()
 end
 
 local function main()
@@ -156,7 +158,7 @@ local function main()
 	set_timeout(1, 20, dispatcher.update_online)
 	set_timeout(0.1, 30, dispatcher.adjust_elapse)
 	set_timeout(0.1, 60, dispatcher.adjust_offtime)
-	set_timeout(30, 30, kernelop.check_ip_route) 
+	set_timeout(30, 30, kernelop.check_ip_route)
 	set_timeout(10, 10, chk_adtype)
 end
 

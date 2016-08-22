@@ -1,15 +1,16 @@
-local log = require("log") 
+local log = require("log")
 local js = require("cjson.safe")
-local common = require("common") 
+local common = require("common")
 local lfs = require("lfs")
 
 local read, save_safe, file_exist = common.read, common.save_safe, common.file_exist
 
 local blacklist = "blacklist"
 local whitelist = "whitelist"
+local macwhitelist = "mac_whitelist"
+local macblacklist = "mac_blacklist"
 local wechatblacklist = "wechat_blacklist"
 local wechatwhitelist = "wechat_whitelist"
-local macwhitelist = "mac_whitelist"
 local alllist = "allist"
 local hostlist = "/etc/config/hostlist.json"
 local cloud_whitelist_file = "/tmp/www/webui/url_config.conf"
@@ -27,7 +28,7 @@ local function hostlist_get(list_type)
 	end
 	local map = js.decode(s) or {}
 	if list_type == allist then
-		return map 
+		return map
 	end
 	return map[list_type] or {}
 end
@@ -37,9 +38,10 @@ local function hostlist_set(list_type, list)
 	local old_map = hostlist_get(allist)
 	new_map[blacklist] = old_map[blacklist] or {}
 	new_map[whitelist] = old_map[whitelist] or {}
+	new_map[macwhitelist] = old_map[macwhitelist] or {}
+	new_map[macblacklist] = old_map[macblacklist] or {}
 	new_map[wechatblacklist] = old_map[wechatblacklist] or {}
 	new_map[wechatwhitelist] = old_map[wechatwhitelist] or {}
-	new_map[macwhitelist] = old_map[macwhitelist] or {}
 	new_map[list_type] = list
 	save_safe(hostlist, js.encode(new_map) or {})
 	return true
@@ -47,7 +49,7 @@ end
 
 local function get_cloud_whlist(filepath)
 	local s = read("/tmp/www/adtype")
-	if not (s and s:find("cloudauth")) then 
+	if not (s and s:find("cloudauth")) then
 		return false, nil
 	end
 
@@ -62,19 +64,19 @@ local function get_cloud_whlist(filepath)
 	return false, nil
 end
 
-local function whitelist_get() 
+local function whitelist_get()
 	return hostlist_get(whitelist)
 end
 
-local function wechatwhitelist_get() 
+local function wechatwhitelist_get()
 	return hostlist_get(wechatwhitelist)
 end
 
-local function blacklist_get() 
+local function blacklist_get()
 	return hostlist_get(blacklist)
 end
 
-local function wechatwhitelist_get() 
+local function wechatwhitelist_get()
 	return hostlist_get(wechatwhitelist)
 end
 
@@ -82,23 +84,32 @@ local function macwhitelist_get()
 	return hostlist_get(macwhitelist)
 end
 
-local function whitelist_set(host_list) 
+local function macblacklist_get()
+	return hostlist_get(macblacklist)
+end
+
+local function whitelist_set(host_list)
 	hostlist_set(whitelist, host_list or {})
 	return {status = 0, data = "ok"}
 end
 
-local function blacklist_set(host_list) 
+local function blacklist_set(host_list)
 	hostlist_set(blacklist, host_list or {})
 	return {status = 0, data = "ok"}
 end
 
-local function wechatwhitelist_set(host_list) 
+local function wechatwhitelist_set(host_list)
 	hostlist_set(wechatwhitelist, host_list or {})
 	return {status = 0, data = "ok"}
 end
 
-local function macwhitelist_set(host_list)
-	hostlist_set(macwhitelist, host_list  or {})
+local function macwhitelist_set(mac_list)
+	hostlist_set(macwhitelist, mac_list  or {})
+	return {status = 0, data = "ok"}
+end
+
+local function macblacklist_set(mac_list)
+	hostlist_set(macblacklist, mac_list  or {})
 	return {status = 0, data = "ok"}
 end
 
@@ -131,24 +142,33 @@ local function get_bypassurl()
 	end
 	return bypassurl
 end
-
+-- whitemac action:1 and blackmac action:0  DON'T MOVE BLACK WHITE OREDER !!!!
 local function get_mac_bypassinfo()
 	local bypassmac = {}
+	local macblacklist = macblacklist_get()
+	if macblacklist and #macblacklist > 0 then
+		for _, mac in ipairs(macblacklist) do
+			if mac and (string.len (mac) == 17) then
+				table.insert(bypassmac, {["mac"] = mac, ["action"] = 0})
+			end
+		end
+	end
+
 	local macwhitelist = macwhitelist_get()
-	if macwhitelist and #macwhitelist > 0 then 
-		for _, mac in ipairs(macwhitelist)do 
-			if mac and string.len (mac) > 3 then 
+	if macwhitelist and #macwhitelist > 0 then
+		for _, mac in ipairs(macwhitelist)do
+			if mac and (string.len (mac) == 17) then
 				table.insert(bypassmac, {["mac"] = mac, ["action"] = 1})
-			end 
-		end 
-	end 
-	
+			end
+		end
+	end
+
 	local ret, map = get_cloud_whlist(cloud_mac_file)
 	if ret and map.whitelist then
 		local maclist = {}
 		if type(map.whitelist) == "string" then
 			maclist = js.decode(map.whitelist)
-		else 
+		else
 			maclist = map.whitelist
 		end
 
@@ -157,27 +177,29 @@ local function get_mac_bypassinfo()
 		end
 
 		for _,v in ipairs(maclist) do
-			if v and string.len (v) > 3 then 
+			if v and string.len (v) > 3 then
 				table.insert(bypassmac, {["mac"] = v, ["action"] = 1})
 			end
 		end
-	end 
+	end
 
 	return bypassmac
 end
 
 return {
 	hostlist_get  = hostlist_get,
-	whitelist_set = whitelist_set, 
+	whitelist_set = whitelist_set,
 	whitelist_get = whitelist_get,
-	blacklist_set = blacklist_set, 
+	blacklist_set = blacklist_set,
 	blacklist_get = blacklist_get,
-	wechatwhitelist_set = wechatwhitelist_set, 
-	wechatwhitelist_get = wechatwhitelist_get,
+	get_bypassurl = get_bypassurl,
 	macwhitelist_set = macwhitelist_set,
 	macwhitelist_get = macwhitelist_get,
-	get_bypassurl = get_bypassurl,
-	get_wechat_bypassurl = get_wechat_bypassurl,
+	macblacklist_set = macblacklist_set,
+	macblacklist_get = macblacklist_get,
 	get_mac_bypassinfo = get_mac_bypassinfo,
+	wechatwhitelist_set = wechatwhitelist_set,
+	wechatwhitelist_get = wechatwhitelist_get,
+	get_wechat_bypassurl = get_wechat_bypassurl,
 }
 

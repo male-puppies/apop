@@ -58,11 +58,11 @@ local function login_success(mac, ip, username, expire)
 	end
 	ol:add(mac, ip, username, tonumber(expire))
 	ol:show()
-end 
+end
 
 local function auth(map)
 	local username, password, ip, mac = map.username, map.password, map.ip, map.mac
-	if not (username and password and ip and mac) then 
+	if not (username and password and ip and mac) then
 		return status("请尝试重新加载！")
 	end
 
@@ -88,13 +88,13 @@ local function auth(map)
 
 	if not user:check_remain() then
 		return status("此帐号无剩余时间！")
-	end 
+	end
 
 	local is_auto = policies:ins():check_auto(ip)
 	local _ = is_auto and print("why auto", ip)
 	if not (is_auto or user:check_user_passwd(username, password)) then
 		return status("无效帐号或密码错误！")
-	end 
+	end
 
 	if not user:check_multi(ol:exist_user(username)) then
 		return status("此帐号已在线！")
@@ -113,10 +113,10 @@ local function setup_update_online()
 	local last_check_time = os.time()
 	return function()
 		-- print("------------------------------")
-		local now = os.time() 
+		local now = os.time()
 		local d = now - last_check_time
 		last_check_time = now
-		
+
 		local ol = onlinelist.ins()
 		ol:foreach(function(user)
 			local _ = user:set_elapse(user:get_elapse() + d), user:set_part(user:get_part() + d)
@@ -138,11 +138,11 @@ local function scan_expire()
 		local name = user:get_name()
 		local u = ul:get(name)
 		if not u:check_expire() then
-			expired_map[name] = 1 
+			expired_map[name] = 1
 		end
 	end)
 
-	for username in pairs(expired_map) do 
+	for username in pairs(expired_map) do
 		log.info("expired %s", username)
 		local _ = kick_online_user(username), ol:set_change(true)
 	end
@@ -168,7 +168,7 @@ local function scan_remain()
 	end
 end
 
-local function update_user() 
+local function update_user()
 	scan_remain()
 	scan_expire()
 end
@@ -185,13 +185,13 @@ local function user_set(map)
 
 		if not ul:exist(name) then
 			return status("不存在 " .. name)
-		end 
+		end
 		if name ~= item.name and ul:exist(item.name) then
 			return status("认证名已存在！")
 		end
 	end
 
-	for name, item in pairs(map) do 
+	for name, item in pairs(map) do
 		local name, pwd, desc, enable, multi, bind, maclist = item.name, item.pwd, item.desc, item.enable, item.multi, item.bind, item.maclist
 		local expire, remain = item.expire, item.remain
 
@@ -207,7 +207,7 @@ local function user_set(map)
 
 	ul:save()
 	return {status = 0}
-end 
+end
 
 local function user_del(map)
 	local group, arr = map.group, map.data
@@ -225,32 +225,32 @@ end
 local function user_add(map, ignore_dup)
 	local group, arr = map.group, map.data
 	local ul, narr = userlist.ins(), {}
-	for _, map in ipairs(arr) do 
-		local ret, err = usr.check(map) 
-		if not ret then 
+	for _, map in ipairs(arr) do
+		local ret, err = usr.check(map)
+		if not ret then
 			return {status = 1, data = err}
 		end
 
 		if ignore_dup then
-			if not ul:exist(map.name) then 
+			if not ul:exist(map.name) then
 				table.insert(narr, map)
 			end
-		elseif ul:exist(map.name) then 
-			return {status = 1, data = "认证名已存在！"} 
-		else 
+		elseif ul:exist(map.name) then
+			return {status = 1, data = "认证名已存在！"}
+		else
 			table.insert(narr, map)
 		end
 	end
 
-	for _, map in ipairs(narr) do 
+	for _, map in ipairs(narr) do
 		local name, pwd, desc, enable, multi, bind, maclist = map.name, map.pwd, map.desc, map.enable, map.multi, map.bind, map.maclist
-		local expire, remain = map.expire, map.remain 
+		local expire, remain = map.expire, map.remain
 
 		assert(name and pwd and desc and enable and multi and bind and maclist and expire and remain)
 
 		local n = usr:new()
 		n:set_name(name):set_pwd(pwd):set_desc(desc):set_enable(enable)
-		n:set_multi(multi):set_bind(bind):set_maclist(maclist) 
+		n:set_multi(multi):set_bind(bind):set_maclist(maclist)
 		n:set_expire(expire):set_remain(remain)
 
 		ul:add(n)
@@ -262,7 +262,7 @@ end
 
 local function user_get(data)
 	local arr = {}
-	for _, user in pairs(userlist.ins():data()) do 
+	for _, user in pairs(userlist.ins():data()) do
 		table.insert(arr, user)
 	end
 
@@ -273,18 +273,18 @@ local function policy_set(map)
 	-- local map = {["hello"] = {name = "hello", ip1 = "192.162.0.1", ip2 = "192.168.0.255", type = "auto"}}
 	local group, map = map.group, map.data
 	local pols = policies.ins()
-	for name, item in pairs(map) do 
+	for name, item in pairs(map) do
 		local ret, err = policy.check(item)
-		if not ret then 
-			return {status = 1, data = err} 
+		if not ret then
+			return {status = 1, data = err}
 		end
 
 		if not pols:exist(name) then
-			return {status = 1, data = "miss " .. name} 
-		end 
-		
-		if name ~= item.name and pols:exist(item.name) then 
-			return {status = 1, data = "dup " .. item.name} 
+			return {status = 1, data = "miss " .. name}
+		end
+
+		if name ~= item.name and pols:exist(item.name) then
+			return {status = 1, data = "dup " .. item.name}
 		end
 	end
 
@@ -300,16 +300,16 @@ local function policy_set(map)
 	pols:save()
 	kernelop.reset()
 	return {status = 0}
-end 
+end
 
-local function policy_add(map) 
+local function policy_add(map)
 	-- local map = {name = "pol1", ip1 = "192.168.0.1", ip2 = "192.168.0.255", type = "auto"}
 	local group, map = map.group, map.data
-	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
+	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type
 	local ret, err = policy.check(map)
 	if not ret then
 		return {status = 1, data = err}
-	end 
+	end
 
 	local pols = policies.ins()
 	if pols:exist(name) then
@@ -325,7 +325,7 @@ local function policy_add(map)
 	return {status = 0}
 end
 
-local function policy_del(map) 
+local function policy_del(map)
 	-- local arr = {"hello", "worldc"}
 	local group, arr = map.group, map.data
 	local pols = policies.ins()
@@ -343,7 +343,7 @@ local function policy_adj(map)
 	local pols = policies.ins()
 	for _, name in ipairs(arr) do
 		if not pols:exist(name) then
-			return {status = 1, data = "miss " .. name} 
+			return {status = 1, data = "miss " .. name}
 		end
 	end
 
@@ -366,7 +366,7 @@ local function online_del(map)
 	end
 
 	return {status = 0}
-end 
+end
 
 local function online_get(data)
 	local arr = {}
@@ -377,7 +377,7 @@ local function online_get(data)
 			name = user:get_name(),
 			elapse = user:get_elapse(),
 		})
-	end 
+	end
 	return {status = 0, data = arr}
 end
 
@@ -386,7 +386,7 @@ local function save()
 	local _ = ol:save(), ul:save()
 end
 
-local function adjust_elapse() 
+local function adjust_elapse()
 	local ol = onlinelist.ins()
 	ol:adjust(kernelop.get_all_user())
 end
@@ -434,14 +434,24 @@ local function macwhitelist_set(map)
 	return {status = 0}
 end
 
+local function macblacklist_get(data)
+	return {status = 0, data = hostlist.macblacklist_get()}
+end
+
+local function macblacklist_set(map)
+	local group, map = map.group, map.data
+	hostlist.macblacklist_set(map)
+	kernelop.reset()
+	return {status = 0}
+end
 -- add by php----
-local function del_online_wxuser(arr) 
+local function del_online_wxuser(arr)
 	local ol, ul = onlinelist.ins(), userlist.ins()
-	for _, name in ipairs(arr) do 
+	for _, name in ipairs(arr) do
 		ul:del(name)
 		local mac_arr = ol:del_user(name)
 		local _ = #mac_arr > 0 and kernelop.offline(mac_arr)
-	end 
+	end
 
 	ul:save()
 	return  0
@@ -450,7 +460,7 @@ end
 local function modify_online_wxuser(arr)
 	local expire = 0
 	local ret, wxcloud_expiretime = get_cloudwx_expiretime()
-	if ret then 
+	if ret then
 		expire = wxcloud_expiretime
 	else
 		local s = read("/etc/config/web_config.json")
@@ -463,11 +473,11 @@ local function modify_online_wxuser(arr)
 	end
 	print("modify_online_wxuser ->expire=", expire)
 	local ol, ul = onlinelist.ins(), userlist.ins()
-	for _, name in ipairs(arr) do 
+	for _, name in ipairs(arr) do
 		print(name)
 		ul:set_offtime(name)
 		ol:set_offtime(name, expire)
-	end 
+	end
 	ol:save()
 	ul:save()
 end
@@ -481,8 +491,8 @@ local function wxuser_deal(data)
 		return
 	end
 	for _, user in pairs(wxuser) do
-		print(user.action, user.openid) 
-		if user.action == "subscribe" then  
+		print(user.action, user.openid)
+		if user.action == "subscribe" then
 			table.insert(modify, user.openid)
 		elseif user.action == "unsubscribe" then
 			table.insert(del, user.openid)
@@ -491,7 +501,7 @@ local function wxuser_deal(data)
 	print("del->",js.encode(del), " mod->",js.encode(modify))
 	if #del ~= 0 then
 		print("del start")
-		del_online_wxuser(del) 
+		del_online_wxuser(del)
 	end
 	if #modify ~= 0 then
 		print("modify start")
@@ -501,12 +511,12 @@ end
 
 return {
 	save = save,
-	auth = auth, 
+	auth = auth,
 
 	set_authopt = set_authopt,
-	
+
 	update_user = update_user,
-	update_online = setup_update_online(), 
+	update_online = setup_update_online(),
 
 	user_set = user_set,
 	user_del = user_del,
@@ -529,9 +539,12 @@ return {
 	whitelist_set = whitelist_set,
 	whitelist_get = whitelist_get,
 
+	macwhitelist_set = macwhitelist_set,
+	macwhitelist_get = macwhitelist_get,
+	macblacklist_set = macblacklist_set,
+	macblacklist_get = macblacklist_get,
+
 	wechatwhitelist_set = wechatwhitelist_set,
 	wechatwhitelist_get = wechatwhitelist_get,
 	wxuser_deal = wxuser_deal,
-	macwhitelist_set = macwhitelist_set,
-	macwhitelist_get = macwhitelist_get,
 }
