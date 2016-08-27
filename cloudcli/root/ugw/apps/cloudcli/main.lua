@@ -13,6 +13,7 @@ local read, save, save_safe = common.read, common.save, common.save_safe
 local g_kvmap, g_devid = {}
 
 local mqtt 
+local on_cache = {cmd="adcfg_notify", map = nil}
 
 local function read_id()
 	local id = read("ifconfig eth0 | grep HWaddr | awk '{print $5}'", io.popen)
@@ -623,6 +624,23 @@ function cmd_map.devcfg_notify(map)
 
 end
 
+local function process_go(cfg_type, map)
+	local n = 0
+	while true do
+		if on_cache.map and string.len(js.encode(on_cache.map)) ~= 0 then
+			print("start---process_go", os.date())
+			local ret = process_cfg_notify("ad",  on_cache.map)
+			if ret then
+				query_version_intval = NORMAL_QUERY_INTVAL
+			else
+				query_version_intval = EMERGY_QUERY_INTVAL
+			end
+			on_cache.map = nil
+			print("end---process_go", os.date())
+		end
+		se.sleep(2)
+	end
+end
 
 function cmd_map.adcfg_notify(map)
 	local switch = get_switch()
@@ -678,7 +696,6 @@ local function query_cfg_version()
 	end
 end
 
-
 local function on_message(map)
 	local cmd, data = map.cmd, map.data 
 	if not (cmd and data) then 
@@ -690,9 +707,12 @@ local function on_message(map)
 	if not func then 
 		log.error("invalid message %s", js.encode(map))
 		return
-	end 
-
-	func(data)
+	end
+	if cmd == "adcfg_notify" then
+		on_cache.map = data
+	else 
+		func(data)
+	end
 end
 
 local function connect_mqtt()
@@ -810,6 +830,7 @@ local function main()
 	se.go(query_cfg_version)
 	se.go(check_cfg_version)
 	se.go(check_cfg_change)
+	se.go(process_go)
 end 
 
 log.setmodule("cm")
