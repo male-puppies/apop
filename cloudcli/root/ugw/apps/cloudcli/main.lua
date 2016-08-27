@@ -637,6 +637,15 @@ function cmd_map.adcfg_notify(map)
 	end
 end
 
+function cmd_map.reboot(map)
+	print("start rebooting")
+	os.execute("reboot >/dev/null 2>&1")
+end
+
+function cmd_map.reset(map)
+	print("start reseting")
+	os.execute("/ugw/script/reset_data.sh; sleep 1; mtd -r erase rootfs_data")
+end
 
 --[[
 	配置主要有两类devcfg和adcfg;
@@ -754,12 +763,26 @@ local function check_cfg_version()
 	end
 end
 
+local function get_online_users()
+	local users = 0
+	local s = read("/tmp/memfile/online.json")
+	if s then
+		local map = js.decode(s)
+		if map then
+			for _,_ in pairs(map) do
+				users = users + 1
+			end
+		end
+	end
+	return users
+end
 
 local function report_status() 
 	local get_state = function()
 		local firmware = read("/etc/openwrt_version") or ""
 		local uptime = read("uptime | awk  -F, '{print $1}'", io.popen) or ""
-		return {firmware = firmware:gsub("[ \t\r\n]$", ""), uptime = uptime:gsub("[ \t\r\n]$", "")}
+		local onlines = get_online_users()
+		return {firmware = firmware:gsub("[ \t\r\n]$", ""), uptime = uptime:gsub("[ \t\r\n]$", ""), onlines = onlines}
 	end
 
 	se.sleep(3)
