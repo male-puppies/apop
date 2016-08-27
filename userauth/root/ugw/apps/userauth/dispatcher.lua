@@ -9,6 +9,7 @@ local onlinelist = require("onlinelist")
 local hostlist = require("hostlist")
 
 local authopt
+local cloud_config_file = "/tmp/www/webui/auth_config.conf"
 
 local function read(path, func)
 	func = func and func or io.open
@@ -21,13 +22,25 @@ local function read(path, func)
 	return s
 end
 
+local function get_cloudwx_expiretime()
+	local f = read(cloud_config_file)
+	local map = {}
+	if f then
+		map = js.decode(f)
+		if map and map.authtype == 1 and map.expiretime then
+			return true, map.expiretime * 60
+		end
+	end
+	return false, nil
+end
+
 local function status(msg, ok)
 	print(msg, ok)
 	return {status = ok and 0 or 1, data = msg}
 end
 
 local function get_timestamp()
-	return  os.date("%Y%m%d %H%M%S") 
+	return  os.date("%Y%m%d %H%M%S")
 end
 
 local function login_success(mac, ip, username, expire)
@@ -69,17 +82,17 @@ local function auth(map)
 		return status("此帐号被禁用！")
 	end
 
-	if not user:check_expire() then 
+	if not user:check_expire() then
 		return status("此帐号已过期！")
 	end
 
-	if not user:check_remain() then 
+	if not user:check_remain() then
 		return status("此帐号无剩余时间！")
 	end 
 
 	local is_auto = policies:ins():check_auto(ip)
 	local _ = is_auto and print("why auto", ip)
-	if not (is_auto or user:check_user_passwd(username, password)) then  
+	if not (is_auto or user:check_user_passwd(username, password)) then
 		return status("无效帐号或密码错误！")
 	end 
 
@@ -138,17 +151,17 @@ end
 local function scan_remain()
 	local ol, ul = onlinelist.ins(), userlist.ins()
 	local minus_map = {}
-	ol:foreach(function(user) 
+	ol:foreach(function(user)
 		local name = user:get_name()
 		minus_map[name] = user:get_part(), user:set_part(0)
 	end)
-	for username, n in pairs(minus_map) do 
+	for username, n in pairs(minus_map) do
 		local user = ul:get(username)
 		if user and user:get_remain_enable() == 1 then
-			local left = user:get_remain_time() - n 
-			left = left > 0 and left or 0 
+			local left = user:get_remain_time() - n
+			left = left > 0 and left or 0
 			local _ = user:set_remain({1, left}), ul:set_change(true)
-			if left <= 0 then 
+			if left <= 0 then
 				local _ = kick_online_user(username), ol:set_change(true)
 			end
 		end
@@ -160,20 +173,20 @@ local function update_user()
 	scan_expire()
 end
 
-local function user_set(map)  
-	local group, map = map.group, map.data 
-	local ul = userlist.ins() 
+local function user_set(map)
+	local group, map = map.group, map.data
+	local ul = userlist.ins()
 
 	for name, item in pairs(map) do
-		local ret, err = usr.check(item) 
-		if not ret then 
+		local ret, err = usr.check(item)
+		if not ret then
 			return status(err)
 		end
 
-		if not ul:exist(name) then 
+		if not ul:exist(name) then
 			return status("不存在 " .. name)
 		end 
-		if name ~= item.name and ul:exist(item.name) then 
+		if name ~= item.name and ul:exist(item.name) then
 			return status("认证名已存在！")
 		end
 	end
@@ -196,14 +209,14 @@ local function user_set(map)
 	return {status = 0}
 end 
 
-local function user_del(map) 
-	local group, arr = map.group, map.data 
+local function user_del(map)
+	local group, arr = map.group, map.data
 	local ol, ul = onlinelist.ins(), userlist.ins()
-	for _, name in ipairs(arr) do 
+	for _, name in ipairs(arr) do
 		ul:del(name)
 		local mac_arr = ol:del_user(name)
 		local _ = #mac_arr > 0 and kernelop.offline(mac_arr)
-	end 
+	end
 
 	ul:save()
 	return {status = 0}
@@ -266,7 +279,7 @@ local function policy_set(map)
 			return {status = 1, data = err} 
 		end
 
-		if not pols:exist(name) then 
+		if not pols:exist(name) then
 			return {status = 1, data = "miss " .. name} 
 		end 
 		
@@ -276,11 +289,11 @@ local function policy_set(map)
 	end
 
 	for name, item in pairs(map) do
-		local name, ip1, ip2, tp = item.name, item.ip1, item.ip2, item.type 
+		local name, ip1, ip2, tp = item.name, item.ip1, item.ip2, item.type
 		assert(name and ip1 and ip2 and tp)
 
 		local n = policy.new()
-		n:set_name(name):set_ip1(ip1):set_ip2(ip2):set_type(tp) 
+		n:set_name(name):set_ip1(ip1):set_ip2(ip2):set_type(tp)
 		pols:set(name, n)
 	end
 
@@ -294,13 +307,13 @@ local function policy_add(map)
 	local group, map = map.group, map.data
 	local name, ip1, ip2, tp = map.name, map.ip1, map.ip2, map.type 
 	local ret, err = policy.check(map)
-	if not ret then 
-		return {status = 1, data = err}  
+	if not ret then
+		return {status = 1, data = err}
 	end 
 
 	local pols = policies.ins()
-	if pols:exist(name) then 
-		return {status = 1, data = "dup " .. name}  
+	if pols:exist(name) then
+		return {status = 1, data = "dup " .. name}
 	end
 
 	local n = policy.new()
@@ -310,13 +323,13 @@ local function policy_add(map)
 	pols:save()
 	kernelop.reset()
 	return {status = 0}
-end 
+end
 
 local function policy_del(map) 
 	-- local arr = {"hello", "worldc"}
 	local group, arr = map.group, map.data
-	local pols = policies.ins() 
-	for _, name in ipairs(arr) do 
+	local pols = policies.ins()
+	for _, name in ipairs(arr) do
 		pols:del(name)
 	end
 
@@ -325,13 +338,13 @@ local function policy_del(map)
 	return {status = 0}
 end
 
-local function policy_adj(map)  
+local function policy_adj(map)
 	local group, arr = map.group, map.data
-	local pols = policies.ins() 
-	for _, name in ipairs(arr) do 
-		if not pols:exist(name) then 
-			return {status = 1, data = "miss " .. name}   
-		end 
+	local pols = policies.ins()
+	for _, name in ipairs(arr) do
+		if not pols:exist(name) then
+			return {status = 1, data = "miss " .. name} 
+		end
 	end
 
 	pols:adjust(arr)
@@ -340,14 +353,14 @@ local function policy_adj(map)
 	return {status = 0}
 end
 
-local function policy_get(data) 
+local function policy_get(data)
 	return {status = 0, data = policies.ins():data()}
 end
 
-local function online_del(map) 
+local function online_del(map)
 	local group, arr = map.group, map.data
 	local ol = onlinelist.ins()
-	for _, mac in ipairs(arr) do 
+	for _, mac in ipairs(arr) do
 		ol:del_mac(mac)
 		kernelop.offline({mac})
 	end
@@ -357,7 +370,7 @@ end
 
 local function online_get(data)
 	local arr = {}
-	for _, user in pairs(onlinelist.ins():data()) do 
+	for _, user in pairs(onlinelist.ins():data()) do
 		table.insert(arr, {
 			ip = user:get_ip(),
 			mac = user:get_mac(),
@@ -387,7 +400,7 @@ local function set_authopt(opt)
 	authopt = opt
 end
 
-local function whitelist_get(data) 
+local function whitelist_get(data)
 	return {status = 0, data = hostlist.whitelist_get()}
 end
 
@@ -399,9 +412,10 @@ local function whitelist_set(map)
 end
 
 
-local function wechatwhitelist_get(data) 
+local function wechatwhitelist_get(data)
 	return {status = 0, data = hostlist.wechatwhitelist_get()}
 end
+
 
 local function wechatwhitelist_set(map)
 	local group, map = map.group, map.data
@@ -409,7 +423,6 @@ local function wechatwhitelist_set(map)
 	kernelop.reset()
 	return {status = 0}
 end
-
 local function macwhitelist_get(data)
 	return {status = 0, data = hostlist.macwhitelist_get()}
 end
@@ -421,7 +434,70 @@ local function macwhitelist_set(map)
 	return {status = 0}
 end
 
+-- add by php----
+local function del_online_wxuser(arr) 
+	local ol, ul = onlinelist.ins(), userlist.ins()
+	for _, name in ipairs(arr) do 
+		ul:del(name)
+		local mac_arr = ol:del_user(name)
+		local _ = #mac_arr > 0 and kernelop.offline(mac_arr)
+	end 
 
+	ul:save()
+	return  0
+end
+
+local function modify_online_wxuser(arr)
+	local expire = 0
+	local ret, wxcloud_expiretime = get_cloudwx_expiretime()
+	if ret then 
+		expire = wxcloud_expiretime
+	else
+		local s = read("/etc/config/web_config.json")
+		if s then
+			local map = js.decode(s)
+			if map and map.interval then
+				expire = map.interval
+			end
+		end
+	end
+	print("modify_online_wxuser ->expire=", expire)
+	local ol, ul = onlinelist.ins(), userlist.ins()
+	for _, name in ipairs(arr) do 
+		print(name)
+		ul:set_offtime(name)
+		ol:set_offtime(name, expire)
+	end 
+	ol:save()
+	ul:save()
+end
+
+local function wxuser_deal(data)
+	local map = js.decode(data)
+	local del = {}
+	local modify = {}
+	local wxuser = map.wxuser
+	if #wxuser == 0 then
+		return
+	end
+	for _, user in pairs(wxuser) do
+		print(user.action, user.openid) 
+		if user.action == "subscribe" then  
+			table.insert(modify, user.openid)
+		elseif user.action == "unsubscribe" then
+			table.insert(del, user.openid)
+		end
+	end
+	print("del->",js.encode(del), " mod->",js.encode(modify))
+	if #del ~= 0 then
+		print("del start")
+		del_online_wxuser(del) 
+	end
+	if #modify ~= 0 then
+		print("modify start")
+		modify_online_wxuser(modify)
+	end
+end
 
 return {
 	save = save,
@@ -455,9 +531,7 @@ return {
 
 	wechatwhitelist_set = wechatwhitelist_set,
 	wechatwhitelist_get = wechatwhitelist_get,
-
+	wxuser_deal = wxuser_deal,
 	macwhitelist_set = macwhitelist_set,
 	macwhitelist_get = macwhitelist_get,
-	
-	
 }

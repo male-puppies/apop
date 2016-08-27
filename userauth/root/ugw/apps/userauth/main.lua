@@ -17,6 +17,19 @@ local function cursec()
 	return math.floor(se.time())
 end
 
+local function send_response_cloud(cmd, data)
+	local map = {
+			out_topic = "a/cloud/wxrds",
+			data = { 
+				mod = "a/local/wxuser", 
+				deadline = math.floor(se.time()) + 5,
+				pld = {cmd = cmd, key = data},
+			},
+		} 
+	print("send: ",js.encode(map))
+	mqtt:publish("a/ac/proxy", js.encode(map))	
+end
+
 local cmd_map = {
 	user_set = dispatcher.user_set,
 	user_del = dispatcher.user_del,
@@ -37,9 +50,11 @@ local cmd_map = {
 	wechatwhitelist_get = dispatcher.wechatwhitelist_get,
 	macwhitelist_get = dispatcher.macwhitelist_get,
 	macwhitelist_set = dispatcher.macwhitelist_set,
+	wxuser_deal = dispatcher.wxuser_deal,   --add by php
 }
 
 local function on_message(topic, data)
+	print("topic->",topic," data->",data)
 	local map = js.decode(data)
 	if not (map and map.pld) then 
 		print("invalid data 1", data)
@@ -53,6 +68,11 @@ local function on_message(topic, data)
 		return
 	end
 
+	if cmd.cmd == "wxuser_deal" then
+		local a = js.decode(cmd.data)
+		local deviceinfo = a.deviceinfo
+		send_response_cloud("wxuser_deal", deviceinfo)
+	end
 	local res = func(cmd.data)
 	if map.mod and map.seq then 
 		local res = mqtt:publish(map.mod, js.encode({seq = map.seq, pld = res}), 0, false)

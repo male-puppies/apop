@@ -84,6 +84,17 @@ function method.set_change(ins, b)
 	ins.change = b 
 end
 
+-- add by php
+function method.set_offtime(ins, name)
+	for _, user in pairs(ins.usermap) do
+		if user:get_name() == name then
+			print("userlist: set_offtime->", name)
+			user.expire = {0, os.date("%Y%m%d") .. " 000000"}
+		end
+	end
+end
+----
+
 local function new(path)
 	assert(path)
 	local obj = {

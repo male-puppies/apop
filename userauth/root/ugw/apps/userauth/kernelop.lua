@@ -69,17 +69,16 @@ local function reset(iface_arr)
 		WechatBypassUrl = get_wechat_bypassurl(),
 		MacBypassInfo = get_mac_bypassinfo(),
 	}
-	
+
 	local cfg_str = js.encode(cfg) assert(cfg_str)
 	cfg_str = string.gsub(cfg_str, '"BypassUrl":{}', '"BypassUrl":[]') assert(cfg_str)
 	cfg_str = string.gsub(cfg_str, '"WechatBypassUrl":{}', '"WechatBypassUrl":[]') assert(cfg_str)
 	cfg_str = string.gsub(cfg_str, '"MacBypassInfo":{}','"MacBypassInfo":[]') assert(cfg_str)
-	
+
 	local cmd = string.format("auth_tool '%s' >/dev/null 2>&1 &", cfg_str)
 	log.debug("%s", cmd)
 	read(cmd, io.popen)
 end
-
 
 local function update_user_status(mac_arr, action)
 	local st_arr = {}
@@ -119,17 +118,17 @@ local function bypass_mac(ip, mac, step)
 	local auth_step 
 	local map = {}
 	map.AuthPolicy = {
-			{
-				AuthPolicyName = "bp" .. ip, 
-				AuthType = 1, 
-				PolicyType = 1, 
-				Timeout = 25, 
-				Enable = 1, 
-				Priority = 10, 
-				IpRange = {{Start = ip, End = ip}},
-				Step = step,
-			}
+		{
+			AuthPolicyName = "bp" .. ip, 
+			AuthType = 1,
+			PolicyType = 1,
+			Timeout = 25,
+			Enable = 1,
+			Priority = 10,
+			IpRange = {{Start = ip, End = ip}},
+			Step = step,
 		}
+	}
 	local cmd = string.format("auth_tool '%s'", js.encode(map))
 	read(cmd, io.popen)
 end
@@ -165,18 +164,18 @@ end
 
 local function check_ip_route()
 	local iface_arr = get_iface()
-	if last_iface_count ~= #iface_arr then 
+	if last_iface_count ~= #iface_arr then
 		log.debug("io route reset %s %s", last_iface_count, #iface_arr)
 		reset()
-	end 
+	end
 end
 
 return {
-	reset = reset, 
-	online = online, 
-	offline = offline, 
+	reset = reset,
+	online = online,
+	offline = offline,
 	bypass_mac = bypass_mac,
-	get_all_user = get_all_user, 
+	get_all_user = get_all_user,
 	-- check_network = check_network,
 	check_ip_route = check_ip_route,
 }

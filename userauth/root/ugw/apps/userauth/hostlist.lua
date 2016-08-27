@@ -12,6 +12,7 @@ local wechatwhitelist = "wechat_whitelist"
 local macwhitelist = "mac_whitelist"
 local alllist = "allist"
 local hostlist = "/etc/config/hostlist.json"
+local cloud_whitelist_file = "/tmp/www/webui/url_config.conf"
 local auth_step1 = 1
 local auth_step2 = 2
 
@@ -41,6 +42,23 @@ local function hostlist_set(list_type, list)
 	new_map[list_type] = list
 	save_safe(hostlist, js.encode(new_map) or {})
 	return true
+end
+
+local function get_cloud_whlist()
+	local s = read("/tmp/www/adtype")
+	if not (s and s:find("cloudauth")) then 
+		return false, nil
+	end
+
+	local f = read(cloud_whitelist_file)
+	local map = {}
+	if f then
+		map = js.decode(f)
+		if map and map[1]  then
+			return true, map
+		end
+	end
+	return false, nil
 end
 
 local function whitelist_get() 
@@ -97,6 +115,14 @@ local function get_wechat_bypassurl()
 			end
 		end
 	end
+	-- add
+	local ret, cloud_whlist = get_cloud_whlist()
+	if ret then
+		for _,host in ipairs(cloud_whlist) do
+			local info1 = {["host"] = host, ["uri"] = "", ["action"] = 1, ["step"] = auth_step1}
+			table.insert(bypassurl, info1)
+		end
+	end
 	return bypassurl
 end
 
@@ -120,7 +146,6 @@ local function get_mac_bypassinfo()
 	if macwhitelist and #macwhitelist > 0 then 
 		for _, mac in ipairs(macwhitelist)do 
 			if mac and string.len (mac) > 3 then 
-			
 				table.insert(bypassmac, {["mac"] = mac, ["action"] = 1})
 			end 
 		end 
@@ -129,6 +154,7 @@ local function get_mac_bypassinfo()
 end
 
 return {
+	hostlist_get  = hostlist_get,
 	whitelist_set = whitelist_set, 
 	whitelist_get = whitelist_get,
 	blacklist_set = blacklist_set, 

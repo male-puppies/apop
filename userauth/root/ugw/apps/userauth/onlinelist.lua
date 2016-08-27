@@ -131,6 +131,11 @@ function method.adjust(ins, users)
 	-- print("adjust users from kernel done")
 end
 
+function method.modify(ins, user)
+	local usermap = ins.usermap
+
+end
+
 function method.offtime(ins, users)
 	local usermap = ins.usermap
 	
@@ -139,13 +144,24 @@ function method.offtime(ins, users)
 			local user = usermap[mac] 
 			if user and user.elapse and user.offtime and tonumber(user.offtime) ~= 0 then
 				if tonumber(user.elapse) >= tonumber(user.offtime) then
-					log.debug("%s expired offline", mac)
+					print("%s expired offline", mac)
 					ins:del_mac(mac) -- offline
 				end
 			end 
 		end
 	end
 end
+
+-- add by php
+function method.set_offtime(ins, name, expire)
+	for _, user in pairs(ins.usermap) do
+		if user:get_name() == name then
+			print("onlinelist: set_offtime->",name)
+			user.offtime = expire
+		end
+	end
+end
+----
 
 local function new(path)
 	local obj = {
