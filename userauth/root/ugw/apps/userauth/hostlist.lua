@@ -115,29 +115,20 @@ local function get_wechat_bypassurl()
 			end
 		end
 	end
-	-- add
-	local ret, cloud_whlist = get_cloud_whlist()
-	if ret then
-		for _,host in ipairs(cloud_whlist) do
-			local info1 = {["host"] = host, ["uri"] = "", ["action"] = 1, ["step"] = auth_step1}
-			table.insert(bypassurl, info1)
-		end
-	end
 	return bypassurl
 end
 
 local function get_bypassurl()
 	local bypassurl = {}
-	local whitelist = whitelist_get()
-	if whitelist and #whitelist > 0 then
-		for _, host in ipairs(whitelist) do
+	local ret, cloud_whlist = get_cloud_whlist()
+	if ret then
+		for _,host in ipairs(cloud_whlist) do
 			if host and string.len(host) > 3 then
 				table.insert(bypassurl, {["host"] = host})
 			end
 		end
 	end
-	return {}
-	--return bypassurl
+	return bypassurl
 end
 
 local function get_mac_bypassinfo()

@@ -515,9 +515,9 @@ end
 local function save_sms_user(phoneno, password, expire)
 	local expire_a = {}
 	if not expire then
-		expire = {0, os.date("%Y%m%d") .. " 000000"}
+		expire_a = {0, os.date("%Y%m%d") .. " 000000"}
 	else
-		expire = {1, expire}
+		expire_a = {1, expire}
 	end
 	local user = {
 		name    = phoneno,
@@ -609,7 +609,12 @@ cmd_map["/sms_send"] = function (map)
 		return {status = 1, data = "请检查是否连接正确wifi"}
 	end
 
-	local url = "qilun.trylong.cn/sms/sms_send"
+	local cloud_host, _ = get_cloud_host()
+	if cloud_host == "" then
+		return {status = 1, data = "请配置云端地址"}
+	end 
+
+	local url = string.format("http://%s/sms/sms_send", cloud_host)
 	local data = string.format('phoneno=%s&shop_id=%s&account_id=%s',phoneno, shop_id, account_id)
 
 	local res = http_post_request(url, data)
@@ -620,7 +625,7 @@ cmd_map["/sms_send"] = function (map)
 			return {status = 0 , data = map.d}
 		end
 		if map and map.r and map.r == 0 then
-			return {status = 1 , data ="发送短信失败，请重试"}
+			return {status = 1 , data = map.d}--"发送短信失败，请重试"}
 		end
 	end
 
@@ -631,7 +636,12 @@ cmd_map["/sms_check"] = function(map)
 	local account_id, shop_id, phoneno, sms_code, ip, mac = map.account_id, map.shop_id, map.phoneno, map.sms_code, map.ip, map.mac
 	assert(account_id and shop_id and phoneno and sms_code)
 
-	local url = "qilun.trylong.cn/sms/check_sms_code"
+	local cloud_host, _ = get_cloud_host()
+	if cloud_host == "" then
+		return {status = 1, data = "请配置云端地址"}
+	end 
+
+	local url = string.format("http://%s/sms/check_sms_code", cloud_host)
 	local data = string.format('phoneno=%s&shop_id=%s&account_id=%s&sms_code=%s',phoneno, shop_id, account_id,sms_code)
 
 	local res = http_post_request(url, data)
@@ -643,7 +653,7 @@ cmd_map["/sms_check"] = function(map)
 		end
 
 		if res_map and res_map.r and res_map.r == 0 then
-			return {status = 1 , data ="smscode 验证码错误，请重新输入"}
+			return {status = 1 , data = res_map.d}--"smscode 验证码错误，请重新输入"}
 		end
 	end
 	return {status = 1 , data ="line 网络错误，请重试"}
