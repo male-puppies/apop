@@ -77,6 +77,7 @@ local keys = {
 	c_ten_black_time = 		"wg_ten_black_time",	--黑名单有效时间
 	c_kick_interval = 		"wg_kick_interval",		--踢用户间隔，应大于	
 	c_wg_barr = 			"wg_barr",
+	c_flowrate = 			"flowrate",
 
 	s_state_hash = 			"state#APID",
 	s_fireware = 			"fireware",
@@ -99,6 +100,7 @@ local keys = {
 	s_run = 				"BAND#run",
 	
 	ws_hash_user = 			"h#user_status", 
+	u_healthy = 			"healthy_model",
 }
 
 local const = {

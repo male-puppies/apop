@@ -6,6 +6,7 @@ local sandc = require("sandc")
 local redis = require("lredis")
 local online = require("online")
 local js = require("cjson.safe") 
+local healthy = require("healthy")
 local const = require("constant") 
 local memfile = require("memfile")
 local cfgmgr = require("cfgmanager")
@@ -201,6 +202,18 @@ modify_map["set_ledctrl"] = function(map, set_done_cb)
 	local _ = set_done_cb(), update_ap(dispatch.set_ledctrl(map))
 end
 
+modify_map["healthy_model_set"] = function(map, set_done_cb)
+	local _ = set_done_cb(), update_ap(healthy.healthy_model_set(map))
+end
+
+modify_map["healthy_model_del"] = function(map, set_done_cb)
+	local _ = set_done_cb(), update_ap(healthy.healthy_model_del(map))
+end
+
+modify_map["healthy_model_switch"] = function(map, set_done_cb)
+	local _ = set_done_cb(), update_ap(healthy.healthy_model_switch(map))
+end
+
 topic_map["a/ac/cfgmgr/modify"] = function(map)
 	local cmd = map.pld 
 	local func = modify_map[cmd.cmd]
@@ -327,6 +340,7 @@ local function main()
 	online.set_rds(rds)
 
 	mqtt = create_mqtt()
+	se.go(healthy.run_healthy)
 	set_timeout(3, 3, cfgmgr.save_all)
 end
 

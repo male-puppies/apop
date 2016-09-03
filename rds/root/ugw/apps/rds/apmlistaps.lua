@@ -82,6 +82,7 @@ local state_kparr = {
 	keys.s_uptime, 
 	keys.s_naps,
 	keys.s_users, 
+	keys.c_flowrate,
 }
 
 local function get_state(group, apid)
@@ -177,6 +178,7 @@ local function apinfo(group, aparr)
 
 		apid_map[apid] = {
 			ip_address = kvmap.ip, 	
+			flowrate = js.decode(stmap.flowrate),
 			ap_describe = kvmap.desc or "", 	
 			mac = apid,
 			current_users = tonumber(stmap["2g#users"] or "0") + tonumber(stmap["5g#users"] or "0"),

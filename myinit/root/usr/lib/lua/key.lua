@@ -163,7 +163,7 @@ end
 
 local function switch(apid, band)
 	assert(apid and band)
-	return fmt_key(keys.c_switch, {APID = apid, BAND = band})
+	return fmt_key(keys.c_bswitch, {APID = apid, BAND = band})
 end 
 
 local function usrlimit(apid, band)

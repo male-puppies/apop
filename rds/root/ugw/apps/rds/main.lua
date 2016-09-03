@@ -20,6 +20,7 @@ local request = require("request")
 local collect = require("collect")
 local account = require("account")
 local authopt = require("authopt")
+local healthy = require("healthy")
 local glbcfg = require("globalcfg")
 local load = require("loadbalance") 
 local upaps = require("apmupdateaps")
@@ -97,6 +98,10 @@ local cmd_func = {
 
 	AuthOptList 		= authopt.authoptlist,
 	AuthOptSet			= authopt.authoptset,
+	HealthyGet		= healthy.healthy_model_get,
+	HealthySet		= healthy.healthy_model_set,
+	HealthyDel		= healthy.healthy_model_del,
+	HealthySwitch		= healthy.healthy_model_switch,
 }
 
 local function init_rds()

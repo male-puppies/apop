@@ -1,7 +1,16 @@
 { 
 "g_country":"China", 					
 "g_update_host":"auto",
-"g_wlan_list":"{}",
+"g_wlan_list":"{[\"00001\"]}",
+"w#00001#wband":"all",
+"w#00001#wencry":"none",
+"w#00001#whide":"0",
+"w#00001#wpasswd":"",
+"w#00001#wvlanid":"",
+"w#00001#wvlanenable":"0",
+"w#00001#wssid":"ql-2016",
+"w#00001#wstate":"1",
+"ww#00001#waplist":"allap",
 "g_ap_list":"{}",
 "g_wlan_current":"0", 
 "ag_reboot":"{\"switch\":1,\"time\":{\"hour\":3,\"min\":0},\"interval\":1}",
@@ -22,5 +31,6 @@
 "wg_kick_interval":"60",
 "wg_barr":"[\"2g\"]",
 "g_debug":"disable",
-"g_ledctrl":"enable"
+"g_ledctrl":"enable",
+"healthy_model":"[]"
 }
