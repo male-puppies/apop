@@ -255,7 +255,6 @@ return {
 	count 			= count,
 	countf 			= countf,
 	empty 			= empty,
-	emptyf 			= emptyf,
 	reduce			= reduce,
 	reduce2 		= reduce2,
 	tomap 			= tomap,
