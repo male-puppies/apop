@@ -273,7 +273,7 @@ local function send_authtype_stat(ip, mac, username)
 
 	local map = cloud_adconf.opt_map
 	local url = string.format("http://%s/statistics/add_stat_type?", cloud_host)
-	local data = string.format("authtype=%s&shop_id=%s&account_id=%s&ip=%s&mac=%s&devid=%s&username=", map.authtype, map.shop_id, map.account_id, ip, mac, g_devid, username)
+	local data = string.format("authtype=%s&shop_id=%s&account_id=%s&ip=%s&mac=%s&devid=%s&username=%s", map.authtype, map.shop_id, map.account_id, ip, mac, g_devid, username)
 
 	local result = http_post_request(url, data, "/tmp/authtype_stat")
 	if result then
@@ -534,7 +534,7 @@ local function save_sms_user(phoneno, password, expire)
 	dispatcher.user_add({group = "default", data = {user}}, true)
 end 
 
-local last_sms_map, sms_interval = {}, 300
+local last_sms_map, sms_interval = {}, 120
 cmd_map["/PhoneNo"] = function(map)   
 	if authopt.adtype == "local" and authopt.sms ~= 1 then 
 		return {status = 1, data = "authopt disable"}	
@@ -578,7 +578,7 @@ local function sms_user_login(map)
 	local expire = cloud_adconf.opt_map.expiretime
 	save_sms_user(phoneno, sms_code)
 	dispatcher.login_success(mac, ip, phoneno, expire)
-	send_authtype_stat(ip, mac, map.phoneno)
+	send_authtype_stat(ip, mac, phoneno)
 
 	if g_redirect and g_redirect ~= "" then
 		return {status = 0, data = g_redirect}
@@ -614,6 +614,18 @@ cmd_map["/sms_send"] = function (map)
 		return {status = 1, data = "请配置云端地址"}
 	end 
 
+	local ol = onlinelist.ins()
+	if ol:exist_user(phoneno) then
+		return {status = 1, data = "该用户已上线，请重新检查手机号是否正确"}
+	end 
+
+	local last, now = last_sms_map[phoneno], cursec()
+	if last and now - last <= sms_interval then 
+		return {status = 1, data = "一个号码,2分钟之内,只允许注册一次,请注意查收短信"}
+	end
+	last_sms_map[phoneno] = now
+
+
 	local url = string.format("http://%s/sms/sms_send", cloud_host)
 	local data = string.format('phoneno=%s&shop_id=%s&account_id=%s',phoneno, shop_id, account_id)
 
@@ -639,6 +651,11 @@ cmd_map["/sms_check"] = function(map)
 	local cloud_host, _ = get_cloud_host()
 	if cloud_host == "" then
 		return {status = 1, data = "请配置云端地址"}
+	end
+
+	local ol = onlinelist.ins()
+	if ol:exist_user(phoneno) then
+		return {status = 1, data = "该用户已上线，请重新检查手机号是否正确"}
 	end 
 
 	local url = string.format("http://%s/sms/check_sms_code", cloud_host)
@@ -656,18 +673,18 @@ cmd_map["/sms_check"] = function(map)
 			return {status = 1 , data = res_map.d}--"smscode 验证码错误，请重新输入"}
 		end
 	end
-	return {status = 1 , data ="line 网络错误，请重试"}
+	return {status = 1 , data ="网络错误，请重试"}
 end
 
 
 cmd_map["/passwd_login"] = function(map)
 	if not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype == 3) then 
-		return {status = 1, data = "未启用密码认证 1"}
+		return {status = 1, data = "未启用密码认证"}
 	end
 
 	local password, ip, mac = map.password, map.ip, map.mac
 	if not(password and ip and mac) then
-		return {status = 1, data = "参数错误 2"}
+		return {status = 1, data = "参数错误"}
 	end
 
 	local mac_b = get_mac(ip)
@@ -683,7 +700,7 @@ cmd_map["/passwd_login"] = function(map)
 	end
 
 	if not a.password or a.password ~= password then
-		return {status = 1, data = "密码错误 3"}
+		return {status = 1, data = "密码错误"}
 	end
 
 	local expire = cloud_adconf.opt_map.expiretime

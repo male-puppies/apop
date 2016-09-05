@@ -13,6 +13,7 @@ local macwhitelist = "mac_whitelist"
 local alllist = "allist"
 local hostlist = "/etc/config/hostlist.json"
 local cloud_whitelist_file = "/tmp/www/webui/url_config.conf"
+local cloud_mac_file = "/tmp/www/webui/auth_config.conf"
 local auth_step1 = 1
 local auth_step2 = 2
 
@@ -44,17 +45,17 @@ local function hostlist_set(list_type, list)
 	return true
 end
 
-local function get_cloud_whlist()
+local function get_cloud_whlist(filepath)
 	local s = read("/tmp/www/adtype")
 	if not (s and s:find("cloudauth")) then 
 		return false, nil
 	end
 
-	local f = read(cloud_whitelist_file)
+	local f = read(filepath)
 	local map = {}
 	if f then
 		map = js.decode(f)
-		if map and map[1]  then
+		if map then
 			return true, map
 		end
 	end
@@ -120,8 +121,8 @@ end
 
 local function get_bypassurl()
 	local bypassurl = {}
-	local ret, cloud_whlist = get_cloud_whlist()
-	if ret then
+	local ret, cloud_whlist = get_cloud_whlist(cloud_whitelist_file)
+	if ret and #cloud_whlist ~= 0 then
 		for _,host in ipairs(cloud_whlist) do
 			if host and string.len(host) > 3 then
 				table.insert(bypassurl, {["host"] = host})
@@ -141,6 +142,27 @@ local function get_mac_bypassinfo()
 			end 
 		end 
 	end 
+	
+	local ret, map = get_cloud_whlist(cloud_mac_file)
+	if ret and map.whitelist then
+		local maclist = {}
+		if type(map.whitelist) == "string" then
+			maclist = js.decode(map.whitelist)
+		else 
+			maclist = map.whitelist
+		end
+
+		if not (maclist and maclist[1]) then
+			return bypassmac
+		end
+
+		for _,v in ipairs(maclist) do
+			if v and string.len (v) > 3 then 
+				table.insert(bypassmac, {["mac"] = v, ["action"] = 1})
+			end
+		end
+	end 
+
 	return bypassmac
 end
 
