@@ -79,6 +79,7 @@ local function healthy_model_set(map)
 	if new_healthy.h_repeat[1] == "once" then -- 执行一次
 		local day = tonumber(os.date("%w"))
 		days[days_keys[day]] = 1
+		days[days_keys[day + 1]] = 1
 		new_healthy.days = days
 	end
 
@@ -169,33 +170,43 @@ local function judge_time(now, open, close)
 	local open_time_hour, open_time_min = validate_time(open)
 	local close_time_hour, close_time_min = validate_time(close)
 
-	if ((now_time_hour > open_time_hour) or (now_time_hour == open_time_hour and now_time_min >= open_time_min)) and ((now_time_hour < close_time_hour) or (now_time_hour == close_time_hour and now_time_min < close_time_min)) then
+	if now_time_hour == open_time_hour and now_time_min == open_time_min then
 		log.info("--open-wifi--")
 		return "open"
 	end
-	log.info("--close--wifi--")
-	return "close"
-end
-
-local function time_size(opentime, closetime)
-	local open_time_hour, open_time_min = validate_time(opentime)
-	local close_time_hour, close_time_min = validate_time(closetime)
-	if open_time_hour > close_time_hour or (open_time_hour == close_time_hour and open_time_min > close_time_min) then
-		return open_time_hour, open_time_min
+	if now_time_hour == close_time_hour and now_time_min == close_time_min then
+		log.info("--close-wifi--")
+		return "close"
 	end
 
-	return close_time_hour, close_time_min
+	return "ignore"
+end
+
+local function time_size(map, time, str)
+	if str == "open" then
+		map[time] = true
+	end
+
+	if str == "close" then
+		map[time] = true
+	end
+
+	return map
 end
 --[[
 	ver_bswitch_go():
-	wifi和bswitch的处理
 	修改对应bswitch和版本号
 ]]
+local update_ap
+local function set_update_ap(update)
+	update_ap = update
+end
+
 local function ver_bswitch_go(group, val)
 	local aparr = js.decode(cfgget(group, keys.c_ap_list))	assert(aparr)
 	local ver = os.date("%Y%m%d %H%M%S")
 
-	local change_map = { }
+	local change_map = {}
 	for _, band in ipairs({"2g", "5g"}) do
 		for _, apid in ipairs(aparr) do
 			local version = pkey.version(apid)
@@ -209,29 +220,44 @@ local function ver_bswitch_go(group, val)
 		cfgset(group, k, v)
 	end
 
+	local apid_map = {}
+	for _, apid in ipairs(aparr) do
+		apid_map[apid] = dispatch.find_ap_config(group, apid)
+	end
+	update_ap(apid_map)
+
 	return true
 end
 
--- once模式的判断与失能
-local function once_disenable(now_time, v)
+-- once模式的判断与失能[[每执行一个时间，就设一个标志，若两个时间都被标记，则代表规则执行完成]]
+local function once_disenable(v)
 	if not v then
 		return nil, "miss h_repeat"
 	end
 
-	local now_time_hour, now_time_min = validate_time(now_time)
-
 	if v.h_repeat[1] == "once" then
-		local hour, min = time_size(v.opentime, v.closetime)
-		if now_time_hour >= hour and now_time_min >= min then
-			v.enable = 0
-			return true
-		end
-
+		v.enable = 0
+		return true
 	end
 
 	return false
 end
 
+local function once_handler(group, healthy, k, flag_map, open_time, close_time)
+	if healthy[k].h_repeat[1] == "once" then
+		if flag_map[open_time] and flag_map[close_time] then
+			local r, e = once_disenable(healthy[k])
+			if not r then
+				log.debug("no change enable or %s", e)
+			end
+
+			healthy = js.encode(healthy)
+			cfgset(group, keys.u_healthy, healthy)
+		end
+	end
+
+	return true
+end
 -- 时间判断处理函数：循环执行规则数组里的规则
 local function healthy_handler(group, flag_map)
 	local v_days = {"monday", "tuesday", "wednesday", "thursday", "friday", "saterday", "sunday"}
@@ -244,12 +270,6 @@ local function healthy_handler(group, flag_map)
 
 	for k,  v in ipairs(healthy) do
 		if v.enable == 1 then -- 规则可用
-			local flag1 = once_disenable(now_time, healthy[k])
-			if flag1 then
-				healthy = js.encode(healthy)
-				cfgset(group, keys.u_healthy, healthy)
-			end
-
 			if v.days[v_days[tonumber(now_day)]] == 1 then -- 当天可执行规则
 				local open_time = v.opentime
 				local close_time = v.closetime
@@ -258,26 +278,21 @@ local function healthy_handler(group, flag_map)
 					return nil, e
 				end
 
-				if r == "open" and (not flag_map.open) then
+				if r == "open" then
 					-- 应该为开启状态
-					local e = ver_bswitch_go(group, 1)
-					if not e then
-						return nil, "open fail"
-					end
+					flag_map = time_size(flag_map, open_time, "open") assert(flag_map)
+					local t = once_handler(group, healthy, k, flag_map, open_time, close_time)	assert(t)
+					local e = ver_bswitch_go(group, 1)	assert(e)
 					log.info("------opened------true")
-					flag_map.open = true
-					flag_map.close = false
 					break
 				end
-				if r == "close" and (not flag_map.close) then
+
+				if r == "close" then
 					-- 应该为关闭状态
-					local r = ver_bswitch_go(group, 0)
-					if not r then
-						return nil, "close fail"
-					end
+					flag_map = time_size(flag_map, close_time, "close")	assert(flag_map)
+					local t = once_handler(group, healthy, k, flag_map, open_time, close_time)	assert(t)
+					local r = ver_bswitch_go(group, 0)	assert(r)
 					log.info("------closed------true")
-					flag_map.open = false
-					flag_map.close = true
 					break
 				end
 			end
@@ -288,8 +303,7 @@ end
 local function run_healthy( )
 	log.info("run healthy")
 	local group = "default"
-	se.sleep(1)
-	local flag_map = { open = false, close = false}
+	local flag_map = {}
 	while true do
 		healthy_handler(group, flag_map)
 		se.sleep(60)
@@ -298,6 +312,7 @@ end
 
 return {
 	run_healthy = run_healthy,
+	set_update_ap = set_update_ap,
 	healthy_model_set = healthy_model_set,
 	healthy_model_del = healthy_model_del,
 	healthy_model_switch = healthy_model_switch
