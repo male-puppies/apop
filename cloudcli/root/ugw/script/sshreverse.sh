@@ -34,6 +34,6 @@ if [ ! -e $target_rsa ]; then
 fi
 
 echo "$footprint" > /root/.ssh/known_hosts
-timeout -t 30 -s 15 ssh -i $target_rsa -N -f -R $cloudport:localhost:$localport $username@$remote_ip -p $remote_port
+timeout -t 30 -s 15 ssh -y -y -i $target_rsa -I 300 -f -g -N -T -R $cloudport:localhost:$localport $username@$remote_ip -p $remote_port
 touch $path
 echo "ssh -i $target_rsa -N -f -R $cloudport:localhost:$localport $username@$remote_ip -p $remote_port"
