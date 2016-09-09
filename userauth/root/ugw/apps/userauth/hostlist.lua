@@ -136,7 +136,15 @@ local function get_bypassurl()
 	if ret and #cloud_whlist ~= 0 then
 		for _,host in ipairs(cloud_whlist) do
 			if host and string.len(host) > 3 then
-				table.insert(bypassurl, {["host"] = host})
+				local host_a = host
+				if host:find("http") then 
+					host_a = string.match(host, "//(.-)/")
+				elseif host:find("/") then
+					host_a = string.match(host, "(.-)/")
+				end
+				print("xxx", host,host_a)
+				table.insert(bypassurl, {["host"] = host_a})
+
 			end
 		end
 	end
