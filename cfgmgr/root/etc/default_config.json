@@ -1,7 +1,7 @@
 { 
 "g_country":"China", 					
 "g_update_host":"auto",
-"g_wlan_list":"{[\"00001\"]}",
+"g_wlan_list":"[\"00001\"]",
 "w#00001#wband":"all",
 "w#00001#wencry":"none",
 "w#00001#whide":"0",

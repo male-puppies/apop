@@ -22,7 +22,7 @@ local g_devid = {}
 local auth_step1 = 1
 local auth_step2 = 2
 local tcp_addr = "tcp://127.0.0.1:9989"
-
+local host_addr_path = "/etc/config/ac_host_cloud.json"
 local cloud_config_file = "/tmp/www/webui/auth_config.conf"
 local cloud_adconf = { newad = false, opt_map = {}}
 
@@ -77,13 +77,50 @@ local function get_mac(ip)
 end
 
 local cmd_map = {}
+cmd_map["/push_to_bind"] = function(map) -- liuke
+	local devid = g_devid
+	map.devid = devid
+	local host = js.decode(read(host_addr_path))
+	local urlfmt = string.format("http://%s/wwxkeybind/onekey_bind?openid=%s&devid=%s", host.user, map.openid, map.devid)
+	local url = string.format("curl '%s'", urlfmt)
+	local rs = read(url, io.popen) assert(rs)
+	local m = js.decode(rs)
+
+	if m.status == 1 and type(m.message) == "table" then
+		local parrm = {
+			ac_port = 61886,
+			switch = 0,
+			descr = map.openid,
+			ac_host = host.user,
+			account = map.openid,
+		}
+		os.remove("/etc/config/cloud.json")
+		local cmd = string.format("echo '%s' > /etc/config/cloud.json", js.encode(parrm))
+		local r = read(cmd, io.popen)	assert(r)
+
+		local course_cmd = string.format("/etc/init.d/base restart;/etc/init.d/cloudcli restart")
+		local r = read(course_cmd, io.popen)
+		if string.find(r, "^stop") and (#r == 24) then
+			-- restart success
+			return {status = "redirect", data = host.user}
+		end
+
+		return  {status = "error", data = 6, host = host.user}
+	end
+
+	if m.status == 2 or m.status == 3 or m.status == 4 or m.status == 5 then
+		-- user bind fail or user device already binded
+		return {status = "error", data = m.status, host = host.user}
+	end
+end
+
 cmd_map["/cloudonline"] = function(map)
 	return {status = 1, data = authopt}
-end 
+end
 
 cmd_map["/authopt"] = function(map)
 	local ip, mac = map.ip, map.mac
-	if not (ip and mac) then 
+	if not (ip and mac) then
 		return {status = 1, data = "invalid param"}
 	end
 	-- if authopt.wx and authopt.wx ~= 0 then
@@ -118,15 +155,15 @@ cmd_map["/wxlogin2info"] = function(map)
 	local arr = {appid, extend, timestamp, shop_id, authurl, mac, ssid, bssid, sk}
 	local sign = md5.sumhexa(table.concat(arr))
 	local res = {
-		AppID     = appid,
-		Extend    = extend,
+		AppID = appid,
+		Extend = extend,
 		TimeStamp = timestamp,
-		Sign      = sign,
-		ShopID    = shop_id,
-		AuthUrl   = authurl,
-		Mac       = mac,
-		SSID      = ssid,
-		BSSID     = bssid,
+		Sign = sign,
+		ShopID = shop_id,
+		AuthUrl = authurl,
+		Mac = mac,
+		SSID = ssid,
+		BSSID = bssid,
 	}
 
 	wx_wait.ext_map[mac] = extend
@@ -142,15 +179,15 @@ local function add_wx_user(openid)
 	end
 	local arr = {}
 	local user = {
-			name    = openid,
-			pwd     = "123456",
-			desc    = "微信认证用户",
-			enable  = 1,
-			multi   = 0,
-			bind    = "none",
+			name = openid,
+			pwd = "123456",
+			desc = "微信认证用户",
+			enable = 1,
+			multi = 0,
+			bind = "none",
 			maclist = {},
-			expire  = {0, os.date("%Y%m%d") .. " 000000"},
-			remain  = {0, 0},
+			expire = {0, os.date("%Y%m%d") .. " 000000"},
+			remain = {0, 0},
 		}
 	table.insert(arr, user)
 	dispatcher.user_add({group = "default", data = arr}, true)
@@ -158,20 +195,20 @@ end
 
 local function add_auto_user(name)
 	local ul = userlist.ins()
-	if ul:exist(name) then
+	if ul:exist(name)  then
 		return
 	end
 	local arr = {}
 	local user = {
-			name    = name,
-			pwd     = "123456",
-			desc    = "一键认证用户",
-			enable  = 1,
-			multi   = 0,
-			bind    = "none",
+			name = name,
+			pwd = "123456",
+			desc = "一键认证用户",
+			enable = 1,
+			multi = 0,
+			bind = "none",
 			maclist = {},
-			expire  = {0, os.date("%Y%m%d") .. " 000000"},
-			remain  = {0, 0},
+			expire = {0, os.date("%Y%m%d") .. " 000000"},
+			remain = {0, 0},
 		}
 	table.insert(arr, user)
 	dispatcher.user_add({group = "default", data = arr}, true)
@@ -184,15 +221,15 @@ local function add_qrcode_user(name)
 	end
 	local arr = {}
 	local user = {
-			name    = name,
-			pwd     = "123456",
-			desc    = "二维码认证用户",
-			enable  = 1,
-			multi   = 0,
-			bind    = "none",
+			name = name,
+			pwd = "123456",
+			desc = "二维码认证用户",
+			enable = 1,
+			multi = 0,
+			bind = "none",
 			maclist = {},
-			expire  = {0, os.date("%Y%m%d") .. " 000000"},
-			remain  = {0, 0},
+			expire = {0, os.date("%Y%m%d") .. " 000000"},
+			remain = {0, 0},
 		}
 	table.insert(arr, user)
 	dispatcher.user_add({group = "default", data = arr}, true)
@@ -266,7 +303,7 @@ local function send_authtype_stat(ip, mac, username)
 	if cloud_host == "" then
 		return false
 	end
-	
+
 	if not cloud_adconf.opt_map then
 		return false
 	end
@@ -288,7 +325,7 @@ end
 local function openid_is_funs(openid)
 	local res = true
 	local cloud_host, _ = get_cloud_host()
-	
+
 	local appid = wx_param.appid
 	if appid and cloud_host ~= "" then
 		local url = string.format("http://%s/admin/ci/wxcgi?cmd=GetWxuserInfo", cloud_host)
@@ -297,8 +334,8 @@ local function openid_is_funs(openid)
 		print("GetWxuserInfo: ", result)
 		if result then
 			local map = js.decode(result)
-			if map and map.sub and map.sub == "unsubscribe" 
-				then res = false 
+			if map and map.sub and map.sub == "unsubscribe"
+				then res = false
 			end
 		end
 	end
@@ -306,7 +343,7 @@ local function openid_is_funs(openid)
 end
 ----------------------------------------------------------------
 
-cmd_map["/weixin2_login"] = function(map)  
+cmd_map["/weixin2_login"] = function(map)
 	local flag = 0
 	local extend, openid = map.extend, map.openid
 	if not (extend and openid) then
@@ -317,7 +354,6 @@ cmd_map["/weixin2_login"] = function(map)
 	if not (ip and mac) then
 		return {status = 1, data = "invalid param1"}
 	end
-
 	if string.find(extend, "wx_scan") then
 		flag = 1
 	else
@@ -373,7 +409,7 @@ cmd_map["/auto_login"] = function(map)
 	end
 	if cloud_adconf.newad and cloud_adconf.opt_map.authtype == 2 then
 		enable = 1
-	end 
+	end
 	if enable == 0 then
 		return {status = 1, data = "auto off 未开启一键认证"}
 	end
@@ -400,7 +436,7 @@ cmd_map["/auto_login"] = function(map)
 		send_authtype_stat(ip, mac, username)
 	else
 		dispatcher.login_success(mac, ip, username)
-	end  
+	end
 
 	if g_redirect and g_redirect ~= "" then
 		return {status = 0, data = g_redirect}
@@ -466,7 +502,7 @@ cmd_map["/qr_login_action"] = function(map)
 	if g_redirect then
 		return {status = 0, data = g_redirect}
 	end
-	
+
 	local s = read("/etc/config/authopt.json")
 	if s then
 		local map = js.decode(s)
@@ -487,7 +523,7 @@ cmd_map["/get_qrcode"] = function(map)
 	if not qr_config then
 		return {status = 1, data = "配置错误"}
 	end
-	
+
 	local qr_map = js.decode(qr_config)
 	if not (qr_map and qr_map.qr_key and qr_map.onlinetime) then
 		return {status = 1, data = "未开启二维码认证"}
@@ -503,7 +539,7 @@ cmd_map["/get_qrcode"] = function(map)
 	end
 
 	local s = sign:sub(1, 8)
-	
+
 	local url = string.format("http://10.10.10.10/qr_login?t=%s&s=%s&o=%s", times, s, onlinetime)
 	return {status = 0, data = url}
 end
@@ -520,24 +556,24 @@ local function save_sms_user(phoneno, password, expire)
 		expire_a = {1, expire}
 	end
 	local user = {
-		name    = phoneno,
-		pwd     = password,
-		desc    = "短信认证用户",
-		enable  = 1,
-		multi   = 0,
-		bind    = "none",
+		name = phoneno,
+		pwd = password,
+		desc = "短信认证用户",
+		enable = 1,
+		multi = 0,
+		bind = "none",
 		maclist = {},
 		expire  = expire_a,
 		remain  = {0, 0},
 	--	utype = usr.UT_SMS,
 	}
 	dispatcher.user_add({group = "default", data = {user}}, true)
-end 
+end
 
 local last_sms_map, sms_interval = {}, 120
-cmd_map["/PhoneNo"] = function(map)   
-	if authopt.adtype == "local" and authopt.sms ~= 1 then 
-		return {status = 1, data = "authopt disable"}	
+cmd_map["/PhoneNo"] = function(map)
+	if authopt.adtype == "local" and authopt.sms ~= 1 then
+		return {status = 1, data = "authopt disable"}
 	end
 
 	local phoneno, ip, mac = map.UserName, map.ip, map.mac 	assert(phoneno and ip and mac)
@@ -547,15 +583,15 @@ cmd_map["/PhoneNo"] = function(map)
 	end
 
 	local last, now = last_sms_map[phoneno], cursec()
-	if last and now - last <= sms_interval then 
+	if last and now - last <= sms_interval then
 		return {status = 1, data = string.format("一个号码,5分钟之内,只允许注册一次,请注意查收短信", sms_interval)}
 	end
 	last_sms_map[phoneno] = now
 
 	local password = "" .. math.random(1000, 9999)
-	
-	local ret, err = send_sms.send(phoneno, password) 
-	if not ret then 
+
+	local ret, err = send_sms.send(phoneno, password)
+	if not ret then
 		return {status = 1, data = err}
 	end
 
@@ -598,7 +634,7 @@ cmd_map["/sms_send"] = function (map)
 	if not cloud_adconf.newad or not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype == 4) then
 		return {status = 1, data = "未启用短信认证"}
 	end
-	
+
 	local account_id, shop_id, phoneno, ip, mac = map.account_id, map.shop_id, map.phoneno, map.ip, map.mac
 	if not (account_id and shop_id and phoneno) then
 		return  {status = 1, data = "非法参数"}
@@ -612,15 +648,15 @@ cmd_map["/sms_send"] = function (map)
 	local cloud_host, _ = get_cloud_host()
 	if cloud_host == "" then
 		return {status = 1, data = "请配置云端地址"}
-	end 
+	end
 
 	local ol = onlinelist.ins()
 	if ol:exist_user(phoneno) then
 		return {status = 1, data = "该用户已上线，请重新检查手机号是否正确"}
-	end 
+	end
 
 	local last, now = last_sms_map[phoneno], cursec()
-	if last and now - last <= sms_interval then 
+	if last and now - last <= sms_interval then
 		return {status = 1, data = "一个号码,2分钟之内,只允许注册一次,请注意查收短信"}
 	end
 	last_sms_map[phoneno] = now
@@ -630,7 +666,7 @@ cmd_map["/sms_send"] = function (map)
 	local data = string.format('phoneno=%s&shop_id=%s&account_id=%s',phoneno, shop_id, account_id)
 
 	local res = http_post_request(url, data)
-	if res then 
+	if res then
 		print("sms_send:", res)
 		local map = js.decode(res)
 		if map and map.r and map.r == 1 then
@@ -656,17 +692,17 @@ cmd_map["/sms_check"] = function(map)
 	local ol = onlinelist.ins()
 	if ol:exist_user(phoneno) then
 		return {status = 1, data = "该用户已上线，请重新检查手机号是否正确"}
-	end 
+	end
 
 	local url = string.format("http://%s/sms/check_sms_code", cloud_host)
 	local data = string.format('phoneno=%s&shop_id=%s&account_id=%s&sms_code=%s',phoneno, shop_id, account_id,sms_code)
 
 	local res = http_post_request(url, data)
-	if res then 
+	if res then
 		print("sms_check:", res)
 		local res_map = js.decode(res)
 		if res_map and res_map.r and res_map.r == 1 then
-			return sms_user_login(map) 
+			return sms_user_login(map)
 		end
 
 		if res_map and res_map.r and res_map.r == 0 then
@@ -678,7 +714,7 @@ end
 
 
 cmd_map["/passwd_login"] = function(map)
-	if not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype == 3) then 
+	if not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype == 3) then
 		return {status = 1, data = "未启用密码认证"}
 	end
 
@@ -725,7 +761,7 @@ end
 
 -------------------------------------------------
 
-cmd_map["/webui/login.html"] = function(map)  
+cmd_map["/webui/login.html"] = function(map)
 	--kernelop.bypass_mac(map.ip, map.mac, auth_step1)
 	--if authopt.wx and authopt.wx ~= 0 then
 	--	kernelop.bypass_mac(map.ip, map.mac, auth_step1)
@@ -738,19 +774,19 @@ local function clear_wx_wait()
 	local max, now = 0, cursec()
 	for i, item in ipairs(wx_wait.queue) do
 		if now - item.active <= wx_auth_timeout then
-			break 
+			break
 		end
 		max = i
 
 		local mac = item.mac
 		local extend = wx_wait.ext_map[mac]
-		if item.extend == extend then 
+		if item.extend == extend then
 			print("delete timeout", extend)
 			wx_wait.ext_map[mac] = nil
 		end
 	end
 
-	for i = 1, max do 
+	for i = 1, max do
 		table.remove(wx_wait.queue, 1)
 	end
 end
@@ -758,25 +794,25 @@ end
 local function start_server()
 	local function dispatcher(data)
 		local map = js.decode(data)
-		if not (map and map.cmd and cmd_map[map.cmd]) then 
+		if not (map and map.cmd and cmd_map[map.cmd]) then
 			return {status = 1, data = "invalid cmd"}
 		end
 
 		return cmd_map[map.cmd](map)
 	end
 
-	local serv, err = se.listen(tcp_addr) 
+	local serv, err = se.listen(tcp_addr)
 	local _ = serv or log.fatal("listen %s fail %s", tcp_addr, err)
 	while true do
 		local cli = se.accept(serv)
-		local _ = cli and request.new(cli, dispatcher):run() 
+		local _ = cli and request.new(cli, dispatcher):run()
 	end
 end
 
-local function init() 
+local function init()
 	local init_authopt = function()
 		local s = read("/tmp/www/adtype")
-		if s and s:find("cloudauth") then 
+		if s and s:find("cloudauth") then
 			authopt.adtype = "cloud"
 		end
 
@@ -784,7 +820,7 @@ local function init()
 		local map = js.decode(s) or {}
 		local sms, wx = tonumber(map.sms or "0") or 0, tonumber(map.wx or "0") or 0
 		authopt.sms, authopt.wx, authopt.redirect = sms, wx, map.redirect
-	end 
+	end
 
 	local init_wechat = function()
 		local s = read("/etc/config/wx_config.json")
@@ -793,25 +829,25 @@ local function init()
 			authopt.wx = 0
 			log.error("invalid wx config, reset wx to 0")
 			return
-		end 
+		end
 
 		local shop_id, appid, sk, ssid = map.shop_id, map.appid, map.secretkey, map.ssid
-		if not (shop_id and appid and sk and ssid) then 
+		if not (shop_id and appid and sk and ssid) then
 			authopt.wx = 0
 			log.error("invalid wx config, %s", s)
 			return
-		end 
+		end
 
 		wx_param = {appid = appid, shop_id = shop_id, sk = sk, ssid = ssid}
-	end 
+	end
 
 	local init_sms = function()
-		if not send_sms.init() then 
+		if not send_sms.init() then
 			log.info("send_sms.init fail. reset authopt.sms = 0")
 			authopt.sms = 0
 		end
-	end 
-	
+	end
+
 	local init_cloudopt = function ()
 		if authopt.adtype == "cloud" then
 			local ret, map = get_cloud_config()
@@ -826,11 +862,11 @@ local function init()
 				local a = js.decode(map.value)
 				if type(map.value) == "string" then
 					a = js.decode(map.value)
-				else 
+				else
 					a = map.value
 				end
 				wx_param = {appid = a.appid, shop_id = a.wxshopid, sk = a.secretkey, ssid = a.ssid, force = a.force}
-			end	
+			end
 			read_id()
 		end
 	end
