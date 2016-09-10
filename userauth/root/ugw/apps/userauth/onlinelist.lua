@@ -188,6 +188,7 @@ function method.offtime(ins, users)
 					if not mac_map[mac] then
 					print("%s expired offline", mac)
 					ins:del_mac(mac) -- offline
+					end
 				end
 			end
 		end
