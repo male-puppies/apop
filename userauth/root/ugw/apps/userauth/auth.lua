@@ -78,8 +78,8 @@ end
 
 local cmd_map = {}
 cmd_map["/push_to_bind"] = function(map) -- liuke
-	local devid = g_devid
-	map.devid = devid
+	read_id()
+	map.devid = js.encode(g_devid)
 	local host = js.decode(read(host_addr_path))
 	local urlfmt = string.format("http://%s/wwxkeybind/onekey_bind?openid=%s&devid=%s", host.user, map.openid, map.devid)
 	local url = string.format("curl '%s'", urlfmt)
