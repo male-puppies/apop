@@ -101,6 +101,9 @@ local keys = {
 	
 	ws_hash_user = 			"h#user_status", 
 	u_healthy = 			"healthy_model",
+	c_chidvalue =			"chidvalue",
+	c_chidinfo =			"chidinfo",
+	c_chidswitch =			"chidswitch",
 }
 
 local const = {

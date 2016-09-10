@@ -16,6 +16,7 @@ local wlan = require("wlanssid")
 local const = require("constant")
 local aps = require("apmlistaps") 
 local upgrade = require("upgrade")
+local wifiadj = require("wifiadj")
 local request = require("request")
 local collect = require("collect")
 local account = require("account")
@@ -104,6 +105,7 @@ local cmd_func = {
 	HealthySet		= healthy.healthy_model_set,
 	HealthyDel		= healthy.healthy_model_del,
 	HealthySwitch		= healthy.healthy_model_switch,
+	wifiadj				= wifiadj.wifiadj,
 }
 
 local function init_rds()

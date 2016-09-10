@@ -30,6 +30,10 @@ local function update_assoc(apid, map, kvmap)
 	end
 end
 
+local function update_optchid(apid, map, kvmap)
+	kvmap[keys.c_chidinfo] = js.encode(map)
+end
+
 local function update_wlan(apid, map, kvmap)
 	for band, map in pairs(map) do
 		local narr, warr = {}, {}
@@ -144,6 +148,10 @@ local band_func_map = {
 	radio = update_radio,
 }
 
+local optchid_func_map = {
+	optchid = update_optchid,
+}
+
 local function isempty(map)
 	for k in pairs(map) do
 		return false
@@ -161,6 +169,12 @@ local function update(group, apid, map)
 	end
 
 	for t, func in pairs(band_func_map) do
+		local data = map[t]
+		local _ = data and func(apid, data, kvmap)
+	end
+
+	-- 拿优化信道数据
+	for t, func in pairs(optchid_func_map) do
 		local data = map[t]
 		local _ = data and func(apid, data, kvmap)
 	end

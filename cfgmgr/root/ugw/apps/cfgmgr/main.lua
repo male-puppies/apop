@@ -11,6 +11,7 @@ local const = require("constant")
 local memfile = require("memfile")
 local cfgmgr = require("cfgmanager")
 local dispatch = require("dispatch")
+local optchannel = require("optchannel")
 
 local keys = const.keys
 
@@ -214,6 +215,10 @@ modify_map["healthy_model_switch"] = function(map, set_done_cb)
 	local _ = set_done_cb(), update_ap(healthy.healthy_model_switch(map))
 end
 
+modify_map["wifiadj"] = function(map, set_done_cb)
+	local _ = set_done_cb(),  update_ap(optchannel.opt_chan(map))
+end
+
 topic_map["a/ac/cfgmgr/modify"] = function(map)
 	local cmd = map.pld 
 	local func = modify_map[cmd.cmd]
@@ -338,6 +343,7 @@ local function main()
 
 	connect_rds()
 	online.set_rds(rds)
+	optchannel.set_rds(rds)
 
 	mqtt = create_mqtt()
 	healthy.set_update_ap(update_ap)
