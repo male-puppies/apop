@@ -161,6 +161,23 @@ local function get_mac_bypassinfo()
 			end
 		end
 	end
+	local ret, map = get_cloud_whlist(cloud_mac_file)
+		if ret and map.blacklist then
+			local maclist = {}
+			if type(map.blacklist) == "string" then
+				maclist = js.decode(map.blacklist)
+			else
+				maclist = map.blacklist
+			end
+
+			if (maclist and maclist[1]) then
+				for _,v in ipairs(maclist) do
+					if v and (string.len (v) == 17) then
+					table.insert(bypassmac, {["mac"] = v, ["action"] = 0})
+					end
+				end
+			end
+	end
 
 	local macwhitelist = macwhitelist_get()
 	if macwhitelist and #macwhitelist > 0 then
@@ -185,7 +202,7 @@ local function get_mac_bypassinfo()
 		end
 
 		for _,v in ipairs(maclist) do
-			if v and string.len (v) > 3 then
+			if v and (string.len (v) == 17) then
 				table.insert(bypassmac, {["mac"] = v, ["action"] = 1})
 			end
 		end
