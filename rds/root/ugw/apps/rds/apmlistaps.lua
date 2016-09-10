@@ -1,10 +1,10 @@
-local log = require("log") 
-local pkey = require("key")  
-local js = require("cjson.safe") 
-local const = require("constant")  
+local log = require("log")
+local pkey = require("key")
+local js = require("cjson.safe")
+local const = require("constant")
 
 local rds, pcli
-local keys = const.keys 
+local keys = const.keys
 
 -- 获取所有AP {["00:00:00:00:00:00"] = {["2g"] = 1, ["5g"] = 1}, ...}
 local function get_aps_country(group)
@@ -13,7 +13,7 @@ local function get_aps_country(group)
 	local _ = varr or log.fatal("query fail")
 	return js.decode(varr[1]), varr[2]
 end
- 
+
 local cfg_kparr = {
 	keys.c_desc,
 	keys.c_gw,
@@ -46,42 +46,42 @@ local cfg_kparr = {
 
 local function get_karr(apid, kparr)
 	local kmap, karr = {}, {}
-	for _, band in ipairs({"2g", "5g"}) do 
+	for _, band in ipairs({"2g", "5g"}) do
 		local rt = {APID = apid, BAND = band}
-		for _, kp in ipairs(kparr) do 
+		for _, kp in ipairs(kparr) do
 			local k = pkey.key(kp, rt)
 			kmap[k] = 1
 		end
 	end
-	for k in pairs(kmap) do 
+	for k in pairs(kmap) do
 		table.insert(karr, k)
-	end 
+	end
 	return karr
 end
 
 local function get_config(group, apid)
 	local karr = get_karr(apid, cfg_kparr)
 	local varr = pcli:query(group, karr)
-	if not varr then 
+	if not varr then
 		log.error("query fail")
 		return {}
-	end 
+	end
 
 	local kvmap = {}
 	for i = 1, #karr do
 		local k, v = karr[i], varr[i]
 		local short = k:match("([25]g#.+)") or k:match(".+#(.+)") 	assert(short and kvmap[short] == nil)
 		kvmap[short] = v ~= nil and v or "-"
-	end 
+	end
 
 	return kvmap
-end 
+end
 
 local state_kparr = {
 	keys.s_fireware,
-	keys.s_uptime, 
+	keys.s_uptime,
 	keys.s_naps,
-	keys.s_users, 
+	keys.s_users,
 	keys.c_flowrate,
 }
 
@@ -91,13 +91,13 @@ local function get_state(group, apid)
 	local varr = rds:hmget(hkey, karr)
 
 	local kvmap = {}
-	for i = 1, #karr do 
+	for i = 1, #karr do
 		local k, v = karr[i], varr[i]
-		if v then 
-			local short = k:match("([25]g#.+)") or k 	assert(short and kvmap[short] == nil) 
+		if v then
+			local short = k:match("([25]g#.+)") or k 	assert(short and kvmap[short] == nil)
 			kvmap[short] = v
 		end
-	end 
+	end
 
 	return kvmap
 end
@@ -107,28 +107,28 @@ local function get_online(group, aparr)
 	local varr = rds:hmget(hkey, aparr)
 
 	local olmap = {}
-	for i = 1, #aparr do 
+	for i = 1, #aparr do
 		local k, v = aparr[i], varr[i]
 		v = v == false and 0 or v
 		olmap[k] = v
-	end 
+	end
 	return olmap
 end
 
 local function nap_info(kvmap, stmap)
 	local nap = {}
 	local dec = function(band, s)
-		if not s then return {} end 
+		if not s then return {} end
 		local t = js.decode(s)
-		if not t then return {} end 
-		for _, item in ipairs(t) do 
+		if not t then return {} end
+		for _, item in ipairs(t) do
 			local tmp = nap[item.apid] or {}
 			local b = tmp[band] or {}
 
 			b.channel_id = item.channel_id
-			b.radio = band 
+			b.radio = band
 			b.rssi = string.format("%4d", item.rssi)
-		
+
 			tmp[band] = b
 			nap[item.apid] = tmp
 		end
@@ -138,7 +138,7 @@ local function nap_info(kvmap, stmap)
 	local _ = stmap["5g#nap"] and dec("5g", stmap["5g#nap"])
 
 	local res = {}
-	for k, v in pairs(nap) do  
+	for k, v in pairs(nap) do
 	 	-- local desc = kvmap.desc or ""
 		local desc = ""
 	 	table.insert(res, {apid = k, desc = desc, ["2g"] = v["2g"], ["5g"] = v["5g"]})
@@ -151,12 +151,12 @@ local function get_login_time(group, aparr)
 	local hkey = string.format("login/%s", group)
 	local varr = rds:hmget(hkey, aparr)
 
-	if not varr then 
+	if not varr then
 		return {}
 	end
 
 	local map  = {}
-	for i = 1, #aparr do 
+	for i = 1, #aparr do
 		local k, v = aparr[i], varr[i]
 		map[k] = v == false and "" or v
 	end
@@ -164,22 +164,23 @@ local function get_login_time(group, aparr)
 	return map
 end
 
-local function apinfo(group, aparr)   
+local function apinfo(group, aparr)
 	local apid_map = {}
-	if #aparr == 0 then 
+	if #aparr == 0 then
 		return apid_map
-	end 
-	
+	end
+
 	local olmap = get_online(group, aparr)
-	local login_map = get_login_time(group, aparr) 
+	local login_map = get_login_time(group, aparr)
 	for _, apid in pairs(aparr) do
-		local kvmap = get_config(group, apid) 
-		local stmap = get_state(group, apid)	
+		local kvmap = get_config(group, apid)
+		local stmap = get_state(group, apid)
+		local flow_rate = {rx = "0 kb/s", tx = "0 kb/s"}
 
 		apid_map[apid] = {
-			ip_address = kvmap.ip, 	
-			flowrate = js.decode(stmap.flowrate),
-			ap_describe = kvmap.desc or "", 	
+			ip_address = kvmap.ip,
+			flowrate = js.decode(stmap.flowrate) or flow_rate,
+			ap_describe = kvmap.desc or "",
 			mac = apid,
 			current_users = tonumber(stmap["2g#users"] or "0") + tonumber(stmap["5g#users"] or "0"),
 			radio = table.concat(js.decode(kvmap.barr) or {}, ","),
@@ -191,8 +192,8 @@ local function apinfo(group, aparr)
 			edit = {
 				nick_name = kvmap.desc,
 				ip_address = kvmap.ip,
-				ip_distribute = kvmap.distr, 
-				gateway = kvmap.gw, 
+				ip_distribute = kvmap.distr,
+				gateway = kvmap.gw,
 				netmask = kvmap.mask,
 				ac_host = kvmap.ac_host,
 				work_mode = kvmap.mode,
@@ -211,7 +212,7 @@ local function apinfo(group, aparr)
 					bandwidth = kvmap["2g#bandwidth"],
 					power = kvmap["2g#power"],
 					users_limit = kvmap["2g#usrlimit"],
-					
+
 					rts = kvmap["2g#rts"],
 					beacon = kvmap["2g#beacon"],
 					dtim = kvmap["2g#dtim"],
@@ -229,7 +230,7 @@ local function apinfo(group, aparr)
 					bandwidth = kvmap["5g#bandwidth"],
 					power = kvmap["5g#power"],
 					users_limit = kvmap["5g#usrlimit"],
-					
+
 					rts = kvmap["5g#rts"],
 					beacon = kvmap["5g#beacon"],
 					dtim = kvmap["5g#dtim"],
@@ -247,12 +248,12 @@ local function apinfo(group, aparr)
 end
 
 local function apmlistaps(conn, group, data)
-	rds, pcli = conn.rds, conn.pcli  
-	local aparr, ctry = get_aps_country(group) 
+	rds, pcli = conn.rds, conn.pcli
+	local aparr, ctry = get_aps_country(group)
 	local res = {
-		APs = apinfo(group, aparr), 
+		APs = apinfo(group, aparr),
 		country = ctry,
-	} 
+	}
 	return {status = 0, data = res}
 end
 
