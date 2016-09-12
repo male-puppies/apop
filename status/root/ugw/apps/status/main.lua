@@ -49,8 +49,6 @@ local function send_request(apid)
 	local varr = rds:get(hkey)	-- status接收AP消息的使能
 	if varr == "1" then
 		table.insert(p.pld.data, "optchid")
-		local karr = {keys.c_chidinfo}
-		rds:expire(karr, 60)	-- AP上传信息60秒有效,防止下次hmget是重复数据
 	end
 
 	if not varr then
