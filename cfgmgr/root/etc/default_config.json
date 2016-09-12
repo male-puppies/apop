@@ -32,5 +32,5 @@
 "wg_barr":"[\"2g\"]",
 "g_debug":"disable",
 "g_ledctrl":"enable",
-"healthy_model":"[]"
+"healthy_model":"{}"
 }
