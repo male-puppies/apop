@@ -801,8 +801,9 @@ local function report_status()
 	local get_state = function()
 		local firmware = read("/etc/openwrt_version") or ""
 		local uptime = read("uptime | awk  -F, '{print $1}'", io.popen) or ""
+		local ip = read("ip ro | grep 'default via' |  awk -F ' ' '{print $9}'", io.popen) or ""
 		local onlines = get_online_users()
-		return {firmware = firmware:gsub("[ \t\r\n]$", ""), uptime = uptime:gsub("[ \t\r\n]$", ""), onlines = onlines}
+		return {firmware = firmware:gsub("[ \t\r\n]$", ""), uptime = uptime:gsub("[ \t\r\n]$", ""), ip = ip:gsub("[ \t\r\n]$", ""), onlines = onlines}
 	end
 
 	se.sleep(3)
