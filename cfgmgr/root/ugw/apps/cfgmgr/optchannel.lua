@@ -7,7 +7,6 @@ local dispatch  = require("dispatch")
 local cfgmgr = require("cfgmanager")
 
 local keys = const.keys
-local defaultchanel = {1, 3, 6, 8, 11, 13}
 local rds
 
 --写内容到配置文件
@@ -23,7 +22,7 @@ end
 --修改ap信道，协议和带宽等参数，apid为mac地址,channel为将要修改的信道
 local function modapchannel(apid, channel)
 	local version_k
-	local apid_map = {}
+	local apid_map
 	local wlan_belong_k = pkey.chanid(apid, "2g")
 	local ver   = os.date("%Y%m%d %H%M%S")
 	local group = "default"
@@ -42,15 +41,13 @@ local function modapchannel(apid, channel)
 	end
 
 	cfgset(group, version_k, ver)
-	cfgmgr.ins(group):save()--保存配置
+
 	if apid and group then
-		apid_map[apid] = dispatch.find_ap_config(group, apid)
+		apid_map = dispatch.find_ap_config(group, apid)
 	end
 
 	return	apid_map
-
 end
-
 --获取{1,3,6,8,11,13}中用户数量最小的信道
 local function get_min_ssid(wlan, defaultchanel)
 	local minvalue = 99
@@ -66,7 +63,6 @@ local function get_min_ssid(wlan, defaultchanel)
 		i = i+1
 	end
 	return pos
-
 end
 
 
@@ -78,8 +74,10 @@ local function get_wlan_info(data,apid)
 			return false
 		end
 	end
+
 	local dat
 	dat = js.decode(data[apid][1])
+
 
 	if dat  then
 		return dat
@@ -88,7 +86,7 @@ local function get_wlan_info(data,apid)
 end
 
 --计算1~13 各个信道ssid数量,返回1~13信道各信道的ssid数量
-local function get_ssid(data)--
+local function get_ssid(data)
 	local count
 	local ssidchannel  = {}
 	local returnchanel = {}
@@ -126,7 +124,22 @@ local function get_ssid(data)--
 
 end
 
+local function get_wlan_info(data,apid)
+	for k, v in pairs(data) do
+		if js.encode(v) == "{}" then
+			return false
+		end
+	end
 
+	local dat
+	dat = js.decode(data[apid][1])
+
+
+	if dat then
+		return dat
+	end
+
+end
 
 --根据get_ssid获取1，3,6,8,11,13最小ssid,返回所在的信道
 local function getminssid(data, chanelcollect)
@@ -150,6 +163,7 @@ local function getminssid(data, chanelcollect)
 	end
 
    if pos then
+
 	return chanelcollect[pos]
    end
 
@@ -172,41 +186,65 @@ local function findpos(wlan, tmp)
 
 end
 
---选择合适的信道，wlan为map,apinfo为map.wlan_info,apid为mac地址
-local function choicechannel(wlan, apid)
-	local channel, datmp
+local function exist_judge(data, find)
+	local ifexist = false
 
-	if wlan.usage >= 50 then
-		datmp = get_ssid(wlan)
+	for _, v in ipairs(data) do
+		if v == find then
+			ifexist = true
+		end
+	end
+
+	return ifexist
+
+end
+--选择合适的信道，wlan为map,apinfo为map.wlan_info,apid为mac地址
+local function choicechannel(wlan, apid, defaultchanel)
+	local channel, datmp, copy_chanel
+	copy_chanel = {1, 3, 6, 8, 11, 13}
+
+	datmp = get_ssid(wlan)
+	if wlan.usage  >= 50 then   --信道利用率大于50才进行信道优化
+		--datmp = get_ssid(wlan)
 		channel = getminssid(datmp, defaultchanel)
+
 		if wlan.child ~= channel then
 			table.remove(defaultchanel, findpos(defaultchanel, channel))
 		else
-
 			if wlan.flowrate > 1000 then
 				table.remove(defaultchanel, findpos(defaultchanel, channel))
 			else
+				local channeltmp = defaultchanel
+				table.remove(channeltmp, findpos(channeltmp, channel))
+				channel = getminssid(datmp, channeltmp)
 				table.remove(defaultchanel, findpos(defaultchanel, channel))
 			end
-
 		end
-
-
+	else
+		--如果利用率小于50，需要分清当前ap信道是否在1, 3, 6, 8, 11, 13
+		if exist_judge(copy_chanel, wlan.child)  then
+			if exist_judge(defaultchanel, wlan.child) then
+				channel = wlan.child
+				table.remove(defaultchanel, findpos(defaultchanel, channel))		
+			else
+				local channeltmp = defaultchanel
+				table.remove(channeltmp, findpos(channeltmp, channel))
+				channel = getminssid(datmp, channeltmp)
+				table.remove(defaultchanel, findpos(defaultchanel, channel))
+			end
+		else
+			channel = wlan.child
+		end
 	end
 
-	if channel then
-		return channel
-	end
-
+	return channel
 end
 
 --程序的入口，map为传入的数据
 local function decide(map)
-
-	local apinfo
-	local returnmap
-	local channel
+	local returnmap, apinfo, channel = {}
 	local maclist = {}
+	local defaultchanel = {1, 3, 6, 8, 11, 13}
 
 	if map then
 		for i, v in pairs(map) do
@@ -216,13 +254,11 @@ local function decide(map)
 		for _, v in ipairs(maclist) do
 			apinfo = get_wlan_info(map, v)
 			if  apinfo then
-				channel = choicechannel(apinfo, v)
-				returnmap = modapchannel(v, channel)
+				channel = choicechannel(apinfo, v, defaultchanel)
+				returnmap[v] = modapchannel(v, channel)
 			end
-
 		end
 	end
-
 	return returnmap
 end
 
@@ -262,11 +298,12 @@ local function apinfo(group, aparr)
 	end
 
 	local opt_time, cnt = 1, 0
-	while opt_time <= 5 do
+	while opt_time <= 3 do
 		for apid, v in pairs(olmap) do
 			local karr = {keys.c_chidinfo}
 			local hkey = pkey.state_hash(apid)	assert(hkey)
 			local varr = rds:hmget(hkey, karr)	-- 获取AP上传数据
+
 			if js.encode(varr) ~= "{}" then
 				cnt = cnt + 1
 				apid_map[apid] = varr
@@ -278,30 +315,33 @@ local function apinfo(group, aparr)
 		end
 
 		opt_time = opt_time + 1
-		se.sleep(3)
+		se.sleep(1)
 	end
 
 	return cnt > 0 and apid_map or nil, "no data"
 end
 
 local function opt_chan(map)
-	local group, num = map.group
+	local group = map.group
 
 	local hkey = keys.c_chidswitch	assert(hkey)
 	rds:set(hkey, "1")	-- 发送使能位给status
-	rds:expire(hkey, 30)	--- 有效期30秒将使能位关闭
-	local aparr = aplist(group)
-	local map_chid, num = {}
+	rds:expire(hkey, 60)	--- 有效期30秒将使能位关闭
 
+	local aparr = aplist(group)
 	local apid_map, err = apinfo(group, aparr)
+	local map_chid, num = {}
 	if not apid_map then
 		num = err == "no ap" and "0%" or string.format("%d%%", math.random(10, 20))	-- 没有AP 返回0 没有数据返回10-20
 	end
 
 	if apid_map then
-		num = string.format("%d%%", math.random(20, 30))
 		map_chid = decide(apid_map)	-- 调用算法函数将 apid_map 传进去
-		num = map_chid and string.format("%d%%", math.random(20, 50))
+		local opt_time = tonumber(os.date("%S"))	-- 优化值20-50
+		opt_time = opt_time <= 20 and opt_time + 20 or opt_time
+		opt_time = opt_time >= 50 and opt_time - 10 or opt_time
+
+		num = map_chid and opt_time or string.format("%d%%", math.random(20, 30))
 		map_chid = map_chid and map_chid or {}
 	end
 
