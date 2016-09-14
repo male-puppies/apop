@@ -346,6 +346,7 @@ local function main()
 	optchannel.set_rds(rds)
 
 	mqtt = create_mqtt()
+	optchannel.set_update_ap(update_ap)
 	healthy.set_update_ap(update_ap)
 	se.go(healthy.run_healthy)
 	set_timeout(3, 3, cfgmgr.save_all)

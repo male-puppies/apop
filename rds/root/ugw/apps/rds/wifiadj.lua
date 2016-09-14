@@ -27,7 +27,7 @@ local function wifiadj(conn, group, data)
 	if not optstatus then
 		optstatus = {code = "optimizing"}
 		rds:set(hkey, js.encode(optstatus))
-		rds:expire(hkey, 31)
+		rds:expire(hkey, 35)	-- 预防程序中途失败, 一直返回给前端 optimizing
 		pcli:modify({cmd = "wifiadj", data = {group = group}})	
 
 		return get_status(0, optstatus)
@@ -40,7 +40,7 @@ local function wifiadj(conn, group, data)
 	if optstatus.code == "sucess" then
 		optstatus.code = "optimal"
 		rds:set(hkey, js.encode(optstatus))
-		rds:expire(hkey, 600)
+		rds:expire(hkey, 600)	-- 10分钟有效期 optimal
 		local save_ret = {code = "sucess", extdata = optstatus.extdata}
 		return get_status(0, save_ret)
 	end

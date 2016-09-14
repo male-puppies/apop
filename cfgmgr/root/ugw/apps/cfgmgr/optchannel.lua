@@ -8,6 +8,11 @@ local cfgmgr = require("cfgmanager")
 
 local keys = const.keys
 local rds
+local update_ap
+
+local function set_update_ap(update)
+	update_ap = update
+end
 
 --写内容到配置文件
 local function cfgset(g, k, v)
@@ -225,7 +230,7 @@ local function choicechannel(wlan, apid, defaultchanel)
 		if exist_judge(copy_chanel, wlan.child)  then
 			if exist_judge(defaultchanel, wlan.child) then
 				channel = wlan.child
-				table.remove(defaultchanel, findpos(defaultchanel, channel))		
+				table.remove(defaultchanel, findpos(defaultchanel, channel))
 			else
 				local channeltmp = defaultchanel
 				table.remove(channeltmp, findpos(channeltmp, channel))
@@ -282,11 +287,12 @@ local function get_online(group, aparr)
 			olmap[k] = v
 		end
 	end
+
 	return olmap
 end
 
 -- 处理AP上传的数据
-local function apinfo(group, aparr)	
+local function apinfo(group, aparr)
 	if #aparr == 0 then
 		return nil, "no ap"
 	end
@@ -298,7 +304,7 @@ local function apinfo(group, aparr)
 	end
 
 	local opt_time, cnt = 1, 0
-	while opt_time <= 3 do
+	while opt_time <= 10 do
 		for apid, v in pairs(olmap) do
 			local karr = {keys.c_chidinfo}
 			local hkey = pkey.state_hash(apid)	assert(hkey)
@@ -315,7 +321,7 @@ local function apinfo(group, aparr)
 		end
 
 		opt_time = opt_time + 1
-		se.sleep(1)
+		se.sleep(3)
 	end
 
 	return cnt > 0 and apid_map or nil, "no data"
@@ -323,25 +329,28 @@ end
 
 local function opt_chan(map)
 	local group = map.group
-
 	local hkey = keys.c_chidswitch	assert(hkey)
 	rds:set(hkey, "1")	-- 发送使能位给status
-	rds:expire(hkey, 60)	--- 有效期30秒将使能位关闭
+	rds:expire(hkey, 60)	-- 有效期30秒将使能位关闭
 
 	local aparr = aplist(group)
+	local map_chid = {}
+	local opt_time, num = tonumber(os.date("%S"))
+	local save_num = opt_time < 10 and opt_time + 10 or opt_time
+	save_num = opt_time > 50 and opt_time - 30 or opt_time
+	save_num = opt_time > 30 and opt_time - 20 or opt_time
+
 	local apid_map, err = apinfo(group, aparr)
-	local map_chid, num = {}
 	if not apid_map then
-		num = err == "no ap" and "0%" or string.format("%d%%", math.random(10, 20))	-- 没有AP 返回0 没有数据返回10-20
+		num = err == "no ap" and "0%" or save_num	-- 没有AP 返回0, 没有数据返回10-30
 	end
 
 	if apid_map then
 		map_chid = decide(apid_map)	-- 调用算法函数将 apid_map 传进去
-		local opt_time = tonumber(os.date("%S"))	-- 优化值20-50
-		opt_time = opt_time <= 20 and opt_time + 20 or opt_time
-		opt_time = opt_time >= 50 and opt_time - 10 or opt_time
+		opt_time = opt_time < 20 and opt_time + 20 or opt_time
+		opt_time = opt_time > 50 and opt_time - 10 or opt_time	-- 优化值为 20-50
 
-		num = map_chid and opt_time or string.format("%d%%", math.random(20, 30))
+		num = map_chid and opt_time or save_num
 		map_chid = map_chid and map_chid or {}
 	end
 
@@ -349,7 +358,8 @@ local function opt_chan(map)
 	local opt = {code = "sucess", extdata = num}
 	rds:set(hkey, js.encode(opt))	-- 设置优化数据
 
-	return map_chid
+	update_ap(map_chid)
+	return {}
 end
 
 local function set_rds(r)
@@ -359,4 +369,5 @@ end
 return {
 	set_rds = set_rds,
 	opt_chan = opt_chan,
+	set_update_ap = set_update_ap,
 }
