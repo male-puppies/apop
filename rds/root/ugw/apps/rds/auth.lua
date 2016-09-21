@@ -155,7 +155,7 @@ end
 local function policydel(conn, group, arr)
 	rds, pcli = conn.rds, conn.pcli 	assert(group and rds and pcli)
 	for _, name in pairs(arr) do
-		if not (#name >= 1 and #name < 32) then
+		if not (#name >= 1 and #name <= 32) then
 			return get_status(1, "无效的认证名！")
 		end
 	end
