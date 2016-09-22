@@ -251,6 +251,7 @@ local function once_handler(group, healthy, k, flag_map, open_time, close_time)
 				log.debug("no change enable or %s", e)
 			end
 
+			flag_map[open_time], flag_map[close_time] = false, false
 			healthy = js.encode(healthy)
 			cfgset(group, keys.u_healthy, healthy)
 		end
