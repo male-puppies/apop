@@ -74,8 +74,8 @@ local function healthy_model_set(map)
 	end
 
 	-- 添加星期
-	local days_keys = {"monday", "tuesday", "wednesday", "thursday", "friday", "saterday", "sunday"}
-	local days = {monday = 0, tuesday = 0, wednesday = 0, thursday = 0, friday = 0, saterday = 0, sunday = 0}
+	local days_keys = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
+	local days = {monday = 0, tuesday = 0, wednesday = 0, thursday = 0, friday = 0, saturday = 0, sunday = 0}
 	if new_healthy.h_repeat[1] == "once" then -- 执行一次
 		local day = tonumber(os.date("%w"))
 		days[days_keys[day]] = 1
@@ -261,12 +261,13 @@ local function once_handler(group, healthy, k, flag_map, open_time, close_time)
 end
 -- 时间判断处理函数：循环执行规则数组里的规则
 local function healthy_handler(group, flag_map)
-	local v_days = {"monday", "tuesday", "wednesday", "thursday", "friday", "saterday", "sunday"}
+	local v_days = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
 	local healthy =  js.decode(cfgget(group, keys.u_healthy))	assert(healthy)
 	local aparr = js.decode(cfgget(group, keys.c_ap_list))	assert(aparr)
 	local ver = os.date("%Y%m%d %H%M%S")
 
 	local now_day = os.date("%w")
+	now_day = now_day == "0" and "7" or now_day
 	local now_time = os.date("%H:%M")
 
 	for k,  v in ipairs(healthy) do
