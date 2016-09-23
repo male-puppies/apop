@@ -102,7 +102,7 @@ local function healthy_model_set(conn, group, data)
 		return get_status(1, "error time min set")
 	end
 	--判断模式的合法性的合法性
-	local h_repeat = {"once", "workday", "everyday", "monday", "tuesday", "wednesday", "thursday", "friday", "saterday", "sunday"}
+	local h_repeat = {"once", "workday", "everyday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
 	local r = fp.contains_any(h_repeat, healthy.h_repeat)
 	if not r then
 		return get_status(1, "error definded h_repeat")

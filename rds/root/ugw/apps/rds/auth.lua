@@ -221,6 +221,7 @@ local mac_pattern = (function()
 end)()
 
 local function check_maclist(arr)
+	if #arr > 250 then return nil, "mac pass 250" end
 	if next(arr) then
 		for _, v in ipairs(arr) do
 			local line = string.match(v, mac_pattern)
