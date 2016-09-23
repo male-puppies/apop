@@ -230,13 +230,14 @@ local function ver_bswitch_go(group, val)
 end
 
 -- once模式的判断与失能[[每执行一个时间，就设一个标志，若两个时间都被标记，则代表规则执行完成]]
-local function once_disenable(v)
+local function once_disenable(v, flag_map, open_time, close_time)
 	if not v then
 		return nil, "miss h_repeat"
 	end
 
 	if v.h_repeat[1] == "once" then
 		v.enable = 0
+		flag_map[open_time], flag_map[close_time] = false, false
 		return true
 	end
 
@@ -246,12 +247,11 @@ end
 local function once_handler(group, healthy, k, flag_map, open_time, close_time)
 	if healthy[k].h_repeat[1] == "once" then
 		if flag_map[open_time] and flag_map[close_time] then
-			local r, e = once_disenable(healthy[k])
+			local r, e = once_disenable(healthy[k], flag_map, open_time, close_time)
 			if not r then
 				log.debug("no change enable or %s", e)
 			end
 
-			flag_map[open_time], flag_map[close_time] = false, false
 			healthy = js.encode(healthy)
 			cfgset(group, keys.u_healthy, healthy)
 		end
