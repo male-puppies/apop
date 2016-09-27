@@ -80,8 +80,7 @@ local cmd_map = {}
 cmd_map["/push_to_bind"] = function(map) -- liuke
 	read_id()
 	map.devid = js.encode(g_devid)
-	local host = js.decode(read(host_addr_path))
-	local urlfmt = string.format("http://%s/wwxkeybind/onekey_bind?openid=%s&devid=%s", host.user, map.openid, map.devid)
+	local urlfmt = string.format("http://%s/wwxkeybind/onekey_bind?openid=%s&devid=%s", map.host_uri, map.openid, map.devid)
 	local url = string.format("curl '%s'", urlfmt)
 	local rs = read(url, io.popen) assert(rs)
 	local m = js.decode(rs)
@@ -91,7 +90,7 @@ cmd_map["/push_to_bind"] = function(map) -- liuke
 			ac_port = 61886,
 			switch = 0,
 			descr = map.openid,
-			ac_host = host.user,
+			ac_host = map.host_uri,
 			account = map.openid,
 		}
 		os.remove("/etc/config/cloud.json")
@@ -102,15 +101,15 @@ cmd_map["/push_to_bind"] = function(map) -- liuke
 		local r = read(course_cmd, io.popen)
 		if string.find(r, "^stop") and (#r == 24) then
 			-- restart success
-			return {status = "redirect", data = host.user}
+			return {status = "redirect"}
 		end
 
-		return  {status = "error", data = 6, host = host.user}
+		return  {status = "error", data = 6}
 	end
 
 	if m.status == 2 or m.status == 3 or m.status == 4 or m.status == 5 then
 		-- user bind fail or user device already binded
-		return {status = "error", data = m.status, host = host.user}
+		return {status = "error", data = m.status}
 	end
 end
 

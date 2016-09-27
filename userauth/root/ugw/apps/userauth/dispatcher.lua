@@ -137,7 +137,7 @@ local function scan_expire()
 	ol:foreach(function(user)
 		local name = user:get_name()
 		local u = ul:get(name)
-		if not u:check_expire() then
+		if not (u and u:check_expire()) then
 			expired_map[name] = 1
 		end
 	end)
