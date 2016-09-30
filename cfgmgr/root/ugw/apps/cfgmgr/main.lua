@@ -216,7 +216,7 @@ modify_map["healthy_model_switch"] = function(map, set_done_cb)
 end
 
 modify_map["wifiadj"] = function(map, set_done_cb)
-	local _ = set_done_cb(),  update_ap(optchannel.opt_chan(map))
+	local _ = set_done_cb(), optchannel.set_opt_req(map)
 end
 
 topic_map["a/ac/cfgmgr/modify"] = function(map)
@@ -348,6 +348,7 @@ local function main()
 	mqtt = create_mqtt()
 	optchannel.set_update_ap(update_ap)
 	healthy.set_update_ap(update_ap)
+	se.go(optchannel.init)
 	se.go(healthy.run_healthy)
 	set_timeout(3, 3, cfgmgr.save_all)
 end

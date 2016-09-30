@@ -6,6 +6,7 @@ local const = require("constant")
 local dispatch  = require("dispatch")
 local cfgmgr = require("cfgmanager")
 
+local opt_req
 local keys = const.keys
 local rds
 local update_ap
@@ -29,7 +30,7 @@ local function modapchannel(apid, channel)
 	local version_k
 	local apid_map
 	local wlan_belong_k = pkey.chanid(apid, "2g")
-	local ver   = os.date("%Y%m%d %H%M%S")
+	local ver = os.date("%Y%m%d %H%M%S")
 	local group = "default"
 
 	version_k = pkey.version(apid)
@@ -41,7 +42,7 @@ local function modapchannel(apid, channel)
 	end
 
 	local proto = pkey.proto(apid, "2g")
-	if	cfgget(group, proto) ~= "bgn" then
+	if cfgget(group, proto) ~= "bgn" then
 		cfgset(group, proto, "bgn")
 	end
 
@@ -51,8 +52,9 @@ local function modapchannel(apid, channel)
 		apid_map = dispatch.find_ap_config(group, apid)
 	end
 
-	return	apid_map
+	return apid_map
 end
+
 --获取{1,3,6,8,11,13}中用户数量最小的信道
 local function get_min_ssid(wlan, defaultchanel)
 	local minvalue = 99
@@ -65,12 +67,12 @@ local function get_min_ssid(wlan, defaultchanel)
 			minvalue = wlan[tmp]
 			pos = defaultchanel[i]
 		end
-		i = i+1
+
+		i = i + 1
 	end
+
 	return pos
 end
-
-
 
 --根据mac提取map中的ap信息
 local function get_wlan_info(data,apid)
@@ -80,14 +82,9 @@ local function get_wlan_info(data,apid)
 		end
 	end
 
-	local dat
-	dat = js.decode(data[apid][1])
+	local dat = js.decode(data[apid][1])
 
-
-	if dat  then
-		return dat
-	end
-
+	return dat and dat or nil
 end
 
 --计算1~13 各个信道ssid数量,返回1~13信道各信道的ssid数量
@@ -123,10 +120,7 @@ local function get_ssid(data)
 		end
 	end
 
-	if returnchanel then
-		return returnchanel
-	end
-
+	return returnchanel and returnchanel
 end
 
 local function get_wlan_info(data,apid)
@@ -136,42 +130,32 @@ local function get_wlan_info(data,apid)
 		end
 	end
 
-	local dat
-	dat = js.decode(data[apid][1])
+	local dat = js.decode(data[apid][1])
 
-
-	if dat then
-		return dat
-	end
-
+	return dat and dat or nil
 end
 
 --根据get_ssid获取1，3,6,8,11,13最小ssid,返回所在的信道
 local function getminssid(data, chanelcollect)
-
 	local tmp, pos
-	local minssid = 99
 	local channel = {}
 
 	local i = 1
 	while i <= #chanelcollect do
 		tmp = chanelcollect[i]
 		table.insert(channel, data[tmp])
-		i = i+1
+		i = i + 1
 	end
 
-	for i = 1,#channel do
+	local minssid = channel[1]
+	for i = 2, #channel do
 		if channel[i] <= minssid then
 			minssid = channel[i]
 			pos = i
 		end
 	end
 
-   if pos then
-
-	return chanelcollect[pos]
-   end
-
+	return pos and chanelcollect[pos] or nil
 end
 
 --查找数据在表中的位置
@@ -185,10 +169,7 @@ local function findpos(wlan, tmp)
 		end
 	end
 
-	if pos then
-		return pos
-	end
-
+	return pos and pos or nil
 end
 
 local function exist_judge(data, find)
@@ -209,8 +190,7 @@ local function choicechannel(wlan, apid, defaultchanel)
 	copy_chanel = {1, 3, 6, 8, 11, 13}
 
 	datmp = get_ssid(wlan)
-	if wlan.usage  >= 50 then   --信道利用率大于50才进行信道优化
-		--datmp = get_ssid(wlan)
+	if wlan.usage >= 50 then   --信道利用率大于50才进行信道优化
 		channel = getminssid(datmp, defaultchanel)
 
 		if wlan.child ~= channel then
@@ -256,14 +236,21 @@ local function decide(map)
 			table.insert(maclist, i)
 		end
 
+		if #maclist > 6 then	-- 超过6个ap不需要判断
+			return nil
+		end
+
 		for _, v in ipairs(maclist) do
 			apinfo = get_wlan_info(map, v)
-			if  apinfo then
+			if apinfo then
 				channel = choicechannel(apinfo, v, defaultchanel)
-				returnmap[v] = modapchannel(v, channel)
+				if channel >= 1 and channel <= 13 then
+					returnmap[v] = modapchannel(v, channel)
+				end
 			end
 		end
 	end
+
 	return returnmap
 end
 
@@ -305,10 +292,12 @@ local function apinfo(group, aparr)
 
 	local opt_time, cnt = 1, 0
 	while opt_time <= 10 do
+		local count = 0
 		for apid, v in pairs(olmap) do
 			local karr = {keys.c_chidinfo}
 			local hkey = pkey.state_hash(apid)	assert(hkey)
 			local varr = rds:hmget(hkey, karr)	-- 获取AP上传数据
+			count = count + 1
 
 			if js.encode(varr) ~= "{}" then
 				cnt = cnt + 1
@@ -316,10 +305,11 @@ local function apinfo(group, aparr)
 			end
 		end
 
-		if cnt > 0 then
+		if cnt == count then
 			break
 		end
 
+		cnt = 0
 		opt_time = opt_time + 1
 		se.sleep(3)
 	end
@@ -331,18 +321,18 @@ local function opt_chan(map)
 	local group = map.group
 	local hkey = keys.c_chidswitch	assert(hkey)
 	rds:set(hkey, "1")	-- 发送使能位给status
-	rds:expire(hkey, 60)	-- 有效期30秒将使能位关闭
+	rds:expire(hkey, 60)	-- 有效期60秒将使能位关闭
 
 	local aparr = aplist(group)
 	local map_chid = {}
 	local opt_time, num = tonumber(os.date("%S"))
-	local save_num = opt_time < 10 and opt_time + 10 or opt_time
-	save_num = opt_time > 50 and opt_time - 30 or opt_time
-	save_num = opt_time > 30 and opt_time - 20 or opt_time
-
+	local opt_time = opt_time < 10 and opt_time + 10 or opt_time
+	opt_time = opt_time > 50 and opt_time - 30 or opt_time
+	opt_time = opt_time > 30 and opt_time - 20 or opt_time
+	local save_num = opt_time
 	local apid_map, err = apinfo(group, aparr)
 	if not apid_map then
-		num = err == "no ap" and "0%" or save_num	-- 没有AP 返回0, 没有数据返回10-30
+		num = err == "no ap" and "0" or save_num	-- 没有AP 返回0, 没有数据返回10-30
 	end
 
 	if apid_map then
@@ -354,20 +344,38 @@ local function opt_chan(map)
 		map_chid = map_chid and map_chid or {}
 	end
 
+	num = string.format("%s%%", num)
 	hkey = keys.c_chidvalue	assert(hkey)
 	local opt = {code = "sucess", extdata = num}
 	rds:set(hkey, js.encode(opt))	-- 设置优化数据
 
 	update_ap(map_chid)
-	return {}
+	return true
 end
+
 
 local function set_rds(r)
 	rds = r
 end
 
+local function set_opt_req(map)
+	opt_req = map
+end
+
+local function init()
+	while true do
+		if opt_req then
+			opt_chan(opt_req)
+			opt_req = false
+		end
+		se.sleep(5)
+	end
+end
+
 return {
+	init = init,
 	set_rds = set_rds,
 	opt_chan = opt_chan,
 	set_update_ap = set_update_ap,
+	set_opt_req = set_opt_req,
 }
