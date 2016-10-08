@@ -107,7 +107,7 @@ cmd_map["/push_to_bind"] = function(map) -- liuke
 		return  {status = "error", data = 6}
 	end
 
-	if m.status == 2 or m.status == 3 or m.status == 4 or m.status == 5 then
+	if m.status == 2 or m.status == 3 or m.status == 4 or m.status == 5 m.status == 6 then
 		-- user bind fail or user device already binded
 		return {status = "error", data = m.status}
 	end
