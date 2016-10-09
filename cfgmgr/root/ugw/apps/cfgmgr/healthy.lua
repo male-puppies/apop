@@ -1,4 +1,5 @@
 -- liuke
+
 --require("global")
 local se = require("se")
 local log = require("log")
@@ -78,8 +79,14 @@ local function healthy_model_set(map)
 	local days = {monday = 0, tuesday = 0, wednesday = 0, thursday = 0, friday = 0, saturday = 0, sunday = 0}
 	if new_healthy.h_repeat[1] == "once" then -- 执行一次
 		local day = tonumber(os.date("%w"))
+		day = day == 0 and 7 or day
 		days[days_keys[day]] = 1
-		days[days_keys[day + 1]] = 1
+		if day == 7 then
+			days[days_keys[1]] = 1
+		else
+			days[days_keys[day + 1]] = 1
+		end
+
 		new_healthy.days = days
 	end
 
