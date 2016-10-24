@@ -126,12 +126,12 @@ local function gen_url(req_url, req_host, cmd, map, timeout, cacert)
 
 	local url = string.format("%s '%s/%s/%s' -d", req_bin, req_host, req_url, cmd)
 
-	local pars = ""
+	local pars
 	for k, v in pairs(map) do
 		if type(v) == "table" then
 			v = js.encode(v)
 		end
-		pars = string.format("%s&%s=%s",pars, k, v)
+		pars = pars and string.format("%s&%s=%s", pars, k, v) or string.format("%s=%s", k, v)
 	end
 	url = string.format("%s '%s'", url, pars)
 	log.debug("post url: %s\n", url)
