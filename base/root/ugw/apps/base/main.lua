@@ -1,4 +1,4 @@
-package.path = "./?.lua;" .. package.path 
+package.path = "./?.lua;" .. package.path
 
 require("global")
 local se = require("se")
@@ -33,7 +33,7 @@ local function try_connect(host, port)
 	if not host:find(pattern) then
 		local cmd = string.format("timeout nslookup '%s' | grep -A 1 'Name:' | grep Addr | awk '{print $3}'", host)
 		ip = read(cmd, io.popen)
-		if not ip then 
+		if not ip then
 			log.error("%s fail", cmd)
 			return
 		end
@@ -43,12 +43,12 @@ local function try_connect(host, port)
 			return
 		end
 	end
-	
+
 	local addr = string.format("tcp://%s:%s", ip, tostring(port))
 
-	for i = 1, 3 do 	
+	for i = 1, 3 do
 		local cli = se.connect(addr, 3)
-		if cli then 
+		if cli then
 			print("connect ok", addr)
 			se.close(cli)
 			return ip, port
@@ -58,16 +58,16 @@ local function try_connect(host, port)
 		se.sleep(3)
 	end
 
-	log.debug("connect %s fail", addr)		
+	log.debug("connect %s fail", addr)
 end
 
 local function get_active_addr()
 
-	while true do 
+	while true do
 		local host, port = try_connect(g_kvmap.ac_host, g_kvmap.ac_port)
 		if host then
 			return host, port
-		end 
+		end
 
 		log.debug("try connect %s %s fail", g_kvmap.ac_host or "", g_kvmap.ac_port or "")
 		se.sleep(3)
@@ -76,7 +76,7 @@ end
 
 local function read_connect_payload()
 	local account = g_kvmap.account
-	local map = {account = account, devid = g_devid} 
+	local map = {account = account, devid = g_devid}
 	return account, map
 end
 
@@ -87,7 +87,7 @@ end
 
 local function start_remote()
 	local host, port = get_active_addr()
-	
+
 	local unique = remote_topic()
 
 	local mqtt = sandc1.new(unique)
@@ -100,23 +100,23 @@ local function start_remote()
 	mqtt:set_callback("on_message", function(topic, payload)
 		if not local_mqtt then
 			log.error("skip %s %s", topic, payload)
-			return 
+			return
 		end
 
 		local map = js.decode(payload)
 		if not (map and map.mod and map.pld) then
 			log.error("invalid message %s %s", topic, payload)
-			return 
-		end 
+			return
+		end
 
 		local_mqtt:publish(map.mod, payload)
 	end)
 
 	mqtt:set_callback("on_connect", function(st, err) save_status(1, host, port) end)
-	mqtt:set_callback("on_disconnect", function(st, err) 
+	mqtt:set_callback("on_disconnect", function(st, err)
 		save_status(0, host, port)
 		os.execute("killstr cloudcli/main.lua")
-		log.fatal("remote mqtt disconnect %s %s. restart cloudcli", st, err) 
+		log.fatal("remote mqtt disconnect %s %s. restart cloudcli", st, err)
 	end)
 	mqtt:set_callback("on_encode_type", function(n, o)
 		mqtt:set_encode_type(n)
@@ -127,7 +127,7 @@ local function start_remote()
 	local ret, err = mqtt:connect(host, port)
 	local _ = ret or log.fatal("connect fail %s %s %s", host, port,  err)
 
-	log.debug("connect %s %s %s ok", account, host, port) 
+	log.debug("connect %s %s %s ok", account, host, port)
 
 	mqtt:run()
 	remote_mqtt = mqtt
@@ -148,14 +148,14 @@ local function start_local()
 			return
 		end
 
-		local map = js.decode(payload) 
-		if not (map and map.data and map.out_topic) then 
+		local map = js.decode(payload)
+		if not (map and map.data and map.out_topic) then
 			log.error("invalid payload %s %s", topic, payload)
-			return 
+			return
 		end
-		
+
 		map.data.tpc = remote_topic()
-		local topic, payload = map.out_topic, js.encode(map.data) 
+		local topic, payload = map.out_topic, js.encode(map.data)
 		remote_mqtt:publish(topic, payload)
 	end)
 
@@ -164,7 +164,7 @@ local function start_local()
 	local host, port = "127.0.0.1", 61886
 	local ret, err = mqtt:connect(host, port)
 	local _ = ret or log.fatal("connect fail %s", err)
-	log.debug("connect %s %s ok", host, port) 
+	log.debug("connect %s %s ok", host, port)
 	mqtt:run()
 	local_mqtt = mqtt
 end
@@ -173,7 +173,7 @@ local function set_default()
 	g_kvmap = defaultcfg.default_cloud()
 end
 
-local function load() 
+local function load()
 	if not lfs.attributes(cfgpath) then
 		return set_default()
 	end
@@ -189,17 +189,17 @@ end
 
 local function main()
 	save_status(0)
-	local _ = read_id(), load() 
+	local _ = read_id(), load()
 	if not lfs.attributes("/tmp/invalid_account") then
 		se.go(start_local)
-		while g_kvmap.ac_host == "" do  
+		while g_kvmap.ac_host == "" do
 			se.sleep(1)
 		end
 		se.go(start_remote)
 	end
 	local _ = lfs.attributes("/tmp/invalid_account") and log.error("invalid account")
 	while true do
-		se.sleep(1) 
+		se.sleep(1)
 	end
 end
 

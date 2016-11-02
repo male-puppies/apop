@@ -349,7 +349,7 @@ static int se_write_error(lua_State *L, int nwrite, const char *errmsg)
 {
 	lua_pushstring(L, errmsg);
 	lua_pushinteger(L, nwrite);
-	return 2;	
+	return 2;
 }
 
 static int se_try_write(lua_State *L, int fd, const char *data, int size, int *pnwrite)

@@ -1,4 +1,4 @@
-﻿= NAME =
+= NAME =
 
 lua-redis-parser - Redis reply parser and request constructor library for Lua
 

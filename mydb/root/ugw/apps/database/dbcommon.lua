@@ -15,33 +15,33 @@ local function close()
 end
 
 local function myexecute(sql)
-	return g_db:execute(sql) 
+	return g_db:execute(sql)
 end
 
 local function select_cb_common(sql, cb)
 	local s = os.time()
 	local cur, err = myexecute(sql)
 	if not cur then
-		return nil, err 
+		return nil, err
 	end
 
 	local row = cur:fetch({}, "a")
 	while row do
 		cb(row)
-		row = cur:fetch(row, "a")	-- reusing the table of results 
+		row = cur:fetch(row, "a")	-- reusing the table of results
 	end
-	cur:close() 
+	cur:close()
 
 	return true
 end
 
-local function select(sql) 
+local function select(sql)
 	local arr = {}
 	local ret, err = select_cb_common(sql, function(row)
 		local nmap = {}
-		for k, v in pairs(row) do 
+		for k, v in pairs(row) do
 			nmap[k] = v
-		end 
+		end
 		table.insert(arr, nmap)
 	end)
 	local _ = ret or log.fatal("sql fail %s %s", sql, err)

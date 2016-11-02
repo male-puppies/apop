@@ -1,4 +1,4 @@
-local se = require("se")  
+local se = require("se")
 local log = require("log")
 local encrypt = require("encrypt")
 local sandutil = require("sandutil")
@@ -45,7 +45,7 @@ function method.running(ins)
 end
 
 local function close_client(ins, err)
-	print("close on error", err, ins.param.clientid) 
+	print("close on error", err, ins.param.clientid)
 	se.close(ins.client)
 	ins.client, ins.state = nil, st_stop
 	ins.on_disconnect(1, err)
@@ -53,32 +53,32 @@ end
 
 function method.publish(ins, topic, payload)
 	assert(ins and topic and payload)
-	if not ins:running() then 
-		return false 
+	if not ins:running() then
+		return false
 	end
 
 	local pl_str, err = encode(ins.encode_type, payload) 	assert(not err, err)
 	local tpmap = {id = "pt", tp = topic, pl = #pl_str}
 	local tp_str, err = encode(ins.encode_type, parser.build_query(toarr(tpmap))) 	assert(not err, err)
-	
-	for _, s in ipairs({tp_str, pl_str}) do 
+
+	for _, s in ipairs({tp_str, pl_str}) do
 		local err = se.write(ins.client, s)
-		if err then 
+		if err then
 			close_client(ins, err)
 			return false
 		end
 	end
 
-	return true 
+	return true
 end
 
 function method.disconnect(ins)
-	if ins.state ~= st_run then 
-		return 
+	if ins.state ~= st_run then
+		return
 	end
-	
+
 	local s = parser.build_query(toarr({id = "dc"}))
-	local s1, err = encode(ins.encode_type, s) 		assert(not err, err) 
+	local s1, err = encode(ins.encode_type, s) 		assert(not err, err)
 	se.write(ins.client, s1)
 	se.close(ins.client)
 	ins.client = nil
@@ -88,16 +88,16 @@ end
 
 function method.connect(ins, host, port)
 	local addr = string.format("tcp://%s:%s", host, port)
-	local cli, err = se.connect(addr) 
-	if not cli then 
+	local cli, err = se.connect(addr)
+	if not cli then
 		return nil, err
 	end
 
 	local m = ins.param
 	if not (m.clientid and #m.clientid > 0 and m.username and #m.username > 0 and m.password and #m.password > 0
-		and m.version and #m.version > 0 and m.keepalive and m.keepalive >= 5 and #m.topics > 0) then 
+		and m.version and #m.version > 0 and m.keepalive and m.keepalive >= 5 and #m.topics > 0) then
 		return nil, "invalid param"
-	end	
+	end
 
 	local _ = (m.will_topic or m.will_payload) and assert(#m.will_topic > 0 and #m.will_payload > 0)
 	local _ = (m.connect_topic or m.connect_payload) and assert(#m.connect_topic > 0 and #m.connect_payload > 0)
@@ -117,18 +117,18 @@ function method.connect(ins, host, port)
 		ex = m.extend,
 	}
 
-	local s = parser.build_query(toarr(map)) 
-	local s1 = encode(ins.encode_type, s) 
+	local s = parser.build_query(toarr(map))
+	local s1 = encode(ins.encode_type, s)
 	local err = se.write(cli, s1)
-	if err then 
+	if err then
 		se.close(cli)
 		ins.state = st_stop
-		return nil, err 
+		return nil, err
 	end
 
 	ins.client = cli
 	ins.state = st_run
-	return true 
+	return true
 end
 
 function method.set_callback(ins, name, cb)
@@ -149,14 +149,14 @@ local function timeout_ping(ins)
 			local now = se.time()
 
 			-- send ping every $keepalive seconds
-			if now - last_active >= keepalive then 
+			if now - last_active >= keepalive then
 				break
 			end
 
 			local d = now - ins.active
 			local _ = d > keepalive + 30 and log.info("diff %s %s", d, ins.param.clientid)
-			-- if d >= keepalive * 3.2 then 
-			-- 	return close_client(ins, string.format("timeout %s %s", d, keepalive * 2.2))  
+			-- if d >= keepalive * 3.2 then
+			-- 	return close_client(ins, string.format("timeout %s %s", d, keepalive * 2.2))
 			-- end
 
 			se.sleep(3)
@@ -170,18 +170,18 @@ local function timeout_ping(ins)
 		end
 
 		-- send ping
-		local s1, err = encode(ins.encode_type, s) 		assert(not err, err) 
-		local err = se.write(ins.client, s1) 
-		if err then 
-			return close_client(ins, err) 
-		end 
-	end 
+		local s1, err = encode(ins.encode_type, s) 		assert(not err, err)
+		local err = se.write(ins.client, s1)
+		if err then
+			return close_client(ins, err)
+		end
+	end
 end
 
 local cmd_map = {}
 function cmd_map.pb(ins, map)
 	ins.on_message(map.tp, map.pl)
-	return true 
+	return true
 end
 
 function cmd_map.ca(ins, map)
@@ -199,7 +199,7 @@ function cmd_map.po(ins, map)
 end
 
 function cmd_map.pt(ins, map)
-	if not (map and map.tp and map.pl) then 
+	if not (map and map.tp and map.pl) then
 		return nil, "invalid pt"
 	end
 	local pbcache = ins.pbcache
@@ -210,13 +210,13 @@ function cmd_map.pt(ins, map)
 	return true
 end
 
-function cmd_map.pp(ins, data)  
+function cmd_map.pp(ins, data)
 	local payload, err = decode(data)
-	if not payload then 
+	if not payload then
 		local len, tp = header(data)
 		log.error("--%s %s %s %s %s", err, #data, len, tp, data)
 		return nil, err
-	end 
+	end
 
 	local topic = ins.pbcache.topic
 	ins.pbcache = nil
@@ -225,17 +225,17 @@ function cmd_map.pp(ins, data)
 end
 
 function method.dispatch(ins, map)
-	local id = map.id 
+	local id = map.id
 	if not id then
 		return true
 	end
 
 	local func = cmd_map[id]
-	if not func then 
+	if not func then
 		print("no " .. id)
-		return true 
+		return true
 	end
-	
+
 	return func(ins, map)
 end
 
@@ -254,34 +254,34 @@ end
 
 function method.parse_normal(ins)
 	local data = ins.data
-	if #data < 4 then 
-		return nil, "lack"  
+	if #data < 4 then
+		return nil, "lack"
 	end
 
 	local len, ntp = header(data)
-	if len > #data then 
-		return nil, "lack"  
+	if len > #data then
+		return nil, "lack"
 	end
 
-	local es = data:sub(1, len) 
+	local es = data:sub(1, len)
 	ins.data = data:sub(len + 1)
 
 	local ds, err = encrypt.decode(es)
-	if not ds then 
+	if not ds then
 		log.error("--%s %s %s %s %s", err, #es, len, ntp, es)
-		return nil, err 
+		return nil, err
 	end
 
-	-- parse data 
+	-- parse data
 	local arr = parser.parse_reply(ds)
-	if not checkarr(arr) then  
+	if not checkarr(arr) then
 		return nil, "data error"
 	end
 
 	-- trim data parsed
 	local ret, err = ins:dispatch(tomap(arr))
-	if not ret then 
-		return nil, err 
+	if not ret then
+		return nil, err
 	end
 
 	local _ = (ntp == ins.encode_type) or ins.on_encode_type(ntp, ins.encode_type)
@@ -289,24 +289,24 @@ function method.parse_normal(ins)
 	return true
 end
 
-local function run_internal(ins)   
-	local on_recv = function() 
+local function run_internal(ins)
+	local on_recv = function()
 		while #ins.data > 0 do
-			if ins.pbcache then 
+			if ins.pbcache then
 				local ret, err = ins:get_payload()
-				if not ret then  
-					if err == "lack" then 
+				if not ret then
+					if err == "lack" then
 						print("get_payload", "lack", #ins.data)
 						return
 					end
 					return nil, err
 				end
-			else 
+			else
 				local ret, err = ins:parse_normal()
-				if not ret then 
-					if err == "lack" then 
-						print("parse_normal", "lack", #ins.data) 
-						return 
+				if not ret then
+					if err == "lack" then
+						print("parse_normal", "lack", #ins.data)
+						return
 					end
 					return nil, err
 				end
@@ -314,24 +314,24 @@ local function run_internal(ins)
 		end
 
 		return true
-	end 
+	end
 
 	while ins:running() do
-		local data, rerr = se.read(ins.client, 8192, 0.01) 
-		if data then  
+		local data, rerr = se.read(ins.client, 8192, 0.01)
+		if data then
 			local now = se.time()
 			ins.active = now 				-- recv data, update active time
-			ins.data = ins.data .. data 	-- cache data 
-			
+			ins.data = ins.data .. data 	-- cache data
+
 			local ret, err = on_recv() 		-- process data
-			if err then 
+			if err then
 				close_client(ins, err)
 				break
 			end
-		end  
+		end
 
 		-- check recv error
-		if rerr and rerr ~= "TIMEOUT" then 
+		if rerr and rerr ~= "TIMEOUT" then
 			close_client(ins, rerr)
 			break
 		end
@@ -362,7 +362,7 @@ local function new(clientid)
 		},
 
 		client = nil,
-		
+
 		data = "",
 		state = st_new,
 		active = se.time(),
@@ -378,7 +378,7 @@ local function new(clientid)
 	}
 
 	setmetatable(obj, mt)
-	return obj 
+	return obj
 end
 
 return {new = new}

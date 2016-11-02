@@ -51,8 +51,8 @@ local global_value = {
 	_LNUM = 1,
 }
 
--- define new valid global, basically you should never call it 
-function define(k) global_value[k] = 1 end 
+-- define new valid global, basically you should never call it
+function define(k) global_value[k] = 1 end
 
 -- proxy original require
 local old_require = require
@@ -60,19 +60,19 @@ require = function(mod)
 	local _ = mod or error("mod is nil")
 	global_value[mod] = 1
 	return old_require(mod)
-end 
+end
 
 local format = string.format
 local mt = {
 	__index = function(t, k) error(format('error get global "%s"', k)) end,
-	__newindex = function(t, k, v) local _ = global_value[k] and rawset(t, k, v) or error(format('error set global "%s" = "%s"', tostring(k), tostring(v))) end, 
+	__newindex = function(t, k, v) local _ = global_value[k] and rawset(t, k, v) or error(format('error set global "%s" = "%s"', tostring(k), tostring(v))) end,
 }
 setmetatable(_G, mt)
 
 -- check pre-defined global values
 local _ = function()
-	for k, v in pairs(_G) do 
+	for k, v in pairs(_G) do
 		local _ = global_value[k] or error(format('detect invaid global variable "%s" = "%s"', k, v))
-	end 
+	end
 end
 _()

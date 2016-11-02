@@ -4,8 +4,8 @@ mt.__index = {
 		local ret, msg = xpcall(f, function(err)
 			local trace = debug.traceback()
 			local t = {err}
-			for line in trace:gmatch("(.-)\n") do  
-				--if not line:find("%[C%]:") then 
+			for line in trace:gmatch("(.-)\n") do
+				--if not line:find("%[C%]:") then
 					table.insert(t, line)
 				--end
 			end
@@ -13,10 +13,10 @@ mt.__index = {
 		end)
 		local _ = not ret and ins.handler(msg)
 		return ret, msg
-	end, 
+	end,
 	sethandler = function(ins, handler)
 		ins.handler = handler
-	end, 
+	end,
 }
 
 local function default_log(msg)

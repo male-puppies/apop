@@ -6,10 +6,10 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 
 #include "lua.h"
-#include "lauxlib.h" 
+#include "lauxlib.h"
 
 #include "dump.c"
 #define MODULE_NETUTIL "netutil"
@@ -40,7 +40,7 @@ static int l_in_range(lua_State *L) {
 	const char *s1 = luaL_checkstring(L, 1);
 	const char *s2 = luaL_checkstring(L, 2);
 	const char *s3 = luaL_checkstring(L, 3);
-	
+
 	struct in_addr ia1, ia2, ia3;
 	if (!inet_aton(s1, &ia1))
 		goto error_ret;
@@ -48,15 +48,15 @@ static int l_in_range(lua_State *L) {
 		goto error_ret;
 	if (!inet_aton(s3, &ia3))
 		goto error_ret;
-	
+
 	ip1 = ntohl(ia1.s_addr);
 	ip2 = ntohl(ia2.s_addr);
 	ip3 = ntohl(ia3.s_addr);
 	if (ip1 >= ip2 && ip1 <= ip3)
 		lua_pushboolean(L, 1);
-	else 
+	else
 		lua_pushboolean(L, 0);
-	
+
 	return 1;
 error_ret:
 	lua_pushnil(L);
@@ -71,9 +71,9 @@ static luaL_Reg reg[] = {
 	{ NULL, NULL }
 };
 
-LUALIB_API int luaopen_netutil(lua_State *L) { 
-	luaL_register(L, MODULE_NETUTIL, reg); 
+LUALIB_API int luaopen_netutil(lua_State *L) {
+	luaL_register(L, MODULE_NETUTIL, reg);
 	lua_pushnil(L);
-	lua_setglobal(L, MODULE_NETUTIL); 
+	lua_setglobal(L, MODULE_NETUTIL);
 	return 1;
 }

@@ -8,16 +8,16 @@ local upgrade_flag = "/tmp/sysupgrade"
 local function read(path, func)
 	func = func and func or io.open
 	local fp = func(path, "r")
-	if not fp then 
-		return 
-	end 
+	if not fp then
+		return
+	end
 	local s = fp:read("*a")
 	fp:close()
 	return s
 end
 
 local function error(fmt, ...)
-	local s = string.format("e %s " .. fmt, os.date("%m%d %H%M%S"), ...) 
+	local s = string.format("e %s " .. fmt, os.date("%m%d %H%M%S"), ...)
 	local cmd = string.format("echo '%s' >> /tmp/backup/essential.log", s)
 	os.execute(cmd)
 	print(s)
@@ -25,14 +25,14 @@ end
 
 local function ubusd_alive()
 	local ins = ubus.connect()
-	if ins then 
+	if ins then
 		ins:close()
-		return true 
+		return true
 	end
 end
 
 local function main()
-	while true do 
+	while true do
 		local count, max = 0, 10
 		for i = 1, max do
 			if not ubusd_alive() then
@@ -42,8 +42,8 @@ local function main()
 			end
 		end
 
-		if count == max then 
-			if lfs.attributes(upgrade_flag) then 
+		if count == max then
+			if lfs.attributes(upgrade_flag) then
 				error("upgrading, skip check ubusd")
 				local _ = se.sleep(5), os.exit(0)
 			end

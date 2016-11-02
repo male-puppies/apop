@@ -27,7 +27,7 @@ define Build/Compile
 	$(MAKE) -C luasql/src LUA53_SO_DIR=$(BUILD_DIR)/lua53/src LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS)
 endef
 
-define Package/$(PKG_NAME)/install  
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luasql/
 	cd luasql/src && $(INSTALL_BIN) *.so $(1)/usr/lib/lua/luasql/
 endef

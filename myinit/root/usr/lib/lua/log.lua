@@ -8,7 +8,7 @@ local mod = "un"
 
 local client = sk.udp()
 local ret, err = client:setpeername(host, port)
-if not ret then 
+if not ret then
 	io.stderr:write(string.format("setpeername fail %s %s %s", host, port, err))
 	os.exit(-1)
 end
@@ -21,15 +21,15 @@ end
 local function logfmt(level, fmt, ...)
 	assert(type(fmt) == "string")
 	local info = debug.getinfo(3, "lS")
-	local src = info.short_src:match(".+/(.*.lua)$") or info.short_src 
+	local src = info.short_src:match(".+/(.*.lua)$") or info.short_src
 	local t = os.date("*t")
-	if string.byte(fmt:sub(-1)) ~= 10 then 
+	if string.byte(fmt:sub(-1)) ~= 10 then
 		fmt = fmt .. "\n"
 	end
 	local vars = {...}
 	local s, func
 	func = function()
-		if info.currentline == 0 then 
+		if info.currentline == 0 then
 			s = string.format("%s %s %02d%02d-%02d:%02d:%02d %s " .. fmt, level, mod, t.month, t.day, t.hour, t.min, t.sec, src, unpack(vars))
 			return
 		end
@@ -74,7 +74,7 @@ local function fatal(fmt, ...)
 	os.exit(-1)
 end
 
-local function setdebug(b) 
+local function setdebug(b)
 	enable_debug = b
 end
 

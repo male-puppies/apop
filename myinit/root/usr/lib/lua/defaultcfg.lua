@@ -3,10 +3,10 @@ local function default_cloud()
 		account = "",
 		ac_host = "",
 		ac_port = "61886",
-		descr = "", 
+		descr = "",
 		switch = "0",
 	}
-end 
+end
 
 local function default_wxshop()
 	return {
@@ -16,7 +16,7 @@ local function default_wxshop()
 		ssid = "",
 		secretkey = "",
 	}
-end 
+end
 
 return {
 	default_cloud = default_cloud,

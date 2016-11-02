@@ -34,7 +34,7 @@ local function backup_disk()
 	local s = se.time()
 	local ret, err = os.execute(cmd)
 	local d = se.time() - s
-	local _ = (ret == true or ret == 0) or log.fatal("cmd fail %s %s %s", d, cmd, err or "") 
+	local _ = (ret == true or ret == 0) or log.fatal("cmd fail %s %s %s", d, cmd, err or "")
 	log.debug("backup_disk spends %s seconds", d)
 end
 
@@ -47,7 +47,7 @@ local function do_recover()
 	local error_return = function(msg)
 		log.error("decode update.log fail. %s", msg or "")
 		decoder:decode_free()
-		backup_disk() 
+		backup_disk()
 		fp:close()
 		os.execute("rm -f " .. logpath)
 	end
@@ -59,9 +59,9 @@ local function do_recover()
 				log.debug("log ok")
 				return fp:close()
 			end
-			return error_return("decoder not empty") 
+			return error_return("decoder not empty")
 		end
-		
+
 		local arr, err = decoder:decode(data)
 		if err then
 			return error_return("decode fail " .. err)
@@ -76,8 +76,8 @@ local function do_recover()
 			local nhex = rdsparser.hex(s)
 			if ohex ~= nhex then
 				return error_return(string.format("invalid cmd %s %s", nhex, js.encode(narr)))
-			end 
-			
+			end
+
 			local ret, err = dispatch.execute(s)
 			local _ = ret or log.fatal("dispatch execute fail %s %s", s, err or "")
 		end
@@ -104,13 +104,13 @@ local function recover()
 	end
 
 	local size = attr.size
-	if size == 0 then 
+	if size == 0 then
 		log.debug("empty log %s", logpath)
 		return
 	end
 
 	init_diskdb()
-	
+
 	dc.connect(diskdb)
 	do_recover()
 	dc.close()

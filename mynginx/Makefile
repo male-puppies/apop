@@ -17,7 +17,7 @@ define Package/$(PKG_NAME)
 	SECTION:=Applications
 	CATEGORY:=Puppies
 	TITLE:=mynginx
-	DEPENDS:=+nginx 
+	DEPENDS:=+nginx
 endef
 
 define Package/$(PKG_NAME)/description
@@ -28,7 +28,7 @@ define Build/Compile
 	echo "--------------------"
 endef
 
-define Package/$(PKG_NAME)/install  
+define Package/$(PKG_NAME)/install
 	$(CP) -a ./root/* $(1)/
 endef
 

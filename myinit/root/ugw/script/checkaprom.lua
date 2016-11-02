@@ -2,13 +2,13 @@
 local function read(path, func)
 	func = func and func or io.open
 	local fp, err = func(path, "r")
-	if not fp then 
-		return nil, err 
-	end 
+	if not fp then
+		return nil, err
+	end
 	local s = fp:read("*a")
 	fp:close()
 	return s
-end 
+end
 
 
 local function get_latest_version(host, rtype)
@@ -18,9 +18,9 @@ local function get_latest_version(host, rtype)
 		return nil
 	end
 
-	res = res:gsub("[ \n]", "") 
-	if not res:match(rtype .. ".%d%d%d%d%d%d%d%d%d%d%d%d") then  
-		return nil 
+	res = res:gsub("[ \n]", "")
+	if not res:match(rtype .. ".%d%d%d%d%d%d%d%d%d%d%d%d") then
+		return nil
 	end
 
 	res = res:gsub("%.", "-")
@@ -49,22 +49,22 @@ function download(host, rtype)
 	local fmt = '{"st":%d,"data":"%s"}'
 	print(cmd)
 	local ret = os.execute(cmd)
-	if ret ~= 0 then 
+	if ret ~= 0 then
 		print(string.format(fmt, 1, "download fail"))
 		os.execute("rm -rf " .. download_dir)
-		return false 
+		return false
 	end
-	
+
 	local tmp_release = string.format("%s/tmp_release", download_dir)
-	os.execute("rm -rf " .. tmp_release) 
+	os.execute("rm -rf " .. tmp_release)
 	local cmd = string.format("/ugw/script/openssltar.sh untar %s/imagex %s wjrc0409", download_dir, tmp_release)
 	print(cmd)
 	local ret = os.execute(cmd)
-	if ret ~= 0 then 
+	if ret ~= 0 then
 		print(string.format(fmt, 1, "download fail 2"))
 		os.execute("rm -rf " .. download_dir)
 		return false
-	end 
+	end
 
 	local cmd = string.format("rm /tmp/www/webui/rom/%s*; mv %s/* /tmp/www/webui/rom/", rtype, tmp_release)
 	os.execute(cmd)
@@ -79,17 +79,17 @@ function cmdmap.version(args)
 	local host = table.remove(args, 1)
 
 	local version_map = {}
-	for k, v in ipairs(args) do 
+	for k, v in ipairs(args) do
 		local version = get_version(host, v)
-		if version then 
+		if version then
 			version_map[v] = version
 		end
-	end 
+	end
 
 	local arr = {}
-	for k, v in pairs(version_map) do 
+	for k, v in pairs(version_map) do
 		table.insert(arr, string.format("%s:%s", k, v))
-	end 
+	end
 
 	local fp = io.open("/tmp/ap.version", "w")
 	fp:write(table.concat(arr, "\n"))
@@ -100,24 +100,24 @@ function cmdmap.download(args)
 	local host = table.remove(args, 1)
 	local lfs = require("lfs")
 	local version_map = {}
-	for k, v in ipairs(args) do 
+	for k, v in ipairs(args) do
 		local version = get_version(host, v)
-		if version then 
+		if version then
 			version = version:gsub("%-", ".")
-			local version_path = string.format("/tmp/www/webui/rom/%s.version", v) 
-			
+			local version_path = string.format("/tmp/www/webui/rom/%s.version", v)
+
 			local cur_version
 			local fp = io.open(version_path)
-			if fp then 
+			if fp then
 				cur_version = fp:read("*l")
 				cur_version = cur_version:gsub("[ \t\r\n]", "")
 				fp:close()
-			end 
-
-			if not (cur_version and cur_version >= version) then 
-				download(host, v) 
 			end
-		end  
+
+			if not (cur_version and cur_version >= version) then
+				download(host, v)
+			end
+		end
 	end
 end
 

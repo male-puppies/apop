@@ -27,7 +27,7 @@ define Build/Compile
 	$(MAKE) -C lua-mongoose3 LUA_INC=$(BUILD_DIR)/lua-5.1.5/src $(TARGET_CONFIGURE_OPTS)
 endef
 
-define Package/$(PKG_NAME)/install  
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/
 	$(INSTALL_BIN) lua-mongoose3/mongoose3.so $(1)/usr/lib/lua/
 endef

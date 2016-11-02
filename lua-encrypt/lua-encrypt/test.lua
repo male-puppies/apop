@@ -1,12 +1,12 @@
 local encrypt = require("encrypt")
 local common = require("common")
-local read = common.read 
+local read = common.read
 local save = common.save
 local s = read("wlan_info.json")
 
 local function test0()
 	print(#s)
-	local s1, err = encrypt.encode(0, s) 	
+	local s1, err = encrypt.encode(0, s)
 	local l, t = encrypt.header(s1)
 	print(l, t)
 	local s2, err = encrypt.decode(s1)
@@ -25,7 +25,7 @@ local function test_err()
 end
 
 local function test1()
-	local s1, err = encrypt.encode(1, s) 	
+	local s1, err = encrypt.encode(1, s)
 	print("----", #s1)
 	save("/tmp/xx.txt", s1)
 	local l, t = encrypt.header(s1)
@@ -52,20 +52,20 @@ local se = require("se")
 
 local function read_until_eof(cli)
 	local data = ""
-	while true do 
+	while true do
 		local s2, err = se.read(cli, max, 0.1)
-		if s2 then 
-			data = data .. s2 
-		end 
-		if err ~= "TIMEOUT" and err ~= "EOF" then 
+		if s2 then
+			data = data .. s2
+		end
+		if err ~= "TIMEOUT" and err ~= "EOF" then
 			se.close(cli)
 			return
 		end
-		if err == "EOF" then 
+		if err == "EOF" then
 			se.close(cli)
-			return data 
-		end 
-	end 
+			return data
+		end
+	end
 end
 
 local function remote0(cli)
@@ -76,13 +76,13 @@ local function remote0(cli)
 	print("encode len", #s1)
 	local ss1, err = encrypt.decode(s1)			assert(not err, err)
 
-	local s2 = read_until_eof(cli) 
-	if s2 then 
+	local s2 = read_until_eof(cli)
+	if s2 then
 		local len, tp = encrypt.header(s2)
 		print(len, tp, "------")
 		local s3, err = encrypt.decode(s2) 		assert(not err, err)
 		assert(#s == #s3 and s == s3)
-	end  
+	end
 end
 
 local function remote1(cli)
@@ -93,40 +93,40 @@ local function remote1(cli)
 	print("encode len", #s1)
 	local ss1, err = encrypt.decode(s1)			assert(not err, err)
 
-	local s2 = read_until_eof(cli) 
-	if s2 then 
+	local s2 = read_until_eof(cli)
+	if s2 then
 		local len, tp = encrypt.header(s2)
 		local s3, err = encrypt.decode(s2) 		assert(not err, err)
-		assert(#s == #s3 and s == s3) 
-	end  
+		assert(#s == #s3 and s == s3)
+	end
 end
 
 local function remote2(cli)
 	local cli, err = se.connect("tcp://192.168.0.213:60000")  assert(not err, err)
 	local s1, err = encrypt.encode(2, s)
-	local l, t = encrypt.header(s1)		
+	local l, t = encrypt.header(s1)
 	local ss1, err = encrypt.decode(s1)			assert(not err, err)
 	print("encode len", #s1)
 	local err = se.write(cli, s1)				assert(not err, err)
-	
-	local s2 = read_until_eof(cli) 
-	if s2 then 
+
+	local s2 = read_until_eof(cli)
+	if s2 then
 		local len, tp = encrypt.header(s2)
 		local s3, err = encrypt.decode(s2) 		assert(not err, err)
-		assert(#s == #s3 and s == s3) 
-	end  
-end 
+		assert(#s == #s3 and s == s3)
+	end
+end
 
 local function main()
 	print("data len", #s)
-	
+
 	local ori = s
 	while true do
 		local n = math.random(1, 200)
 		s = ori:rep(n)
 		local m = math.random(1, #ori)
 		s = s .. ori:sub(1, m)
-		if max < #s then 
+		if max < #s then
 			max = #s + 16
 			print("reset max to ", max, n, m)
 		end
@@ -136,7 +136,7 @@ local function main()
 		remote1(cli)
 		print("test ", 2, #s)
 		remote2(cli)
-	end 
-end 
+	end
+end
 
 se.run(main)

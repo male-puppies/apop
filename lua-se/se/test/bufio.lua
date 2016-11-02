@@ -56,7 +56,7 @@ local function reader_read_until(r, pat)
 		end
 		data = data .. reader_consume(r)
 	end
-	return nil, r.err	
+	return nil, r.err
 end
 
 local reader_metatable = {

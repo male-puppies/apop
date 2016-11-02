@@ -4,7 +4,7 @@
 #include <string.h>
 #include "lua.h"
 #include "lauxlib.h"
-#include "mongoose.h"  
+#include "mongoose.h"
 
 #include "dump.c"
 
@@ -30,7 +30,7 @@ static int l_conn_uri(lua_State *L) {
 	}
 	if (user_conn->conn->uri)
 		lua_pushfstring(L, "%s", user_conn->conn->uri);
-	else 
+	else
 		lua_pushnil(L);
 	return 1;
 error_ret:
@@ -48,7 +48,7 @@ static int l_conn_remote_ip(lua_State *L) {
 	}
 	if (user_conn->conn->remote_ip)
 		lua_pushfstring(L, "%s", user_conn->conn->remote_ip);
-	else 
+	else
 		lua_pushnil(L);
 	return 1;
 error_ret:
@@ -66,12 +66,12 @@ static int l_conn_write(lua_State *L) {
 		msg = "invalid user_conn";
 		goto error_ret;
 	}
-	
+
 	str = lua_tostring(L, 2);
 	if (!str) {
 		msg = "invalid write content";
 		goto error_ret;
-	} 
+	}
 	ret = mg_printf_data(user_conn->conn, "%s", str);
 	lua_pushinteger(L, ret);
 	return 1;
@@ -117,7 +117,7 @@ static int l_conn_get(lua_State *L) {
 	ret = strlen(varbuff);
 	if (!ret)
 		lua_pushnil(L);
-	else 
+	else
 		lua_pushlstring(L, varbuff, ret);
 	return 1;
 error_ret:
@@ -128,7 +128,7 @@ error_ret:
 
 static int ev_handler(struct mg_connection *conn, enum mg_event ev) {
 	if (!(conn && conn->uri) || strncmp(conn->uri, "/c.", 3))
-		return MG_FALSE; 
+		return MG_FALSE;
 	lua_State *L = (lua_State *)conn->server_param;
 	lua_getfenv(L, 1);
 	lua_rawgeti(L, -1, 1);
@@ -158,11 +158,11 @@ static int ev_handler(struct mg_connection *conn, enum mg_event ev) {
 	return ret;
 error_pop:
 	lua_pop(L, 1);
-	return MG_FALSE; 
+	return MG_FALSE;
 }
 
 static int l_set_ev_handler(lua_State *L) {
-	const char *msg; 
+	const char *msg;
 	struct httpserver *hs = (struct httpserver *)luaL_checkudata(L, 1, META_HTTPAUTH);
 	if (!hs || !hs->server) {
 		msg = "invalid userdata";
@@ -193,14 +193,14 @@ static int l_create_server(lua_State *L) {
 		msg = "mg_create_server fail";
 		goto error_ret;
 	}
-	hs->server = server; 
+	hs->server = server;
 	luaL_getmetatable(L, META_HTTPAUTH);
 	lua_setmetatable(L, -2);
 	lua_createtable(L, 1, 0);
     lua_setfenv(L, -2);
 	return 1;
 error_ret:
-	if (server) 
+	if (server)
 		mg_destroy_server(&server);
 	lua_pushnil(L);
 	lua_pushfstring(L, "%s", msg);
@@ -208,7 +208,7 @@ error_ret:
 }
 
 static int l_set_option(lua_State *L) {
-	const char *msg, *key, *val; 
+	const char *msg, *key, *val;
 	struct httpserver *hs = (struct httpserver *)luaL_checkudata(L, 1, META_HTTPAUTH);
 	if (!hs || !hs->server) {
 		msg = "invalid userdata";
@@ -230,7 +230,7 @@ error_ret:
 }
 
 static int l_get_option(lua_State *L) {
-	const char *msg, *key, *val; 
+	const char *msg, *key, *val;
 	struct httpserver *hs = (struct httpserver *)luaL_checkudata(L, 1, META_HTTPAUTH);
 	if (!hs || !hs->server) {
 		msg = "invalid userdata";
@@ -244,7 +244,7 @@ static int l_get_option(lua_State *L) {
 	val = mg_get_option(hs->server, key);
 	if (val)
 		lua_pushfstring(L, "%s", val);
-	else 
+	else
 		lua_pushnil(L);
 	return 1;
 error_ret:
@@ -255,7 +255,7 @@ error_ret:
 
 static int l_poll_server(lua_State *L) {
 	int ms;
-	const char *msg; 
+	const char *msg;
 	struct httpserver *hs = (struct httpserver *)luaL_checkudata(L, 1, META_HTTPAUTH);
 	if (!hs || !hs->server) {
 		msg = "invalid userdata";
@@ -264,7 +264,7 @@ static int l_poll_server(lua_State *L) {
 	ms = lua_tointeger(L, 2);
 	if (ms <= 0)
 		ms = 1000;
-	lua_settop(L, 1); 
+	lua_settop(L, 1);
 	mg_poll_server(hs->server, ms);
 	return 0;
 error_ret:
@@ -283,29 +283,29 @@ static int l_destroy_server(lua_State *L) {
 	return 0;
 }
 
-static luaL_Reg fns[] = { 
-	{ "set_option", 	l_set_option }, 
-	{ "get_option", 	l_get_option }, 
-	{ "poll_server", 	l_poll_server }, 
-	{ "set_ev_handler",	l_set_ev_handler }, 
-	{ "destroy_server", l_destroy_server }, 
-	{ "__gc", 			l_destroy_server }, 
+static luaL_Reg fns[] = {
+	{ "set_option", 	l_set_option },
+	{ "get_option", 	l_get_option },
+	{ "poll_server", 	l_poll_server },
+	{ "set_ev_handler",	l_set_ev_handler },
+	{ "destroy_server", l_destroy_server },
+	{ "__gc", 			l_destroy_server },
 	{ NULL, NULL }
 };
 
 static luaL_Reg reg[] = {
-	{ "create_server", l_create_server }, 
+	{ "create_server", l_create_server },
 	{ NULL, NULL }
 };
 
 static luaL_Reg conn_fns[] = {
-	{ "uri", l_conn_uri }, 
-	{ "remote_ip", l_conn_remote_ip }, 
-	{ "write", l_conn_write }, 
-	{ "get", l_conn_get }, 
-	{ "addr", l_conn_addr }, 
+	{ "uri", l_conn_uri },
+	{ "remote_ip", l_conn_remote_ip },
+	{ "write", l_conn_write },
+	{ "get", l_conn_get },
+	{ "addr", l_conn_addr },
 	{ NULL, NULL }
-}; 
+};
 
 static void create_metatable(lua_State *L, luaL_Reg *reg, const char *mt_name, int pop) {
 	luaL_newmetatable(L, mt_name);
@@ -350,8 +350,8 @@ LUALIB_API int luaopen_mongoose(lua_State *L) {
 	create_metatable(L, fns, META_HTTPAUTH, 1);
 	create_metatable(L, conn_fns, META_CONN, 1);
 	luaL_register(L, MODULE_HTTPAUTH, reg);
-	register_constant(L);	
+	register_constant(L);
 	lua_pushnil(L);
-	lua_setglobal(L, MODULE_HTTPAUTH); 
+	lua_setglobal(L, MODULE_HTTPAUTH);
 	return 1;
 }

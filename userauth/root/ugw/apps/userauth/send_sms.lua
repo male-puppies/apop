@@ -22,18 +22,18 @@ local sms_counter_path = "/etc/config/sms_counter.json"
 
 -- print(js.encode(opt))
 local function inc_counter(ok)
-	if ok then 
+	if ok then
 		sms_counter.success = sms_counter.success + 1
-	else 
+	else
 		sms_counter.fail = sms_counter.fail + 1
-	end 
+	end
 	return true
 end
 
-local function sms_result(b, s) 
+local function sms_result(b, s)
 	if b then
 		return inc_counter(true)
-	end 
+	end
 	log.error("send sms fail %s", s)
 	return inc_counter()
 end
@@ -53,8 +53,8 @@ end
 
 send_type_map[1] = function(phoneno, username, password, content)
 	local content, err = utf8_to_gbk(content)
-	if not content then 
-		return nil, err 
+	if not content then
+		return nil, err
 	end
 
 	local urlfmt = "http://service.winic.org:8009/sys_port/gateway/?id=%s&pwd=%s&to=%s&content=%s&time="
@@ -65,7 +65,7 @@ send_type_map[1] = function(phoneno, username, password, content)
 	local timeout = 10
 	local cmd = string.format("./send_sms.sh '%s' '%d' '%s' &", url, timeout, path)
 	local ret = os.execute(cmd)
-	if not (ret == true or ret == 0) then 
+	if not (ret == true or ret == 0) then
 		return nil, "发送短信失败：1"
 	end
 
@@ -75,20 +75,20 @@ send_type_map[1] = function(phoneno, username, password, content)
 		if lfs.attributes(path) then
 			local s = read(path)
 
-			if s:find("^0 000") then 
+			if s:find("^0 000") then
 				return sms_result(true)
-			end 
+			end
 			sms_result(false, s)
 			break
 		end
 	end
 
 	return nil, "发送短信失败：2"
-end 
+end
 
-send_type_map[4] = function(phoneno, username, password, content) 
+send_type_map[4] = function(phoneno, username, password, content)
 	local content, err = utf8_to_gbk(content)
-	if not content then 
+	if not content then
 		return nil, err
 	end
 
@@ -101,7 +101,7 @@ send_type_map[4] = function(phoneno, username, password, content)
 	local timeout = 10
 	local cmd = string.format("./send_sms.sh '%s' '%d' '%s' &", url, timeout, path)
 	local ret = os.execute(cmd)
-	if not (ret == true or ret == 0) then 
+	if not (ret == true or ret == 0) then
 		return nil, "发送短信失败：1"
 	end
 
@@ -110,30 +110,30 @@ send_type_map[4] = function(phoneno, username, password, content)
 		se.sleep(0.1)
 		if lfs.attributes(path) then
 			local s = read(path)
-			
+
 			if s:find("^0 (%d+)") then
 				return sms_result(true)
-			end 
+			end
 			sms_result(false, s)
 			break
 		end
 	end
 
 	return nil, "发送短信失败：2"
-end 
+end
 -- local function main()
 -- 	print(send_type_map[4]("15914180656", "LLYD", "LLYD2015", "尼玛 您的上网验证码是[1234], 有效期[5]分钟。【全民上网】"))
--- end 
+-- end
 -- se.run(main)
 local function send(phoneno, password)
-	if not opt then 
+	if not opt then
 		return nil, "非法短信发送配置"
 	end
 
 	local func = send_type_map[opt.type]
-	if not func then 
+	if not func then
 		return nil, "非法短信服务类型"
-	end 
+	end
 
 	local content_fmt = string.format("%s 您的上网验证码是[%%s]，有效期[%%d]分钟。【%s】", opt.msg, opt.sign)
 	return func(phoneno, opt.sno, opt.pwd, string.format(content_fmt, password, opt.expire))
@@ -144,27 +144,27 @@ local function get_expire()
 end
 
 local function init()
-	local path = "/etc/config/sms_config.json" 
+	local path = "/etc/config/sms_config.json"
 	local map = js.decode((read(path)))
-	if not (map and map.type and map.sno and map.pwd and map.msg and map.sign and map.expire) then 
+	if not (map and map.type and map.sno and map.pwd and map.msg and map.sign and map.expire) then
 		log.error("decode %s fail", path)
-		return 
-	end 
+		return
+	end
 
 	map.redirect = map.redirect and map.redirect or ""
 	opt = map
-	
+
 	os.execute("test -e /tmp/sms/ || mkdir -p /tmp/sms/; rm -rf /tmp/sms/*")
-	
+
 	local map = js.decode((read(sms_counter_path)))
-	if not (map and map.success and map.fail) then 
+	if not (map and map.success and map.fail) then
 		log.info("invalid %s, reset", sms_counter_path)
 		sms_counter = {success = 0, fail = 0}
-	else 
+	else
 		sms_counter = map
 	end
-	
-	sms_enable = true 
+
+	sms_enable = true
 
 	return true
 end
@@ -172,7 +172,7 @@ end
 local function new_timeout_save_sms_counter()
 	local last = {success = sms_counter.success, fail = sms_counter.fail}
 	return function()
-		while true do 
+		while true do
 			se.sleep(1)
 			-- print(js.encode(last), js.encode(sms_counter))
 			if not (last.success == sms_counter.success and last.fail == sms_counter.fail) then
@@ -184,16 +184,16 @@ local function new_timeout_save_sms_counter()
 				end
 				save_safe(sms_counter_path, js.encode(sms_counter))
 				last.success, last.fail = sms_counter.success, sms_counter.fail
-			end 
+			end
 		end
-	end 
+	end
 end
 
 local function run()
 	if not sms_enable then
 		print("sms disabled")
-		return 
-	end 
+		return
+	end
 	se.go(new_timeout_save_sms_counter())
 end
 

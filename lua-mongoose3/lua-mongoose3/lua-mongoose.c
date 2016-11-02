@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <string.h> 
-#include "mongoose.h"  
+#include <string.h>
+#include "mongoose.h"
 
 #define LUA_LIB
 #include "lua.h"
 #include "lauxlib.h"
 #include "sqlite3.h"
 
-#if LUA_VERSION_NUM < 502 
+#if LUA_VERSION_NUM < 502
 # define luaL_newlib(L,l) (lua_newtable(L), luaL_register(L,NULL,l))
-#endif 
+#endif
 
 #if LUA_VERSION_NUM > 501
 /*
@@ -45,14 +45,14 @@
 struct httpserver {
 	lua_State *L;
 	struct mg_mgr mgr;
-	struct mg_connection *nc; 
+	struct mg_connection *nc;
 	struct mg_serve_http_opts opts;
 	char root[MAX_ROOT_SIZE];
 };
 
 struct luaconn {
 	void *p;
-	struct mg_connection *nc; 
+	struct mg_connection *nc;
 };
 
 struct luahttpmsg {
@@ -100,10 +100,10 @@ static int l_http_message(lua_State *L) {
 		lua_pushstring(L, "not http_message");
 		return 2;
 	}
-	
+
 	struct luahttpmsg *hp = lua_newuserdata(L, sizeof(struct luahttpmsg));
 	hp->hm = (struct http_message *)conn->p;
-	luaL_getmetatable(L, META_HTTP_MSG); 
+	luaL_getmetatable(L, META_HTTP_MSG);
 	lua_setmetatable(L, -2);
 	return 1;
 }
@@ -116,26 +116,26 @@ static int http_var_common(lua_State *L, const char *type) {
 		len = lua_tointeger(L, 3);
 		len = len > 0 ? len : 256;
 	}
-	
+
 	char *buff = (char *)malloc(len); 	assert(buff);
-	
+
 	int ret;
 	const struct mg_str *s = NULL;
 	if (!strncmp(type, "body", 4)) {
 		s = &hp->hm->body;
 	} else if (!strncmp(type, "query_string", sizeof("query_string") - 1)) {
 		s = &hp->hm->query_string;
-	} 
+	}
 	ret = mg_get_http_var(s, key, buff, len);
 	if (ret <= 0) {
-		lua_pushnil(L); 
+		lua_pushnil(L);
 		free(buff);
 		return 1;
 	}
-	
+
 	lua_pushfstring(L, "%s", buff);
 	free(buff);
-	return 1; 
+	return 1;
 }
 
 static int l_uri(lua_State *L) {
@@ -171,35 +171,35 @@ static int l_http_header(lua_State *L) {
 		memcpy(buff, s->p, s->len);
 		buff[s->len] = 0;
 		lua_pushfstring(L, "%s", buff);
-		free(buff); 
+		free(buff);
 	}
-	
+
 	return 1;
 }
 
 static void ev_handler(struct mg_connection *nc, int ev, void *p) {
 	struct httpserver *hs = (struct httpserver *)nc->mgr->user_data;
-	
-	lua_State *L = hs->L; 
+
+	lua_State *L = hs->L;
 	int top = lua_gettop(L);
-	
-	lua_getfenv(L, 1); 
-	lua_rawgeti(L, -1, 1); 
-	lua_remove(L, -2); 	
-	
+
+	lua_getfenv(L, 1);
+	lua_rawgeti(L, -1, 1);
+	lua_remove(L, -2);
+
 	struct luaconn *conn = lua_newuserdata(L, sizeof(struct luaconn));
 	conn->p = p;
 	conn->nc = nc;
 
-	luaL_getmetatable(L, META_LUA_CONN); 
-	lua_setmetatable(L, -2); 			
-	
-	lua_pushinteger(L, ev); 
+	luaL_getmetatable(L, META_LUA_CONN);
+	lua_setmetatable(L, -2);
+
+	lua_pushinteger(L, ev);
 	if (lua_pcall(L, 2, 0, 0)) {
-		luaL_error(L, "lua_pcall fail %s", lua_tostring(L, 3)); 
+		luaL_error(L, "lua_pcall fail %s", lua_tostring(L, 3));
 	}
 
-	lua_pop(L, lua_gettop(L) - top); 	
+	lua_pop(L, lua_gettop(L) - top);
 }
 
 static int l_create_server(lua_State *L) {
@@ -207,35 +207,35 @@ static int l_create_server(lua_State *L) {
 	const char *addr = luaL_checkstring(L, 2);
 	if (!lua_isfunction(L, 3))
 		luaL_error(L, "param 3 should be ev_handler callback");
-	
+
 	struct httpserver *hs = (struct httpserver *)lua_newuserdata(L, sizeof(struct httpserver));
 	memset(hs, 0, sizeof(struct httpserver));
-	
+
 	hs->L = L;
 	mg_mgr_init(&hs->mgr, hs);
 	hs->nc = mg_bind(&hs->mgr, addr, ev_handler);
-	
+
 	if (!hs->nc) {
 		lua_pushnil(L);
 		lua_pushfstring(L, "mg_bind %s fail", addr);
 		return 2;
 	}
-	
+
 	mg_set_protocol_http_websocket(hs->nc);
-  
+
 	int len = strlen(root);
 	if (len >= MAX_ROOT_SIZE)
 		len = MAX_ROOT_SIZE - 1;
 	strncpy(hs->root, root, len);
 	hs->opts.document_root = hs->root;
-	
+
 	//hs->opts.enable_directory_listing = "yes";
 	//hs->opts.access_log_file = "/tmp/log.txt";
-	
-	
+
+
 	luaL_getmetatable(L, META_MONGOOSE);
 	lua_setmetatable(L, -2);
-	
+
 	lua_createtable(L, 1, 0);
 	lua_pushvalue(L, 3);
 	lua_rawseti(L, -2, 1);
@@ -245,20 +245,20 @@ static int l_create_server(lua_State *L) {
 }
 
 
-static int l_poll_server(lua_State *L) { 
+static int l_poll_server(lua_State *L) {
 	struct httpserver *hs = (struct httpserver *)luaL_checkudata(L, 1, META_MONGOOSE);
-	int ms = lua_tointeger(L, 2); 
-	mg_mgr_poll(&hs->mgr, ms > 0 ? ms : 1000); 
+	int ms = lua_tointeger(L, 2);
+	mg_mgr_poll(&hs->mgr, ms > 0 ? ms : 1000);
 	return 0;
 }
 
-static luaL_Reg fns[] = {  
-	{ "poll", 	l_poll_server },  
+static luaL_Reg fns[] = {
+	{ "poll", 	l_poll_server },
 	{ NULL, NULL }
 };
 
 static luaL_Reg reg[] = {
-	{ "create_server", l_create_server }, 
+	{ "create_server", l_create_server },
 	{ NULL, NULL }
 };
 
@@ -268,9 +268,9 @@ static luaL_Reg conn_fns[] = {
 	{ "send", 			l_send 			},
 	{ "send_close", 	l_send_close	},
 	{ "serve_http", 	l_serve_http 	},
-	{ "http_message", 	l_http_message	}, 
+	{ "http_message", 	l_http_message	},
 	{ NULL, NULL }
-}; 
+};
 
 static luaL_Reg http_msg_func[] = {
 	{ "uri", 			l_uri 			},
@@ -303,7 +303,7 @@ static struct constant s_const[] = {
 	{"MG_EV_HTTP_REQUEST", 	MG_EV_HTTP_REQUEST	},
 	{"MG_EV_HTTP_REPLY", 	MG_EV_HTTP_REPLY	},
 	{"MG_EV_HTTP_CHUNK", 	MG_EV_HTTP_CHUNK	},
-	{"MG_EV_SSI_CALL", 		MG_EV_SSI_CALL		}, 
+	{"MG_EV_SSI_CALL", 		MG_EV_SSI_CALL		},
 	{NULL, 					0					}
 };
 static void register_constant(lua_State *L) {
@@ -319,7 +319,7 @@ LUALIB_API int luaopen_mongoose(lua_State *L) {
 	create_metatable(L, fns, META_MONGOOSE);
 	create_metatable(L, conn_fns, META_LUA_CONN);
 	create_metatable(L, http_msg_func, META_HTTP_MSG);
-	luaL_newlib(L, reg); 
-	register_constant(L);	
+	luaL_newlib(L, reg);
+	register_constant(L);
 	return 1;
 }

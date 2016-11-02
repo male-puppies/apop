@@ -1,11 +1,11 @@
-local log = require("log") 
+local log = require("log")
 local js = require("cjson.safe")
-local common = require("common") 
+local common = require("common")
 local read, save_safe = common.read, common.save_safe
 
 local authoptpath = "/etc/config/authopt.json"
 
-local function get_authopt() 
+local function get_authopt()
 	return js.decode((read(authoptpath))) or {redirect = ""}
 end
 
@@ -13,15 +13,15 @@ local function authoptlist(conn, account, data)
 	return {status = 0, data = get_authopt()}
 end
 
-local function authoptset(conn, account, map) 
-	if not (map and map.redirect) then 
+local function authoptset(conn, account, map)
+	if not (map and map.redirect) then
 		return {status = 1, data = "invalid param"}
 	end
 
 	local authopt, nredirect = get_authopt(), map.redirect
-	if (authopt.redirect == nredirect) then 
+	if (authopt.redirect == nredirect) then
 		return {status = 0, data = "nothing change"}
-	end 
+	end
 
 	authopt.redirect = map.redirect
 	save_safe(authoptpath, js.encode(authopt))

@@ -6,7 +6,7 @@ local conn_map = {}
 
 local function dispather(conn, ev)
 	if ev == 0 then		-- poll
-		return 
+		return
 	end
 
 	local addr = conn:addr()
@@ -22,14 +22,14 @@ local function dispather(conn, ev)
 			return conn:serve_http()
 		end
 
-		-- hm:body_var hm:query_var hm:http_header 
+		-- hm:body_var hm:query_var hm:http_header
 		go(function()
 			sleep(5)
 			conn:send('{"a":1}')
 			conn:send_close()
 			conn_map[addr] = nil
 		end)
-		
+
 		return
 	end
 end

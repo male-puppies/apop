@@ -1,5 +1,5 @@
-local se = require("se") 
-local js = require("cjson.safe") 
+local se = require("se")
+local js = require("cjson.safe")
 local baseclient = require("baseclient2")
 
 local function cursec()
@@ -23,7 +23,7 @@ mt_ext.__index = {
 
 		local nseq
 		nseq, ins.seq = ins.seq, ins.seq + 1
-			
+
 		local timeout = 3
 		local map = {
 			mod = ins.base_ins:get_topic(),
@@ -36,13 +36,13 @@ mt_ext.__index = {
 
 		local res = baseclient.wait(ins.response_map, nseq, timeout)
 		return res
-	end, 
+	end,
 
 	query = function(ins, group, karr)
 		return ins:request_common("a/ac/cfgmgr/query", {group = group, karr = karr})
 	end,
 
-	modify = function(ins, data) 
+	modify = function(ins, data)
 		return ins:request_common("a/ac/cfgmgr/modify", data)
 	end,
 
@@ -55,10 +55,10 @@ mt_ext.__index = {
 
 		local nseq
 		nseq, ins.seq = ins.seq, ins.seq + 1
-			
+
 		local timeout = 5
 		local map = {
-			mod = "a/local/cfgmgr", 
+			mod = "a/local/cfgmgr",
 			pld = {cmd = "getlog", data = {seq = nseq, mod = ins.base_ins:get_topic(), type = "current"}},
 		}
 
@@ -69,9 +69,9 @@ mt_ext.__index = {
 	end,
 
 	sendcmd = function(ins, apid, data)
-		assert(apid) 
+		assert(apid)
 		local map = {
-			mod = "a/local/cfgmgr", 
+			mod = "a/local/cfgmgr",
 			pld = {cmd = "exec", data = data},
 		}
 
@@ -79,38 +79,38 @@ mt_ext.__index = {
 	end,
 }
 
-local function new() 
+local function new()
 	local unique = "a/local/ds"
 	local param = {
 		clientid = unique,
-		topic = unique, 
+		topic = unique,
 		port = 61886,
 	}
 	local ins = baseclient.new(param)
 
 	local obj = {
-		seq = 0, 
-		base_ins = ins, 
-		notify_arr = {}, 
-		out_seq_map = {}, 
+		seq = 0,
+		base_ins = ins,
+		notify_arr = {},
+		out_seq_map = {},
 		on_message = numb,
-		response_map = {},  
+		response_map = {},
 	}
 	setmetatable(obj, mt_ext)
 
-	ins:set_callback("on_message", function(payload)   
+	ins:set_callback("on_message", function(payload)
 		local map = js.decode(payload)
 
-		if not (map and map.pld) then 
-			return 
-		end 
+		if not (map and map.pld) then
+			return
+		end
 
-		if map.seq then 
+		if map.seq then
 			if obj.out_seq_map[map.seq] then
 				obj.response_map[map.seq], obj.out_seq_map[map.seq] = map.pld, nil
 			end
 			return
-		end 
+		end
 
 		table.insert(obj.notify_arr, map.pld)
 	end)

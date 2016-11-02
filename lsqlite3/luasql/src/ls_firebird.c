@@ -367,7 +367,7 @@ static int conn_execute (lua_State *L) {
 			break;
 		case SQL_SHORT:
 			var->sqldata = (char *)malloc_zero(sizeof(ISC_SHORT));
-			break;			
+			break;
 		case SQL_LONG:
 			var->sqldata = (char *)malloc_zero(sizeof(ISC_LONG));
 			break;
@@ -995,7 +995,7 @@ static int env_connect (lua_State *L) {
 static int env_close (lua_State *L) {
 	env_data *env = (env_data *)luaL_checkudata (L, 1, LUASQL_ENVIRONMENT_FIREBIRD);
 	luaL_argcheck (L, env != NULL, 1, "environment expected");
-	
+
 	/* already closed? */
 	if(env->closed == 1) {
 		lua_pushboolean(L, 0);
@@ -1072,4 +1072,4 @@ LUASQL_API int luaopen_luasql_firebird (lua_State *L) {
 	luaL_setfuncs (L, driver, 0);
 	luasql_set_info (L);
 	return 1;
-} 
+}

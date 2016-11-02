@@ -10,7 +10,7 @@ function diskmap.authuser()
 			desc 	varchar(64) 	not null default '',
 			usertype varchar(16) 	not null default 'web',
 			switch 	char(2)   		not null default '1',
-			multi 	char(2)			not null default '0' 
+			multi 	char(2)			not null default '0'
 		)
 	]]
 	dc.promise(sql)
@@ -64,7 +64,7 @@ local dbmap = {}
 function dbmap.disk()
 	os.execute("mkdir -p /tmp/db/")
 	dc.connect("/tmp/db/disk.db")
-	for _, func in pairs(diskmap) do 
+	for _, func in pairs(diskmap) do
 		func()
 	end
 end
@@ -72,7 +72,7 @@ end
 function dbmap.recover()
 	os.execute("rm -rf /tmp/recover; mkdir -p /tmp/recover/")
 	dc.connect("/tmp/recover/disk.db")
-	for _, func in pairs(diskmap) do 
+	for _, func in pairs(diskmap) do
 		func()
 	end
 end
@@ -80,7 +80,7 @@ end
 function dbmap.memory()
 	os.execute("mkdir -p /tmp/db/")
 	dc.connect("/tmp/db/memory.db")
-	for _, func in pairs(memory_map) do 
+	for _, func in pairs(memory_map) do
 		func()
 	end
 end

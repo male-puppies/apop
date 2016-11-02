@@ -1,8 +1,8 @@
 local se = require("se")
 local log = require("log")
 local sandc = require("sandc")
-local js = require("cjson.safe") 
--- local mosq = require("mosquitto")  
+local js = require("cjson.safe")
+-- local mosq = require("mosquitto")
 
 local function yield()
 	se.sleep(0.000001)
@@ -14,12 +14,12 @@ local function numb() return true end
 local function try_connect(host, port)
 	local addr = string.format("tcp://%s:%s", host, tostring(port))
 
-	for i = 1, 3 do 	
+	for i = 1, 3 do
 		local cli = se.connect(addr, 3)
-		if cli then 
+		if cli then
 			return true, se.close(cli)
 		end
-		
+
 		se.sleep(1)
 	end
 
@@ -28,13 +28,13 @@ end
 --]]
 
 local mt = {}
-mt.__index = { 
+mt.__index = {
 	--[[
 	publish_internel = function(ins, mqtt)
-		while true do 
+		while true do
 			local item = ins.publish_cache[1]
-			if not item then 
-				return 
+			if not item then
+				return
 			end
 
 			if not ins.on_check_out(item) then
@@ -45,10 +45,10 @@ mt.__index = {
 				local ret = mqtt:publish(topic, payload, qos, false)
 				mqtt:loop(1)
 
-				if not ret then 
+				if not ret then
 					log.error("publish fail")
 					return
-				end 
+				end
 
 				local _ = yield(), table.remove(ins.publish_cache, 1)
 			end
@@ -56,11 +56,11 @@ mt.__index = {
 	end,
 
 	connect_internel = function(ins, mqtt)
-		if not try_connect(ins.host, ins.port) then 
+		if not try_connect(ins.host, ins.port) then
 			ins.on_connect_fail()
 			return se.sleep(1)
-		end 
-		
+		end
+
 		local _ = ins.will_topic and mqtt:will_set(ins.will_topic, ins.will_payload)
 
 		local st = se.time()
@@ -79,7 +79,7 @@ mt.__index = {
 		se.sleep(1)
 	end,--]]
 
-	--[[ run_as_routine = function(ins) 
+	--[[ run_as_routine = function(ins)
 		local mqtt = mosq.new(ins.clientid, ins.clean)
 
 		mqtt:callback_set("ON_MESSAGE", function(mid, topic, payload, qos, retain) ins.on_message(payload) end)
@@ -110,7 +110,7 @@ mt.__index = {
 		local ret, err = mqtt:connect(ins.host, ins.port)
 		local _ = ret or log.fatal("connect fail %s", err)
 		mqtt:set_callback("on_message", function(topic, payload) ins.on_message(payload) end)
-		mqtt:set_callback("on_disconnect", function(st, err) 
+		mqtt:set_callback("on_disconnect", function(st, err)
 			-- ins.status = false
 			print(st, err)
 			ins.on_disconnect(st, err)
@@ -120,7 +120,7 @@ mt.__index = {
 		ins.mqtt = mqtt
 	end,
 
-	publish = function(ins, topic, payload) 
+	publish = function(ins, topic, payload)
 		-- print("publish", topic, payload)
 		ins.mqtt:publish(topic, payload)
 		-- table.insert(ins.publish_cache, {topic, payload, qos, ...})
@@ -140,7 +140,7 @@ mt.__index = {
 	-- end,
 
 	set_will = function(ins, topic, payload)
-		assert(topic and payload)	
+		assert(topic and payload)
 		ins.will_topic, ins.will_payload = topic, payload
 	end,
 }
@@ -166,7 +166,7 @@ local function new_base(map)
 		on_disconnect = numb,
 		-- on_check_out = numb,
 		-- on_connect_fail = numb,
-		
+
 		-- running = true,
 		mqtt = nil,
 	}
@@ -178,7 +178,7 @@ end
 local function wait_response(response_map, seq, timeout)
 	local st = se.time()
 	while true do
-		se.sleep(0.005) 
+		se.sleep(0.005)
 		local res = response_map[seq]
 		if res ~= nil then
 			response_map[seq] = nil

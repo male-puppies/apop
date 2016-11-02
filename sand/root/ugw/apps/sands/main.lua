@@ -1,4 +1,4 @@
-local uv = require("luv") 
+local uv = require("luv")
 local sands = require("sands")
 
 local function is_gw_mode()

@@ -17,20 +17,20 @@ local country_map = {
 
 local function short(ctry)
 	local item = country_map[ctry]
-	if item then 
+	if item then
 		return item.short
-	end 
+	end
 end
 
 local function code(ctry)
 	local item = country_map[ctry]
-	if item then 
+	if item then
 		return item.code
-	end  
+	end
 	log.fatal("not support country %s", ctry)
 end
 
 return {
 	code = code,
-	short = short, 
+	short = short,
 }

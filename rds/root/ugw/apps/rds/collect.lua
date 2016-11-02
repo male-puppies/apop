@@ -15,12 +15,12 @@ end
 local function clear_timeout()
 	local change = false
 	local now, timeout = cursec(), 300
-	for group, active in pairs(group_map) do 
+	for group, active in pairs(group_map) do
 		local d = now - active
-		if d >= timeout then 
+		if d >= timeout then
 			group_map[group], change = nil, true
 			log.debug("timeout, stop collect %s", group)
-		end 
+		end
 	end
 
 	return true
@@ -30,21 +30,21 @@ local function update(r, group)
 	rds = r
 
 	local change = false
-	if not group_map[group] then 
+	if not group_map[group] then
 		change = true
-		log.debug("start collect %s", group) 
+		log.debug("start collect %s", group)
 	end
 
 	group_map[group] = cursec()
 	change = clear_timeout() and true or change
 	local _ = change and set_rds()
-end 
+end
 
 local function start()
 	while true do
 		se.sleep(3)
 		local _ = rds and clear_timeout() and set_rds()
-	end 
+	end
 end
 
 return {update = update, start = start}
