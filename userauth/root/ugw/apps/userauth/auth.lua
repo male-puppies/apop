@@ -367,13 +367,12 @@ cmd_map["/weixin2_login"] = function(map)
 
 	if flag == 1 then
 		add_wx_user(openid)
-		local iscloud, config = get_cloud_config()
 
-		if cloud_adconf.newad and wx_param.force and wx_param.force == 1 then
-			if  openid_is_funs(openid) then
-				dispatcher.login_success(mac, ip, openid, cloud_adconf.opt_map.expiretime)
-			else
+		if cloud_adconf.newad then
+			if  wx_param.force and wx_param.force == 1 and not openid_is_funs(openid) then
 				dispatcher.login_success(mac, ip, openid, 180)
+			else
+				dispatcher.login_success(mac, ip, openid, cloud_adconf.opt_map.expiretime)
 			end
 			send_authtype_stat(ip, mac, openid)
 		else
