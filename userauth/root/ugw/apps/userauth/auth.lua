@@ -293,7 +293,7 @@ local function get_cloud_host()
 end
 
 
-local function send_authtype_stat(ip, mac, username)
+local function send_authtype_stat(authtype, ip, mac, username)
 	if not (ip and mac and username) then
 		return false
 	end
@@ -309,7 +309,7 @@ local function send_authtype_stat(ip, mac, username)
 
 	local map = cloud_adconf.opt_map
 	local url = string.format("http://%s/statistics/add_stat_type?", cloud_host)
-	local data = string.format("authtype=%s&shop_id=%s&account_id=%s&ip=%s&mac=%s&devid=%s&username=%s", map.authtype, map.shop_id, map.account_id, ip, mac, g_devid, username)
+	local data = string.format("authtype=%s&shop_id=%s&account_id=%s&ip=%s&mac=%s&devid=%s&username=%s", authtype, map.shop_id, map.account_id, ip, mac, g_devid, username)
 
 	local result = http_post_request(url, data, "/tmp/authtype_stat")
 	if result then
@@ -374,7 +374,7 @@ cmd_map["/weixin2_login"] = function(map)
 			else
 				dispatcher.login_success(mac, ip, openid, cloud_adconf.opt_map.expiretime)
 			end
-			send_authtype_stat(ip, mac, openid)
+			send_authtype_stat(1, ip, mac, openid)
 		else
 			dispatcher.login_success(mac, ip, openid)
 		end
@@ -392,7 +392,7 @@ end
 
 cmd_map["/auto_login"] = function(map)
 	local ads_config = read("/tmp/www/webui/ads_config.json")
-	--print("cloud_adconf--", js.encode(cloud_adconf))
+
 	if not ads_config and not cloud_adconf.newad then
 		return {status = 1, data = "配置错误 file err"}
 	end
@@ -405,7 +405,7 @@ cmd_map["/auto_login"] = function(map)
 		g_redirect = g_map.g_redirect or ""
 		--return {status = 1, data = "未开启一键认证"}
 	end
-	if cloud_adconf.newad and cloud_adconf.opt_map.authtype == 2 then
+	if cloud_adconf.newad and cloud_adconf.opt_map.authtype:find("2") then
 		enable = 1
 	end
 	if enable == 0 then
@@ -429,9 +429,9 @@ cmd_map["/auto_login"] = function(map)
 	end
 	add_auto_user(username)
 
-	if cloud_adconf.newad and cloud_adconf.opt_map.authtype == 2 then
+	if cloud_adconf.newad and cloud_adconf.opt_map.authtype:find("2") then
 		dispatcher.login_success(mac, ip, username, cloud_adconf.opt_map.expiretime)
-		send_authtype_stat(ip, mac, username)
+		send_authtype_stat(2, ip, mac, username)
 	else
 		dispatcher.login_success(mac, ip, username)
 	end
@@ -543,7 +543,12 @@ cmd_map["/get_qrcode"] = function(map)
 end
 
 cmd_map["/cloudlogin"] = function(map)
-	return dispatcher.auth(map)
+	local ret = dispatcher.auth(map)
+	if ret.status == 0 and authopt.adtype == "cloud" then
+		send_authtype_stat(5, map.ip, map.mac, map.username)
+	end
+
+	return ret
 end
 
 local function save_sms_user(phoneno, password, expire)
@@ -612,7 +617,7 @@ local function sms_user_login(map)
 	local expire = cloud_adconf.opt_map.expiretime
 	save_sms_user(phoneno, sms_code)
 	dispatcher.login_success(mac, ip, phoneno, expire)
-	send_authtype_stat(ip, mac, phoneno)
+	send_authtype_stat(4, ip, mac, phoneno)
 
 	if g_redirect and g_redirect ~= "" then
 		return {status = 0, data = g_redirect}
@@ -629,7 +634,7 @@ local function sms_user_login(map)
 end
 
 cmd_map["/sms_send"] = function (map)
-	if not cloud_adconf.newad or not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype == 4) then
+	if not cloud_adconf.newad or not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype:find("4")) then
 		return {status = 1, data = "未启用短信认证"}
 	end
 
@@ -712,7 +717,7 @@ end
 
 
 cmd_map["/passwd_login"] = function(map)
-	if not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype == 3) then
+	if not (cloud_adconf.opt_map.authtype and cloud_adconf.opt_map.authtype:find("3") and cloud_adconf.opt_map.value["3"]) then
 		return {status = 1, data = "未启用密码认证"}
 	end
 
@@ -726,21 +731,21 @@ cmd_map["/passwd_login"] = function(map)
 		return {status = 1, data = "请检查是否连接正确wifi"}
 	end
 
-	local a = {}
-	if type(cloud_adconf.opt_map.value) == "string" then
-		a = js.decode(cloud_adconf.opt_map.value)
-	else
-		a = cloud_adconf.opt_map.value
-	end
-
-	if not a.password or a.password ~= password then
+	-- local a = {}
+	-- if type(cloud_adconf.opt_map.value) == "string" then
+	-- 	a = js.decode(cloud_adconf.opt_map.value)
+	-- else
+	-- 	a = cloud_adconf.opt_map.value
+	-- end
+	local a = cloud_adconf.opt_map.value["3"]
+	if not (a.password and a.password == password) then
 		return {status = 1, data = "密码错误"}
 	end
 
 	local expire = cloud_adconf.opt_map.expiretime
 	add_passwd_user(mac, password)
 	dispatcher.login_success(mac, ip, mac, expire)
-	send_authtype_stat(ip, mac, mac)
+	send_authtype_stat(3, ip, mac, mac)
 
 	if g_redirect and g_redirect ~= "" then
 		return {status = 0, data = g_redirect}
@@ -856,14 +861,9 @@ local function init()
 			cloud_adconf.newad = true
 			cloud_adconf.opt_map = map
 			cloud_adconf.opt_map.expiretime = cloud_adconf.opt_map.expiretime * 60
-			if map.authtype and map.authtype == 1 and map.value then
-				local a = js.decode(map.value)
-				if type(map.value) == "string" then
-					a = js.decode(map.value)
-				else
-					a = map.value
-				end
-				wx_param = {appid = a.appid, shop_id = a.wxshopid, sk = a.secretkey, ssid = a.ssid, force = a.force}
+			if map.authtype and map.authtype:find("1") and map.value and  map.value["1"]then
+				local a = map.value["1"]
+				wx_param = {appid = a.appid, shop_id = a.wxshopid, sk = a.secretkey, ssid = a.ssid, force = a.force, initid = a.initid}
 			end
 			read_id()
 		end
