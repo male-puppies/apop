@@ -60,7 +60,7 @@ local function login_success(mac, ip, username, expire)
 	ol:show()
 end
 
-local function auth(map)
+local function auth(map, expire)
 	local username, password, ip, mac = map.username, map.password, map.ip, map.mac
 	if not (username and password and ip and mac) then
 		return status("请尝试重新加载！")
@@ -104,7 +104,7 @@ local function auth(map)
 		return status("此设备禁止登录！")
 	end
 
-	login_success(mac, ip, username)
+	login_success(mac, ip, username, expire)
 
 	return status(authopt.redirect or "ok", true)
 end

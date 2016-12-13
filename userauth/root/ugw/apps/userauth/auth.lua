@@ -543,7 +543,12 @@ cmd_map["/get_qrcode"] = function(map)
 end
 
 cmd_map["/cloudlogin"] = function(map)
-	local ret = dispatcher.auth(map)
+	local expire
+	if authopt.adtype == "cloud" and cloud_adconf.newad and cloud_adconf.opt_map.authtype:find("5") then
+		expire = cloud_adconf.opt_map.expiretime
+	end
+
+	local ret = dispatcher.auth(map, expire)
 	if ret.status == 0 and authopt.adtype == "cloud" then
 		send_authtype_stat(5, map.ip, map.mac, map.username)
 	end
