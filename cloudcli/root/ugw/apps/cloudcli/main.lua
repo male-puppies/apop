@@ -72,8 +72,8 @@ local function reset_cloud()
 	end
 end
 
-function get_version_info()
-	local map
+local function get_version_info()
+	local map = {}
 	local file = io.open("/etc/openwrt_release")
 	if not file then
 		print("file is null")
@@ -89,7 +89,7 @@ end
 
 local function set_detail()
 	local mode = get_version_info()
-	g_kvmap.detail = js.encode({major = "ac", minor = "7621", mode = mode["DISTRIB_ID"]})
+	g_kvmap.detail = js.encode({major = "ac", minor = "7621", mode = mode and mode["DISTRIB_ID"]})
 end
 
 local function set_default()
