@@ -12,7 +12,7 @@ local cfgpath = "/etc/config/cloud.json"
 local read, save, save_safe = common.read, common.save, common.save_safe
 local g_kvmap, g_devid = {}
 
-local mqtt 
+local mqtt
 local on_cache = {cmd="adcfg_notify", map = nil}
 
 local function read_id()
@@ -22,12 +22,27 @@ local function read_id()
 	g_devid = id
 end
 
+local function update_ac2cloud_state()
+	local file_name = "/tmp/memfile/cloudcli.json"
+	local s = read(file_name)
+	local map = js.decode(s)
+	if not map then
+		return
+	end
+
+	if map and map.state == 1 then
+		map.state = 0
+	end
+	print("****update status:", js.encode(map))
+	save_safe(file_name,  js.encode(map))
+end
+
 local function upload()
 	local register_topic = "a/ac/cfgmgr/register"
 	local request = function(data)
-		while true do 
+		while true do
 			local res = mqtt:request(register_topic, data)
-			if res ~= nil then 
+			if res ~= nil then
 				return res
 			end
 			log.error("register fail %s %s", js.encode(res), js.encode(data))
@@ -46,7 +61,11 @@ local function upload()
 	local cmd = {cmd = "upload", data = {devid = g_devid, account = g_kvmap.account, config = g_kvmap}}
 	local res = request(cmd)
 	local _ = (type(res) == "table" and res.status and res.msg) or log.fatal("upload fail %s", js.encode(res))
-	if res.status ~= 0 and res.msg == "invalid account" then 
+	if res.status == -1 then
+		update_ac2cloud_state()
+		return
+	end
+	if res.status ~= 0 and res.msg == "invalid account" then
 		os.execute("touch /tmp/invalid_account;  /etc/init.d/base restart")
 		log.fatal("invalid account, notify base to stop connect")
 	end
@@ -55,9 +74,9 @@ end
 
 local function reset_cloud()
 	local request = function(data)
-		while true do 
+		while true do
 			local res = mqtt:request("a/ac/cfgmgr/modify", data)
-			if res ~= nil then 
+			if res ~= nil then
 				return res
 			end
 			log.error("reset_ac fail %s", js.encode(data))
@@ -97,53 +116,53 @@ local function set_default()
 	set_detail()
 end
 
-local function load() 
+local function load()
 	if not lfs.attributes(cfgpath) then
 		return set_default()
-	end 
+	end
 	local s = read(cfgpath)
 	local map = js.decode(s)
-	if not map then 
+	if not map then
 		os.remove(cfgpath)
 		return set_default()
-	end 
+	end
 	g_kvmap = map
 	set_detail()
 end
 
 local cmd_map = {}
 function cmd_map.replace(map)
-	local field_map = {account = 1, ac_host = 1, ac_port = 1, descr = 1}	
-	for k in pairs(map) do 
-		if not field_map[k] then 
+	local field_map = {account = 1, ac_host = 1, ac_port = 1, descr = 1}
+	for k in pairs(map) do
+		if not field_map[k] then
 			log.error("invalid replace %s", js.encode(map))
-			return 
+			return
 		end
 	end
-	
+
 	local change, need_exit = false, false
 	local check_field = {account = 1, ac_host = 1, ac_port = 1}
-	for k, v in pairs(map) do 
+	for k, v in pairs(map) do
 		local ov = g_kvmap[k]
-		if v ~= ov then 
+		if v ~= ov then
 			change = true
-			if check_field[k] then 
-				need_exit = true 
-			end 
+			if check_field[k] then
+				need_exit = true
+			end
 			log.debug("%s change %s->%s", k, ov, v)
 		end
 	end
 
-	if not change then 
-		return 
-	end 
+	if not change then
+		return
+	end
 
-	g_kvmap = map 
+	g_kvmap = map
 
-	do return end 
+	do return end
 	local s = js.encode(g_kvmap)
 	save_safe(cfgpath, s)
-	if need_exit then 
+	if need_exit then
 		os.execute("killstr 'base/main.lua'")
 		os.exit(0)
 	end
@@ -151,35 +170,35 @@ end
 
 local sshreverse_running = false
 local proxypass_sh = "/ugw/script/sshreverse.sh"
-function cmd_map.proxypass(map) 
-	if sshreverse_running then 
+function cmd_map.proxypass(map)
+	if sshreverse_running then
 		log.error("sshreverse is already running")
-		return 
+		return
 	end
 
 	local respath = "/tmp/sshresult.txt"
 	local cmd = string.format("%s '%s' '%s' '%s' '%s' '%s' '%s' '%s' &", proxypass_sh, map.username, map.cloudport, map.localport, map.remote_ip, map.remote_port, map.footprint, respath)
 	se.go(function()
-		if sshreverse_running then 
-			return 
-		end 
+		if sshreverse_running then
+			return
+		end
 
 		os.remove(respath)
 		os.execute(cmd)
 
 		local start = se.time()
 		sshreverse_running = true
-		while true do 
-			if lfs.attributes(respath) then 
+		while true do
+			if lfs.attributes(respath) then
 				os.remove(respath)
 				log.debug("sshreverse use time %s", se.time() - start)
 				break
 			end
-			if se.time() - start > 30 then 
+			if se.time() - start > 30 then
 				log.error("sshreverse timeout")
-				
+
 				break
-			end 
+			end
 			se.sleep(0.3)
 		end
 		sshreverse_running = false
@@ -280,7 +299,7 @@ local function get_cfg_ver_info()
 		log.error("read %s fail.", cfg_ver_file)
 		return false
 	end
-	local map, err = js.decode(s) 
+	local map, err = js.decode(s)
 	if not map then
 		log.fatal("decode %s failed.", cfg_ver_file)
 		return false
@@ -329,7 +348,7 @@ local function get_cfg_version(cfg_type)
 	if cfg_ver_info and cfg_ver_info[cfg_type] and cfg_ver_info[cfg_type]["version"] then
 		return cfg_ver_info[cfg_type]["version"]
 	end
-	log.error("get %s cfg version failed.", cfg_type) 
+	log.error("get %s cfg version failed.", cfg_type)
 	return nil
 end
 
@@ -338,7 +357,7 @@ local function set_cfg_version(cfg_type, version, file_map)
 	if not (version and type(cfg_type) == "string" and (cfg_type == "ad" or cfg_type == "dev"))  then
 		log.error("set_cfg_version: invalid pars.")
 		return false
-	end 
+	end
 
 	cfg_ver_info[cfg_type]["version"] = version
 
@@ -368,7 +387,7 @@ local function get_cfg_files(cfg_type)
 		log.error("get_cfg_files: invalid pars.")
 		return false
 	end
-	local file_arr 
+	local file_arr
 	if cfg_ver_info and cfg_ver_info[cfg_type]["files"] then
 		return cfg_ver_info[cfg_type]["files"]
 	end
@@ -452,7 +471,7 @@ local function override_devcfg()
 	if def_files then
 		for _, file_info in ipairs(def_files) do
 			if file_info["exist"] == "1" and file_info["name"] then
-				if lfs.attributes(const.config_dir.."/"..file_info["name"]) then 
+				if lfs.attributes(const.config_dir.."/"..file_info["name"]) then
 					local file_name = file_info["name"]
 					local cmd = string.format("mv %s %s", file_name, file_name..".".."del")
 					os.execute(cmd)
@@ -465,7 +484,7 @@ local function override_devcfg()
 	for name, exist in pairs(file_map) do
 		local cmd = string.format("mv %s %s", const.text_dir.."/"..name, const.config_dir.."/"..name)
 		os.execute(cmd)
-	end 
+	end
 
 	if del_files then
 		for _, name in ipairs(del_files) do
@@ -541,7 +560,7 @@ local function process_dlconfig(cfg_type, file_name)
 	end
 	if finish == 1 then
 		if cfg_type == "ad" then
-			return override_adcfg() 
+			return override_adcfg()
 		elseif cfg_type == "dev" then
 			return override_devcfg()
 		end
@@ -682,7 +701,7 @@ end
 
 --[[
 	配置主要有两类devcfg和adcfg;
-	其中devcfg包括“basic(ap_config.json), sms, wx, user” 共计四个配置,统一以devcfg_version	
+	其中devcfg包括“basic(ap_config.json), sms, wx, user” 共计四个配置,统一以devcfg_version
 	其中adcfg以adcfg_version
 --]]
 local function send_query_version_req()
@@ -695,13 +714,13 @@ local function send_query_version_req()
 			version_map = {["ad"] = "1970-01-01 00:00:00", ["dev"]="1970-01-01 00:00:00"}
 		end
 
-		mqtt:request("a/ac/query/version", {["account"] = account, ["devid"] = devid, ["version"] = version_map}, 1)		
+		mqtt:request("a/ac/query/version", {["account"] = account, ["devid"] = devid, ["version"] = version_map}, 1)
 	end
 end
 
 
 local function query_cfg_version()
-	while true do 
+	while true do
 		local switch = get_switch()
 		if switch == "1" then
 			send_query_version_req()
@@ -712,20 +731,20 @@ local function query_cfg_version()
 end
 
 local function on_message(map)
-	local cmd, data = map.cmd, map.data 
-	if not (cmd and data) then 
+	local cmd, data = map.cmd, map.data
+	if not (cmd and data) then
 		log.error("invalid message %s", js.encode(map))
-		return 
-	end 
+		return
+	end
 
 	local func = cmd_map[cmd]
-	if not func then 
+	if not func then
 		log.error("invalid message %s", js.encode(map))
 		return
 	end
 	if cmd == "adcfg_notify" then
 		on_cache.map = data
-	else 
+	else
 		func(data)
 	end
 end
@@ -742,14 +761,14 @@ local function check_cfg_change()
 	while true do
 		local attr = lfs.attributes(cfgpath)
 		if attr then
-			if not lasttime then 
+			if not lasttime then
 				lasttime = attr.modification
 			else
 				lasttime = attr.modification
 				local s = read(cfgpath)
 				local map = js.decode(s) 	assert(map)
-				for k, v in pairs(map) do 
-					if check_field[k] and v ~= g_kvmap[k] then  
+				for k, v in pairs(map) do
+					if check_field[k] and v ~= g_kvmap[k] then
 						log.debug("field change %s %s %s. kill base, exit and reload", k, g_kvmap[k], v)
 						os.execute("killstr 'base/main.lua'")
 						os.exit(0)
@@ -758,7 +777,7 @@ local function check_cfg_change()
 			end
 		end
 		se.sleep(1)
-	end 
+	end
 end
 
 
@@ -812,7 +831,7 @@ local function get_online_users()
 	return users
 end
 
-local function report_status() 
+local function report_status()
 	local get_state = function()
 		local firmware = read("/etc/openwrt_version") or ""
 		local uptime = read("uptime | awk  -F, '{print $1}'", io.popen) or ""
@@ -822,15 +841,15 @@ local function report_status()
 	end
 
 	se.sleep(3)
-	while true do  
+	while true do
 		local map = {
 			out_topic = "a/ac/report",
-			data = { 
-				mod = "a/local/cloudcli", 
+			data = {
+				mod = "a/local/cloudcli",
 				deadline = math.floor(se.time()) + 5,
 				pld = {g_kvmap.account, g_devid, {acstate = get_state()}},
 			},
-		} 
+		}
 		mqtt:publish("a/ac/proxy", js.encode(map))
 		se.sleep(600)
 	end
@@ -847,7 +866,7 @@ local function main()
 	se.go(check_cfg_version)
 	se.go(check_cfg_change)
 	se.go(process_go)
-end 
+end
 
 log.setmodule("cm")
 log.setdebug(true)
