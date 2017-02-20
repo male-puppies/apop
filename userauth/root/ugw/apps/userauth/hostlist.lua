@@ -164,9 +164,9 @@ local function get_mac_bypassinfo()
 	local ret, map = get_cloud_whlist(cloud_mac_file)
 		if ret and map.blacklist then
 			local maclist = {}
-			if type(map.blacklist) == "string" then
-				maclist = js.decode(map.blacklist)
-			else
+			if (type(map.blacklist) == "string") then
+				maclist = js.decode(map.blacklist) or {}
+			elseif (type(map.blacklist) == "table") then
 				maclist = map.blacklist
 			end
 
@@ -191,9 +191,9 @@ local function get_mac_bypassinfo()
 	local ret, map = get_cloud_whlist(cloud_mac_file)
 	if ret and map.whitelist then
 		local maclist = {}
-		if type(map.whitelist) == "string" then
-			maclist = js.decode(map.whitelist)
-		else
+		if (type(map.whitelist) == "string") then
+			maclist = js.decode(map.whitelist) or {}
+		elseif (type(map.whitelist) == "table") then
 			maclist = map.whitelist
 		end
 
