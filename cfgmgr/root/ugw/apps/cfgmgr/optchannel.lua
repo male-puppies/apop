@@ -340,7 +340,7 @@ local function opt_chan(map)
 		opt_time = opt_time < 20 and opt_time + 20 or opt_time
 		opt_time = opt_time > 50 and opt_time - 10 or opt_time	-- 优化值为 20-50
 
-		num = map_chid and opt_time or save_num
+		num = map_chid and next(map_chid) and opt_time or 0
 		map_chid = map_chid and map_chid or {}
 	end
 
