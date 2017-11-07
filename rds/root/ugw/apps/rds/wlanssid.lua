@@ -43,7 +43,9 @@ local function wlaninfo(group, wlanid)
 		{k = keys.c_wstate, 			desc = "state"},
 		{k = keys.c_wencry, 		desc = "encryption"},
 		{k = keys.c_wpasswd, 		desc = "password"},
-		{k = keys.c_wband, 			desc = "band"}, 
+		{k = keys.c_wband, 			desc = "band"},
+		{k = keys.c_wvlanenable, 	desc = "vlanenable"},
+		{k = keys.c_wvlanid, 		desc = "vlanid"}, 
 	}
 	
 	local karr, rt = {}, {WLANID = wlanid}
@@ -146,6 +148,8 @@ local function wlanlist(conn, group, data)
 			band = map.band or "", 
 			ext_wlanid = assert(map.ext_wlanid),
 			checkAps = checkarr[map.ext_wlanid] or '0',
+			vlanenable = map.vlanenable or '0',
+			vlanid = map.vlanid or 1,
 		}
 	end 
 
@@ -241,8 +245,30 @@ web_map.apList = {
 			end 
 			return t
 		end
-	}	
- 
+	}
+web_map.vlanenable = {
+		k = keys.c_wvlanenable, 
+		func = function(s)
+			local valid = {["0"] = 1, ["1"] = 1} 
+			local enable = tostring(s)
+			if not enable or type(enable) ~= "string" or not valid[enable] then 
+				log.error("error enable %s", s or "")
+				return nil, errmsg("invalid enable")
+			end
+			return enable
+		end
+	}	 
+web_map.vlanid = {
+		k = keys.c_wvlanid, 
+		func = function(t) 
+			if not t or type(t) ~= "string" or tonumber(t) < 0 or tonumber(t) > 4096 then 
+				log.error("error vlanid %s", t or "")
+				return nil, errmsg("invalid vlanid")
+			end
+			return t
+		end
+	}
+
 local function param_validate(o) 
 	assert(type(o) == "table")
 
@@ -484,6 +510,8 @@ local function get_kp_val_map(map)
 		[web_map.hide.k] = map[web_map.hide.k], 
 		[web_map.apList.k] = map[web_map.apList.k],
 		[web_map.SSID.k] = map[web_map.SSID.k],
+		[web_map.vlanenable.k] = map[web_map.vlanenable.k],
+		[web_map.vlanid.k] = map[web_map.vlanid.k],
 	}
 	
 	if map[web_map.encrypt.k] ~= "none"	then 
