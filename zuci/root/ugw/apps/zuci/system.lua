@@ -1,5 +1,6 @@
 local log = require("log")
 local md5 = require("md5")
+local lfs = require("lfs")
 local js = require("cjson.safe")
 local uci = require("muci")
 -- local nixio = require("nixio")
@@ -261,6 +262,10 @@ local function uploadbackup(group, data)
 end
 
 local function confreset(group, data)
+	local path_backup = "/tmp/backup"              
+	if lfs.attributes(path_backup) then       
+		os.execute("rm -rf /tmp/backup/*")               
+	end
 	os.execute("/ugw/script/reset_data.sh; sleep 1; mtd -r erase rootfs_data")
 end
 
